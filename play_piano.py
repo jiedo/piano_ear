@@ -168,7 +168,8 @@ def main():
     thread_track.start()
 
     staff_img_png = pygame.image.load("data.png").convert_alpha()
-    staff_img = pygame.transform.rotate(staff_img_png, 270)
+    # staff_img = pygame.transform.rotate(staff_img_png, 270)
+    staff_img = staff_img_png
     staff_img_rect = staff_img.get_rect()
 
     piano.screen.blit(staff_img, staff_img_rect, (0, 0, WINSIZE[0], WINSIZE[1] * 0.618))
