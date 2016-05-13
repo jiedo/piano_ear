@@ -68,7 +68,6 @@ class Playtrack(threading.Thread):
         global g_done, g_key_press
 
         #print sounds_keys
-        piano_label_font = pygame.font.Font(pygame.font.match_font('Bravura Text'), 144)
         time_pitchs = []
         timestamp = 0
         while not g_done:
@@ -128,8 +127,8 @@ class Playtrack(threading.Thread):
                 if pitch not in time_pitchs:
                     time_pitchs += [pitch]
 
-                note_rec, note_pos = self.piano.draw_note(pitch)
-                self.piano.draw_lines(WINSIZE[1]- self.piano.piano_white_key_height)
+                note_rec, note_pos = self.piano.draw_note(pitch, top=WINSIZE[1] * 0.7)
+                self.piano.draw_lines(WINSIZE[1] * 0.618)
                 # self.piano.screen.blit(ren, (note_pos, 100))
                 self.piano.draw_keys(pitch_key_rec, key_color_down)
                 self.piano.draw_keys(pitch_side_blackkeys_rec, self.piano.black)
@@ -147,7 +146,8 @@ class Playtrack(threading.Thread):
                     _sound.stop()
 
                 pygame.draw.rect(self.piano.screen, self.piano.backgroud_color, note_rec, False)
-                self.piano.draw_lines(WINSIZE[1] - self.piano.piano_white_key_height)
+
+                self.piano.draw_lines(WINSIZE[1] * 0.618)
                 self.piano.draw_keys(pitch_key_rec, key_color)
                 self.piano.draw_keys(pitch_side_blackkeys_rec, self.piano.black)
 
@@ -160,13 +160,18 @@ def main():
     screen = pygame.display.set_mode(WINSIZE)
     pygame.display.set_caption('Piano Keyboard')
 
-    piano = Piano(screen)
-    piano.draw_piano()
+    piano = Piano(screen, WINSIZE)
 
-    screen = piano.draw_piano(WINSIZE[1]-piano.piano_white_key_height)
-    piano.draw_lines(WINSIZE[1]-piano.piano_white_key_height)
+    piano.draw_piano()
+    piano.draw_lines(WINSIZE[1] * 0.618)
     thread_track = Playtrack(piano)
     thread_track.start()
+
+    staff_img_png = pygame.image.load("data.png").convert_alpha()
+    staff_img = pygame.transform.rotate(staff_img_png, 270)
+    staff_img_rect = staff_img.get_rect()
+
+    piano.screen.blit(staff_img, staff_img_rect, (0, 0, WINSIZE[0], WINSIZE[1] * 0.618))
 
     clock = pygame.time.Clock()
     global g_done, g_key_press

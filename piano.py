@@ -13,8 +13,9 @@ from pygame.locals import *
 __create_time__ = "Feb 26 2012"
 
 class Piano():
-    def __init__(self, screen):
+    def __init__(self, screen, screen_rect):
         self.screen = screen
+        self.screen_rect = screen_rect
         self.piano_note_font = pygame.font.Font(pygame.font.match_font('Bravura Text'), 144)
         self.notes = """A2 #A2 B2
     C1 #C1 D1 #D1 E1 F1 #F1 G1 #G1 A1 #A1 B1
@@ -128,27 +129,29 @@ class Piano():
 
 
 
-    def draw_lines(self, h=1, n=6, top=0, left=10):
+    def draw_lines(self, top=0, n=6, left=10):
+        bottom = self.top
+
         middle_c_white_index = 23
         middle_c_white_offset_x = middle_c_white_index * self.piano_white_key_width + self.piano_white_key_width/2
         for i in range(1, int(n*2)):
             rx = left + middle_c_white_offset_x + i * 2*self.piano_white_key_width
             lx = left + middle_c_white_offset_x - i * 2*self.piano_white_key_width
             if i < n:
-                pygame.draw.line(self.screen, self.color_lines, (lx, top), (lx, top + h))
-                pygame.draw.line(self.screen, self.color_lines, (rx, top), (rx, top + h))
+                pygame.draw.line(self.screen, self.color_lines, (lx, top), (lx, bottom))
+                pygame.draw.line(self.screen, self.color_lines, (rx, top), (rx, bottom))
             else:
-                self.draw_dash_line(self.color_add_lines, (lx, top), (lx, top + h))
-                self.draw_dash_line(self.color_add_lines, (rx, top), (rx, top + h))
+                self.draw_dash_line(self.color_add_lines, (lx, top), (lx, bottom))
+                self.draw_dash_line(self.color_add_lines, (rx, top), (rx, bottom))
 
         x = left + middle_c_white_offset_x
-        self.draw_dash_line(self.color_middle_c_line, (x, top), (x, top + h))
+        self.draw_dash_line(self.color_middle_c_line, (x, top), (x, bottom))
 
 
 
-    def draw_note(self, key_note_idx):
+    def draw_note(self, key_note_idx, top=340):
         note = self.notes[key_note_idx-21]
-        #print note
+        print note
 
         if key_note_idx in self.blackkeys:
             vertical_label = u"\ue262\ue0a2"
@@ -164,14 +167,14 @@ class Piano():
         vertical_label_size = self.piano_note_font.size(vertical_label)
         #print vertical_label_size
         #note_rec = pygame.Rect(note_pos, 100, vertical_label_size[0], vertical_label_size[1])
-        note_rec = pygame.Rect(note_pos, 340, vertical_label_size[1], vertical_label_size[0])
+        note_rec = pygame.Rect(note_pos, top, vertical_label_size[1], vertical_label_size[0])
         # print note_rec
         # print ren
         # print dir(ren)
         #pygame.draw.rect(ren, self.black, note_rec, True)
 
         ren = pygame.transform.rotate(ren, 270)
-        self.screen.blit(ren, (note_pos, 340))
+        self.screen.blit(ren, (note_pos, top))
         return note_rec, note_pos
 
 
@@ -191,7 +194,12 @@ class Piano():
             pygame.draw.rect(self.screen, bdcolor, r, 1)
 
 
-    def draw_piano(self, top=0, left=10):
+    def draw_piano(self, top=None, left=10):
+        if top is None:
+            top = self.screen_rect[1] - self.piano_white_key_height
+
+        self.top = top
+
         self.screen.fill(self.backgroud_color)
 
         w, h = self.add_piano_keys('l', 0, top, left)
@@ -213,7 +221,7 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode(WINSIZE)
     pygame.display.set_caption('Piano Keyboard')
 
-    piano = Piano(screen)
+    piano = Piano(screen, WINSIZE)
     piano.draw_piano()
 
     clock = pygame.time.Clock()

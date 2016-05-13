@@ -8,9 +8,9 @@
 }
 
 \header {
-  tagline = ""  % removed
-  %% title = "Force"
-  %% composer = "Faust"
+  tagline = "jiedo"  % removed
+  title = "Music"
+  composer = "Faust"
 }
 
 
