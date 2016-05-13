@@ -24,6 +24,7 @@ import pygame.time
 import threading
 import time
 
+_platform = "disable"
 
 if _platform == "darwin":
     # OS X
@@ -73,13 +74,13 @@ class Playtrack(threading.Thread):
         while not g_done:
             try:
                 midi_line = play_midi.g_queue.get(True, 1)
-                print midi_line
+                # print midi_line
                 cmd, pitch, volecity_data, pitch_timestamp = midi_line.split()[:4]
                 volecity = get_volecity(int(volecity_data))
                 pitch = int(pitch)
                 pitch_timestamp = int(pitch_timestamp)
             except Exception, e:
-                print "no data: ", e
+                # print "no data: ", e
                 continue
 
             if pitch not in grand_pitch_range:
@@ -135,13 +136,13 @@ class Playtrack(threading.Thread):
 
                 if _platform == "darwin":
                     _sound = sounds[(pitch, volecity)]
-                    _sound.setVolume_(0.4)
+                    _sound.setVolume_(0.7)
                     _sound.play()
 
             elif cmd == "NOTE_OFF":
 
                 if _platform == "darwin":
-                    _sound.setVolume_(0.0)
+                    _sound.setVolume_(0.1)
                     time.sleep(0.03)
                     _sound.stop()
 
@@ -167,10 +168,13 @@ def main():
     thread_track = Playtrack(piano)
     thread_track.start()
 
+    # import os
+    # os.system("convert -density 100 -depth 24 -quality 99 data.pdf data.png")
+
     staff_img_png = pygame.image.load("data.png").convert_alpha()
-    # staff_img = pygame.transform.rotate(staff_img_png, 270)
     staff_img = staff_img_png
     staff_img_rect = staff_img.get_rect()
+    print staff_img_rect
 
     piano.screen.blit(staff_img, staff_img_rect, (0, 0, WINSIZE[0], WINSIZE[1] * 0.618))
 
