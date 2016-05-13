@@ -1,5 +1,17 @@
 \version "2.18.0"
 
+#(set-default-paper-size "a4" 'landscape)
+#(set-global-staff-size 50)
+
+\paper {
+   print-page-number = false
+}
+
+\header {
+  tagline = ""  % removed
+  %% title = "Force"
+  %% composer = "Faust"
+}
 
 
 \score {

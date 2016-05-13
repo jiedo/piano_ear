@@ -13,19 +13,22 @@ Optional command line argument:
 
 """
 
-import os
-import os.path, sys, random
-
-import pygame.time
-import threading
-# import AppKit
-
-from pygame.locals import *
 
 from piano import Piano
+from pygame.locals import *
+from sys import platform as _platform
+import os
+import os.path, sys, random
 import play_midi
-
+import pygame.time
+import threading
 import time
+
+
+if _platform == "darwin":
+    # OS X
+    import AppKit
+
 
 g_done = False
 g_key_press = None
@@ -51,18 +54,20 @@ class Playtrack(threading.Thread):
 
     def run(self):
         volecity_list = [48, 60, 71, 82, 91, 100, 115, 127]
-        volecity_list = [100]
+        #volecity_list = [100]
         grand_pitch_range  = range(21,109)
         sounds_keys = []
         sounds = {}
         for g in grand_pitch_range:
             for v in volecity_list:
                 sound_file = '/Users/jie/astudy/jiedo/Piano_Sounds/Grand-%03d-%03d.wav' % (g,v)
-                # sounds[(g,v)] = AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)
+                if _platform == "darwin":
+                    sounds[(g,v)] = AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)
                 sounds_keys += [(g,v)]
 
         global g_done, g_key_press
 
+        #print sounds_keys
         piano_label_font = pygame.font.Font(pygame.font.match_font('Bravura Text'), 144)
         time_pitchs = []
         timestamp = 0
@@ -129,23 +134,22 @@ class Playtrack(threading.Thread):
                 self.piano.draw_keys(pitch_key_rec, key_color_down)
                 self.piano.draw_keys(pitch_side_blackkeys_rec, self.piano.black)
 
-                # _sound = sounds[(pitch, volecity)]
-                # _sound.setVolume_(0.4)
-                # _sound.play()
-
-                #time.sleep(0.4)
+                if _platform == "darwin":
+                    _sound = sounds[(pitch, volecity)]
+                    _sound.setVolume_(0.4)
+                    _sound.play()
 
             elif cmd == "NOTE_OFF":
 
-                # _sound.setVolume_(0.0)
-                # time.sleep(0.03)
-                # _sound.stop()
+                if _platform == "darwin":
+                    _sound.setVolume_(0.0)
+                    time.sleep(0.03)
+                    _sound.stop()
 
                 pygame.draw.rect(self.piano.screen, self.piano.backgroud_color, note_rec, False)
                 self.piano.draw_lines(WINSIZE[1] - self.piano.piano_white_key_height)
                 self.piano.draw_keys(pitch_key_rec, key_color)
                 self.piano.draw_keys(pitch_side_blackkeys_rec, self.piano.black)
-
 
 
 def main():
