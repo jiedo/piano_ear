@@ -148,7 +148,7 @@ class Piano():
 
     def draw_note(self, key_note_idx):
         note = self.notes[key_note_idx-21]
-        print note
+        #print note
 
         if key_note_idx in self.blackkeys:
             vertical_label = u"\ue262\ue0a2"
