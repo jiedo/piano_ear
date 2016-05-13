@@ -23,7 +23,8 @@ import parsemidi
 
 
 g_queue = Queue.Queue()
-
+g_interval = 500
+g_tpq = 0
 
 class playtrack(threading.Thread):
     def __init__(self, index, track, tpq):
@@ -33,8 +34,7 @@ class playtrack(threading.Thread):
         self.tpq = tpq
 
     def run(self):
-        global g_queue
-        interval = 500
+        global g_queue, g_interval
 
         for e in self.track.events:
             # if isstop :
@@ -44,26 +44,26 @@ class playtrack(threading.Thread):
 
             if e.type == 'NOTE_ON':
                 if e.velocity < 1:
+                    print self.index, "OFF", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
                     g_queue.put('NOTE_OFF %d %d %d' % (e.pitch, e.velocity, e.time,))
-                    #print self.index, "OFF", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
                 else:
+                    print self.index, "ON ", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
                     g_queue.put('NOTE_ON %d %d %d' % (e.pitch, e.velocity, e.time,))
-                    #print self.index, "ON ", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
 
             elif e.type == 'NOTE_OFF':
+                print self.index, "OFF", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
                 g_queue.put('NOTE_OFF %d %d %d' % (e.pitch, e.velocity, e.time,))
-                #print self.index, "OFF", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
 
             elif e.type == 'DeltaTime':
                 if e.time > 0:
-                    #print self.index, '%-s \t' % e.type, e.time
-                    pygame.time.wait(int(e.time * interval / self.tpq ))
+                    print self.index, '%-s \t' % e.type, e.time
+                    #pygame.time.wait(int(e.time * g_interval / self.tpq ))
 
             elif e.type == 'SET_TEMPO': # a 4,time
                 x,y,z = e.data
                 v = ord(x) * 256 * 256 + ord(y) * 256 + ord(z)
-                interval = v / 1000
-                #print self.index, '%-s \t' % e.type, e.data
+                g_interval = v / 1000
+                print self.index, '%-s \t' % e.type, e.data
 
 
 
@@ -72,29 +72,39 @@ def load_midi(infile=None):
     """Play an audio file as a buffered sound sample
     """
 
+    global g_tpq
+
     m = parsemidi.MidiFile()
     m.open(infile)
     m.read()
     m.close()
-    tpq = m.ticksPerQuarterNote
-    print 'ticksPerQuarterNote', tpq
+    g_tpq = m.ticksPerQuarterNote
+    print 'ticksPerQuarterNote', g_tpq
 
+    all_threads = []
     for i, track in enumerate(m.tracks):
-        thread_track = playtrack(i, track, tpq)
+        thread_track = playtrack(i, track, g_tpq)
         thread_track.start()
+        all_threads += [thread_track]
 
-    # for t in all_threads:
-    #     t.start()
-    #     t.join()
+    for t in all_threads:
+        t.join()
+
+    all_midi_lines = []
+    while True:
+        try:
+            line = g_queue.get(True, 2)
+            all_midi_lines += [line]
+        except Exception, e:
+            print "get error", e
+            break
+
+    all_midi_lines.sort(key=lambda x: int(x.split()[-1]))
+    return all_midi_lines
 
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
-        load_midi(sys.argv[1])
-
-    while True:
-        try:
-            line = g_queue.get(True, 3)
+        all_midi_lines = load_midi(sys.argv[1])
+        for line in all_midi_lines:
             print line
-        except Exception, e:
-            break

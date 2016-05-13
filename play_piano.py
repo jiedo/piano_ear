@@ -30,7 +30,8 @@ if _platform == "darwin":
     # OS X
     import AppKit
 
-
+g_all_midi_lines = []
+g_midi_cmd_idx = 0
 g_done = False
 g_key_press = None
 WINSIZE = [1280, 750]
@@ -66,25 +67,62 @@ class Playtrack(threading.Thread):
                     sounds[(g,v)] = AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)
                 sounds_keys += [(g,v)]
 
-        global g_done, g_key_press
+        global g_done, g_key_press, g_midi_cmd_idx, g_all_midi_lines
 
         #print sounds_keys
         time_pitchs = []
+        last_timestamp = 0
         timestamp = 0
         while not g_done:
             try:
-                midi_line = play_midi.g_queue.get(True, 1)
+                if g_midi_cmd_idx >= len(g_all_midi_lines):
+                    time.sleep(1)
+                    continue
+
+                midi_line = g_all_midi_lines[g_midi_cmd_idx]
+                g_midi_cmd_idx += 1
                 # print midi_line
                 cmd, pitch, volecity_data, pitch_timestamp = midi_line.split()[:4]
                 volecity = get_volecity(int(volecity_data))
                 pitch = int(pitch)
                 pitch_timestamp = int(pitch_timestamp)
             except Exception, e:
-                # print "no data: ", e
+                time.sleep(1)
+                print "no data: ", e
                 continue
 
             if pitch not in grand_pitch_range:
                 continue
+
+            if pitch not in time_pitchs:
+                time_pitchs += [pitch]
+
+            if pitch_timestamp != last_timestamp:
+                key2color = [(1, 'C'), (1, 'C'), (3, 'D'), (3, 'D'), (8, 'E'),
+                             (2, 'F'), (2, 'F'), (6, 'G'), (6, 'G'), (4, 'A'), (4, 'A'), (5, 'B')]
+                blackkeys_index = [1, 3, 6, 8, 10]
+                last = 0
+                for i in time_pitchs:
+                    between = '-'
+                    if last == 0: between = ' '
+                    isBlack = '07'
+                    if (i % 12) in blackkeys_index:
+                        isBlack = '03'
+                    color, note = key2color[i % 12]
+                    print ('%s%s' % (between * (i - last -1),
+                                     '\033[%s;3%d;40m%s\033[0m' % (isBlack, color, note))),
+                    last = i
+
+                print
+
+                # sleep
+                deta_timestamp = pitch_timestamp - last_timestamp
+                pygame.time.wait(int(deta_timestamp * play_midi.g_interval / play_midi.g_tpq ))
+
+                last_timestamp = pitch_timestamp
+                time_pitchs = []
+
+
 
             pitch_side_blackkeys_rec = []
             if pitch in self.piano.whitekeys.keys():
@@ -104,30 +142,6 @@ class Playtrack(threading.Thread):
                 key_color_down = self.piano.color_key_down
 
             if cmd == "NOTE_ON":
-                if pitch_timestamp != timestamp:
-                    key2color = [(1, 'C'), (1, 'C'), (3, 'D'), (3, 'D'), (8, 'E'),
-                                 (2, 'F'), (2, 'F'), (6, 'G'), (6, 'G'), (4, 'A'), (4, 'A'), (5, 'B')]
-                    blackkeys_index = [1, 3, 6, 8, 10]
-                    last = 0
-                    for i in time_pitchs:
-                        between = '-'
-                        if last == 0: between = ' '
-                        isBlack = '07'
-                        if (i % 12) in blackkeys_index:
-                            isBlack = '03'
-                        color, note = key2color[i % 12]
-                        print ('%s%s' % (between * (i - last -1),
-                                         '\033[%s;3%d;40m%s\033[0m' % (isBlack, color, note))),
-                        last = i
-
-                    print
-
-                    timestamp = pitch_timestamp
-                    time_pitchs = []
-
-                if pitch not in time_pitchs:
-                    time_pitchs += [pitch]
-
                 note_rec, note_pos = self.piano.draw_note(pitch, top=WINSIZE[1] * 0.7)
                 self.piano.draw_lines(WINSIZE[1] * 0.618)
                 # self.piano.screen.blit(ren, (note_pos, 100))
@@ -179,7 +193,10 @@ def main():
     piano.screen.blit(staff_img, staff_img_rect, (0, 0, WINSIZE[0], WINSIZE[1] * 0.618))
 
     clock = pygame.time.Clock()
-    global g_done, g_key_press
+    global g_done, g_key_press, g_all_midi_lines, g_midi_cmd_idx
+
+    g_all_midi_lines = play_midi.load_midi("data.midi")
+    g_midi_cmd_idx = 0
 
     is_clear = True
     while not g_done:
@@ -200,7 +217,8 @@ def main():
 
                 elif e.key == K_SPACE:
                     if is_clear:
-                        play_midi.load_midi("data.midi")
+                        g_all_midi_lines = play_midi.load_midi("data.midi")
+                        g_midi_cmd_idx = 0
                         is_clear = False
 
             elif e.type == MOUSEBUTTONDOWN and e.button == 1:
