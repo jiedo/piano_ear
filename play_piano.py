@@ -24,7 +24,11 @@ import pygame.time
 import threading
 import time
 
+import wave
+import alsaaudio
+
 _platform = "pygame"
+
 
 if _platform == "darwin":
     # OS X
@@ -51,6 +55,40 @@ def get_volecity(v):
         else:
             return selectv
     return 127
+
+
+def stop(devices, pitch):
+    pcm = None
+    for d in devices.values():
+        if d['pitch'] == pitch:
+            pcm = d
+            break
+    if pcm:
+        try:
+            pcm['pcm'].pause(1)
+        except:
+            pass
+        pcm['pitch'] = 0
+
+
+def play(devices, pitch, volecity, sounds):
+    pcm = None
+    for d in devices.values():
+        if d['pitch'] == 0:
+            pcm = d
+            break
+
+    for d in devices.values():
+        if d['pitch'] == pitch:
+            pcm = d
+            break
+
+    if pcm:
+        #print pitch, volecity
+        sound, soundlen = sounds[(pitch, volecity)]
+        pcm['pcm'].setperiodsize(soundlen)
+        pcm['pcm'].write(sound)
+        pcm['pitch'] = pitch
 
 
 def main():
@@ -87,6 +125,7 @@ def main():
     grand_pitch_range  = range(21,109)
     sounds_keys = []
     sounds = {}
+    devices = {}
     channels = []
     if _platform != "darwin":
         for i in range(pygame.mixer.get_num_channels()):
@@ -94,13 +133,38 @@ def main():
             print "channel", i
         print "finished channel"
 
+    if _platform in ["linux", "linux2"]:
+        for i in range(16):
+            device = alsaaudio.PCM()
+            device.setchannels(2)
+            device.setrate(44100)
+            device.setformat(alsaaudio.PCM_FORMAT_S16_LE)
+
+            devices[i] = {'pcm': device,
+                          'pitch':0
+                          }
+
     for g in grand_pitch_range:
         for v in volecity_list:
-            sound_file = '/Users/jie/astudy/jiedo/Piano_Sounds/Grand-%03d-%03d.wav' % (g,v)
+            sound_file = "/Users/jie/astudy/jiedo/Piano_Sounds/Grand-%03d-%03d.wav" % (g,v)
+            sound_file = "/media/debian/home/jie/astudy/jiedo/ivory-yamaha-wav/Grand-%03d-%03d.wav" % (g,v)
             if _platform == "darwin":
                 sounds[(g,v)] = AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)
+
             elif _platform == "pygame":
                 sounds[(g,v)] = pygame.mixer.Sound(sound_file)
+
+            elif _platform in ["linux", "linux2"]:
+                sound = wave.open(sound_file, 'rb')
+                sounddata = []
+                data = sound.readframes(1024)
+                while data:
+                    sounddata += [data]
+                    data = sound.readframes(1024)
+                sound.close()
+                sound = ''.join(sounddata)
+                soundlen = len(sounddata)/44100
+                sounds[(g,v)] = sound, soundlen
 
             sounds_keys += [(g,v)]
 
@@ -128,7 +192,7 @@ def main():
 
                 elif e.key == K_SPACE:
                     if is_clear:
-                        g_all_midi_lines = play_midi.load_midi("data.midi")
+                        #g_all_midi_lines = play_midi.load_midi("data.midi")
                         g_midi_cmd_idx = 0
                         is_clear = False
 
@@ -216,19 +280,24 @@ def main():
             piano.draw_lines(WINSIZE[1] * 0.618)
             piano.draw_keys(pitch_key_rec, key_color_down)
             piano.draw_keys(pitch_side_blackkeys_rec, piano.black)
+
             if _platform == "darwin":
                 _sound = sounds[(pitch, volecity)]
-                _sound.setVolume_(0.7)
+                _sound.setVolume_(0.9)
                 _sound.play()
+
             elif _platform == "pygame":
                 _sound = sounds[(pitch, volecity)]
-                _sound.set_volume(0.7)
+                _sound.set_volume(0.9)
                 for ch_data in channels:
                     ch, ch_pitch = ch_data
                     if not ch_pitch or pitch == ch_pitch:
                         ch_data[1] = pitch
                         ch.play(_sound)
                         break
+
+            elif _platform in ["linux", "linux2"]:
+                play(devices, pitch, volecity, sounds)
 
         elif cmd == "NOTE_OFF":
             if _platform == "darwin":
@@ -243,6 +312,12 @@ def main():
                     if pitch == ch_pitch:
                         ch.fadeout(100)
                         ch_data[1] = None
+
+            elif _platform in ["linux", "linux2"]:
+                try:
+                    stop(devices, pitch)
+                except :
+                    pass
 
             # pygame.draw.rect(piano.screen, piano.backgroud_color, note_rec, False)
             piano.draw_lines(WINSIZE[1] * 0.618)

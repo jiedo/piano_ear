@@ -129,7 +129,7 @@ class Piano():
 
 
 
-    def draw_lines(self, top=0, n=6, left=10):
+    def draw_lines(self, top=0, n=6, left=0):
         bottom = self.top
 
         middle_c_white_index = 23
@@ -194,7 +194,7 @@ class Piano():
             pygame.draw.rect(self.screen, bdcolor, r, 1)
 
 
-    def draw_piano(self, top=None, left=10):
+    def draw_piano(self, top=None, left=0):
         if top is None:
             top = self.screen_rect[1] - self.piano_white_key_height
 
