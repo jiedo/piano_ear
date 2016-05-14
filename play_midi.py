@@ -44,26 +44,27 @@ class playtrack(threading.Thread):
 
             if e.type == 'NOTE_ON':
                 if e.velocity < 1:
-                    print self.index, "OFF", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
+                    # print self.index, "OFF", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
                     g_queue.put('NOTE_OFF %d %d %d' % (e.pitch, e.velocity, e.time,))
                 else:
-                    print self.index, "ON ", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
+                    # print self.index, "ON ", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
                     g_queue.put('NOTE_ON %d %d %d' % (e.pitch, e.velocity, e.time,))
 
             elif e.type == 'NOTE_OFF':
-                print self.index, "OFF", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
+                # print self.index, "OFF", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
                 g_queue.put('NOTE_OFF %d %d %d' % (e.pitch, e.velocity, e.time,))
 
             elif e.type == 'DeltaTime':
                 if e.time > 0:
-                    print self.index, '%-s \t' % e.type, e.time
+                    pass
+                    #print self.index, '%-s \t' % e.type, e.time
                     #pygame.time.wait(int(e.time * g_interval / self.tpq ))
 
             elif e.type == 'SET_TEMPO': # a 4,time
                 x,y,z = e.data
                 v = ord(x) * 256 * 256 + ord(y) * 256 + ord(z)
                 g_interval = v / 1000
-                print self.index, '%-s \t' % e.type, e.data
+                #print self.index, '%-s \t' % e.type, e.data
 
 
 

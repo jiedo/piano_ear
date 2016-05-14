@@ -24,11 +24,15 @@ import pygame.time
 import threading
 import time
 
-_platform = "disable"
+_platform = "pygame"
 
 if _platform == "darwin":
     # OS X
     import AppKit
+elif _platform == "pygame":
+    import pygame.mixer
+    pygame.mixer.init(44100) #raises exception on fail
+
 
 g_all_midi_lines = []
 g_midi_cmd_idx = 0
@@ -49,124 +53,6 @@ def get_volecity(v):
     return 127
 
 
-class Playtrack(threading.Thread):
-    def __init__(self, piano):
-        threading.Thread.__init__(self)
-        self.piano = piano
-
-    def run(self):
-        volecity_list = [48, 60, 71, 82, 91, 100, 115, 127]
-        #volecity_list = [100]
-        grand_pitch_range  = range(21,109)
-        sounds_keys = []
-        sounds = {}
-        for g in grand_pitch_range:
-            for v in volecity_list:
-                sound_file = '/Users/jie/astudy/jiedo/Piano_Sounds/Grand-%03d-%03d.wav' % (g,v)
-                if _platform == "darwin":
-                    sounds[(g,v)] = AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)
-                sounds_keys += [(g,v)]
-
-        global g_done, g_key_press, g_midi_cmd_idx, g_all_midi_lines
-
-        #print sounds_keys
-        time_pitchs = []
-        last_timestamp = 0
-        timestamp = 0
-        while not g_done:
-            try:
-                if g_midi_cmd_idx >= len(g_all_midi_lines):
-                    time.sleep(1)
-                    continue
-
-                midi_line = g_all_midi_lines[g_midi_cmd_idx]
-                g_midi_cmd_idx += 1
-                # print midi_line
-                cmd, pitch, volecity_data, pitch_timestamp = midi_line.split()[:4]
-                volecity = get_volecity(int(volecity_data))
-                pitch = int(pitch)
-                pitch_timestamp = int(pitch_timestamp)
-            except Exception, e:
-                time.sleep(1)
-                print "no data: ", e
-                continue
-
-            if pitch not in grand_pitch_range:
-                continue
-
-            if pitch not in time_pitchs:
-                time_pitchs += [pitch]
-
-            if pitch_timestamp != last_timestamp:
-                key2color = [(1, 'C'), (1, 'C'), (3, 'D'), (3, 'D'), (8, 'E'),
-                             (2, 'F'), (2, 'F'), (6, 'G'), (6, 'G'), (4, 'A'), (4, 'A'), (5, 'B')]
-                blackkeys_index = [1, 3, 6, 8, 10]
-                last = 0
-                for i in time_pitchs:
-                    between = '-'
-                    if last == 0: between = ' '
-                    isBlack = '07'
-                    if (i % 12) in blackkeys_index:
-                        isBlack = '03'
-                    color, note = key2color[i % 12]
-                    print ('%s%s' % (between * (i - last -1),
-                                     '\033[%s;3%d;40m%s\033[0m' % (isBlack, color, note))),
-                    last = i
-
-                print
-
-                # sleep
-                deta_timestamp = pitch_timestamp - last_timestamp
-                pygame.time.wait(int(deta_timestamp * play_midi.g_interval / play_midi.g_tpq ))
-
-                last_timestamp = pitch_timestamp
-                time_pitchs = []
-
-
-
-            pitch_side_blackkeys_rec = []
-            if pitch in self.piano.whitekeys.keys():
-                pitch_key_rec = [self.piano.whitekeys[pitch]]
-                key_color = self.piano.white
-                if pitch + 1 in self.piano.blackkeys.keys():
-                    pitch_side_blackkeys_rec += [self.piano.blackkeys[pitch+1]]
-                if pitch - 1 in self.piano.blackkeys.keys():
-                    pitch_side_blackkeys_rec += [self.piano.blackkeys[pitch-1]]
-
-            elif pitch in self.piano.blackkeys.keys():
-                pitch_key_rec = [self.piano.blackkeys[pitch]]
-                key_color = self.piano.black
-
-            key_color_down = self.piano.color_key_down
-            if key_color != self.piano.black:
-                key_color_down = self.piano.color_key_down
-
-            if cmd == "NOTE_ON":
-                note_rec, note_pos = self.piano.draw_note(pitch, top=WINSIZE[1] * 0.7)
-                self.piano.draw_lines(WINSIZE[1] * 0.618)
-                # self.piano.screen.blit(ren, (note_pos, 100))
-                self.piano.draw_keys(pitch_key_rec, key_color_down)
-                self.piano.draw_keys(pitch_side_blackkeys_rec, self.piano.black)
-
-                if _platform == "darwin":
-                    _sound = sounds[(pitch, volecity)]
-                    _sound.setVolume_(0.7)
-                    _sound.play()
-
-            elif cmd == "NOTE_OFF":
-
-                if _platform == "darwin":
-                    _sound.setVolume_(0.1)
-                    time.sleep(0.03)
-                    _sound.stop()
-
-                pygame.draw.rect(self.piano.screen, self.piano.backgroud_color, note_rec, False)
-
-                self.piano.draw_lines(WINSIZE[1] * 0.618)
-                self.piano.draw_keys(pitch_key_rec, key_color)
-                self.piano.draw_keys(pitch_side_blackkeys_rec, self.piano.black)
-
-
 def main():
     """Play an audio file as a buffered sound sample
     """
@@ -179,8 +65,6 @@ def main():
 
     piano.draw_piano()
     piano.draw_lines(WINSIZE[1] * 0.618)
-    thread_track = Playtrack(piano)
-    thread_track.start()
 
     # import os
     # os.system("convert -density 100 -depth 24 -quality 99 data.pdf data.png")
@@ -198,9 +82,36 @@ def main():
     g_all_midi_lines = play_midi.load_midi("data.midi")
     g_midi_cmd_idx = 0
 
+    volecity_list = [48, 60, 71, 82, 91, 100, 115, 127]
+    #volecity_list = [100]
+    grand_pitch_range  = range(21,109)
+    sounds_keys = []
+    sounds = {}
+    channels = []
+    if _platform != "darwin":
+        for i in range(pygame.mixer.get_num_channels()):
+            channels += [[pygame.mixer.Channel(i), None]]
+            print "channel", i
+        print "finished channel"
+
+    for g in grand_pitch_range:
+        for v in volecity_list:
+            sound_file = '/Users/jie/astudy/jiedo/Piano_Sounds/Grand-%03d-%03d.wav' % (g,v)
+            if _platform == "darwin":
+                sounds[(g,v)] = AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)
+            elif _platform == "pygame":
+                sounds[(g,v)] = pygame.mixer.Sound(sound_file)
+
+            sounds_keys += [(g,v)]
+
+
+    #print sounds_keys
+    time_pitchs = []
+    last_timestamp = 0
+    timestamp = 0
+
     is_clear = True
     while not g_done:
-        pygame.display.update()
         for e in pygame.event.get():
             if e.type == QUIT:
                 g_done = True
@@ -223,7 +134,123 @@ def main():
 
             elif e.type == MOUSEBUTTONDOWN and e.button == 1:
                 pass
-        clock.tick(10)
+
+        # playtrack
+        try:
+            if g_midi_cmd_idx >= len(g_all_midi_lines):
+                time.sleep(1)
+                continue
+
+            midi_line = g_all_midi_lines[g_midi_cmd_idx]
+            g_midi_cmd_idx += 1
+            # print midi_line
+            cmd, pitch, volecity_data, pitch_timestamp = midi_line.split()[:4]
+            volecity = get_volecity(int(volecity_data))
+            pitch = int(pitch)
+            pitch_timestamp = int(pitch_timestamp)
+        except Exception, e:
+            time.sleep(1)
+            print "no data: ", e
+            continue
+
+        if pitch not in grand_pitch_range:
+            continue
+
+        if pitch_timestamp != last_timestamp:
+            time_pitchs.sort()
+            key2color = [(1, 'C'), (1, 'C'), (3, 'D'), (3, 'D'), (8, 'E'),
+                         (2, 'F'), (2, 'F'), (6, 'G'), (6, 'G'), (4, 'A'), (4, 'A'), (5, 'B')]
+            blackkeys_index = [1, 3, 6, 8, 10]
+            last = 0
+            for i in time_pitchs:
+                between = '-'
+                if last == 0: between = ' '
+                isBlack = '07'
+                if (i % 12) in blackkeys_index:
+                    isBlack = '03'
+                color, note = key2color[i % 12]
+                print ('%s%s' % (between * (i - last -1),
+                                 '\033[%s;3%d;40m%s\033[0m' % (isBlack, color, note))),
+                last = i
+
+            print
+
+            # sleep
+            deta_timestamp = pitch_timestamp - last_timestamp
+            wait_time = int(deta_timestamp * play_midi.g_interval / play_midi.g_tpq )
+            print "wait...", wait_time
+
+            old_time = time.time()
+            pygame.display.update()
+            deta_time = time.time() - old_time
+            if wait_time/1000.0 - deta_time > 0:
+                time.sleep(wait_time/1000.0 - deta_time)
+            #pygame.time.wait(wait_time)
+
+            last_timestamp = pitch_timestamp
+            time_pitchs = []
+
+        pitch_side_blackkeys_rec = []
+        if pitch in piano.whitekeys.keys():
+            pitch_key_rec = [piano.whitekeys[pitch]]
+            key_color = piano.white
+            if pitch + 1 in piano.blackkeys.keys():
+                pitch_side_blackkeys_rec += [piano.blackkeys[pitch+1]]
+            if pitch - 1 in piano.blackkeys.keys():
+                pitch_side_blackkeys_rec += [piano.blackkeys[pitch-1]]
+
+        elif pitch in piano.blackkeys.keys():
+            pitch_key_rec = [piano.blackkeys[pitch]]
+            key_color = piano.black
+
+        key_color_down = piano.color_key_down
+        if key_color != piano.black:
+            key_color_down = piano.color_key_down
+
+        if cmd == "NOTE_ON":
+            if pitch not in time_pitchs:
+                time_pitchs += [pitch]
+                print "play", pitch
+
+            # note_rec, note_pos = piano.draw_note(pitch, top=WINSIZE[1] * 0.7)
+            piano.draw_lines(WINSIZE[1] * 0.618)
+            piano.draw_keys(pitch_key_rec, key_color_down)
+            piano.draw_keys(pitch_side_blackkeys_rec, piano.black)
+            if _platform == "darwin":
+                _sound = sounds[(pitch, volecity)]
+                _sound.setVolume_(0.7)
+                _sound.play()
+            elif _platform == "pygame":
+                _sound = sounds[(pitch, volecity)]
+                _sound.set_volume(0.7)
+                for ch_data in channels:
+                    ch, ch_pitch = ch_data
+                    if not ch_pitch or pitch == ch_pitch:
+                        ch_data[1] = pitch
+                        ch.play(_sound)
+                        break
+
+        elif cmd == "NOTE_OFF":
+            if _platform == "darwin":
+                _sound = sounds[(pitch, volecity)]
+                _sound.setVolume_(0.0)
+                _sound.stop()
+            elif _platform == "pygame":
+                _sound = sounds[(pitch, volecity)]
+                _sound.set_volume(0.0)
+                for ch_data in channels:
+                    ch, ch_pitch = ch_data
+                    if pitch == ch_pitch:
+                        ch.fadeout(100)
+                        ch_data[1] = None
+
+            # pygame.draw.rect(piano.screen, piano.backgroud_color, note_rec, False)
+            piano.draw_lines(WINSIZE[1] * 0.618)
+            piano.draw_keys(pitch_key_rec, key_color)
+            piano.draw_keys(pitch_side_blackkeys_rec, piano.black)
+
+        #clock.tick(10)
+
     g_done = True
 
 
