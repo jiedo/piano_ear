@@ -40,7 +40,7 @@ class Piano():
         self.backgroud_color = 255, 255, 255
         self.color_black_key_down = 100, 100, 200
         self.color_white_key_down = 100, 100, 200
-        self.color_key_down = 100, 200, 100
+        self.color_key_down = 0, 170, 200
         self.color_key_note = 140, 155, 100
 
         self.piano_white_key_width = 24
@@ -192,15 +192,24 @@ class Piano():
 
             self.screen.fill(dcolor, r)
             pygame.draw.rect(self.screen, bdcolor, r, 1)
+            if r.width == self.piano_black_key_width: # black
+                pygame.draw.line(self.screen, self.color_lines,
+                                 (r.left + 2, r.top),
+                                 (r.left + 2, r.top + r.height - 4), 1)
+                pygame.draw.line(self.screen, self.color_lines,
+                                 (r.left + r.width - 2, r.top),
+                                 (r.left + r.width - 2, r.top + r.height - 4), 1)
 
+                pygame.draw.line(self.screen, self.color_lines,
+                                 (r.left + 2, r.top + r.height - 4),
+                                 (r.left + r.width - 2, r.top + r.height - 4), 1)
 
     def draw_piano(self, top=None, left=0):
         if top is None:
             top = self.screen_rect[1] - self.piano_white_key_height
 
         self.top = top
-
-        self.screen.fill(self.backgroud_color)
+        # self.screen.fill(self.backgroud_color)
 
         w, h = self.add_piano_keys('l', 0, top, left)
         left += w

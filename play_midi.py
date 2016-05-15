@@ -100,8 +100,41 @@ def load_midi(infile=None):
             print "get error", e
             break
 
+    all_midi_lines.sort(key=lambda x: x.split()[0])
+    all_midi_lines.reverse()
     all_midi_lines.sort(key=lambda x: int(x.split()[-1]))
-    return all_midi_lines
+
+    new_all_midi_lines = []
+
+    pitch_is_on_in_timestamp = {}
+    pitch_status = {}
+    for code in all_midi_lines:
+        cmd, pitch, _, timestamp = code.split()
+        if cmd == "NOTE_ON":
+
+            if timestamp not in pitch_is_on_in_timestamp:
+                pitch_is_on_in_timestamp[timestamp] = {}
+            if pitch_is_on_in_timestamp[timestamp].get(pitch, False):
+                print "midi timestamp dup:", code
+                continue
+            pitch_is_on_in_timestamp[timestamp][pitch] = True
+
+            if pitch_status.get(pitch, False):
+                new_all_midi_lines += [code.replace("ON", "OFF") + " 0"]
+
+            pitch_status[pitch] = True
+            new_all_midi_lines += [code + " 1"]
+
+        elif cmd == "NOTE_OFF":
+            pitch_status[pitch] = False
+            if not pitch_is_on_in_timestamp.get(timestamp, {}).get(pitch, False):
+                new_all_midi_lines += [code + " 2"]
+
+
+    new_all_midi_lines.sort(key=lambda x: x.split()[-1])
+    new_all_midi_lines.sort(key=lambda x: int(x.split()[-2]))
+
+    return new_all_midi_lines
 
 
 if __name__ == '__main__':
