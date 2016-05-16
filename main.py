@@ -67,6 +67,7 @@ def main():
         # events
         for e in pygame.event.get():
             # print pygame.event.event_name(e.type)
+
             if e.type == QUIT:
                 p_done = True
                 break
@@ -102,6 +103,14 @@ def main():
                 if e.key == K_ESCAPE:
                     p_done = True
                     break
+
+                elif e.key == K_LEFT:
+                    p_staff_offset_x -= WINSIZE[0] * 0.618
+                    if p_staff_offset_x < 0:
+                        p_staff_offset_x = 0
+                elif e.key == K_RIGHT:
+                    p_staff_offset_x += WINSIZE[0] * 0.618
+
                 elif e.key in [K_a, K_b, K_c, K_d, K_e, K_f, K_g, ]:
                     p_key_press = e.key
 
@@ -111,11 +120,11 @@ def main():
                     p_midi_cmd_idx = len(p_all_midi_lines) * (e.key - 48) / 10
                     last_timestamp = -1
 
-                elif e.key == K_RETURN:
+                elif e.key == K_SPACE:
                     is_clear = True
                     is_pause = not is_pause
 
-                elif e.key == K_SPACE:
+                elif e.key == K_RETURN:
                     if is_clear:
                         piano.draw_piano()
                         p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi("data.midi")
@@ -124,8 +133,6 @@ def main():
                         is_pause = False
                         is_clear = False
 
-            elif e.type == MOUSEBUTTONDOWN and e.button == 1:
-                pass
 
         # get cmd
         try:
