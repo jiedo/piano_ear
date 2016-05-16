@@ -30,7 +30,7 @@ class Piano():
         self.whitekeys = {}
         self.blackkeys = {}
 
-        self.piano_staff_width = 16
+        self.piano_staff_width = 17
         self.timestamp_range = 5000
 
         self.color_red_line = 130, 0, 0
@@ -249,11 +249,11 @@ class Piano():
                 pygame.draw.line(self.screen, self.color_lines, (left, topy), (rightx, topy))
                 pygame.draw.line(self.screen, self.color_lines, (left, downy), (rightx, downy))
             else:
-                self.draw_dash_line(self.color_add_lines, (left, topy), (rightx, topy), vertical=False)
-                self.draw_dash_line(self.color_add_lines, (left, downy), (rightx, downy), vertical=False)
+                self.draw_dash_line(self.color_add_lines, (left, topy), (rightx, topy), deta_h=15, vertical=False)
+                self.draw_dash_line(self.color_add_lines, (left, downy), (rightx, downy), deta_h=15, vertical=False)
 
         y = left + middle_c_white_offset_y
-        self.draw_dash_line(self.color_middle_c_line, (left, y), (rightx, y), vertical=False)
+        self.draw_dash_line(self.color_middle_c_line, (left, y), (rightx, y), deta_h=15, vertical=False)
 
 
     def show_progress_bar(self, max_timestamp, current_timestamp, offset_x):
@@ -265,21 +265,21 @@ class Piano():
 
         pygame.draw.line(self.screen, self.color_backgroud,
                          (0, 0),
-                         (self.screen_rect[0], 0), 4)
+                         (self.screen_rect[0], 0), 10)
 
-        pygame.draw.line(self.screen, self.color_red_line,
-                         (offset_pos, 0),
-                         (offset_pos + screen_width_pos, 0), 4)
+        pygame.draw.line(self.screen, self.white,
+                         (offset_pos, 3),
+                         (offset_pos + screen_width_pos, 3), 5)
 
         pygame.draw.line(self.screen, self.color_key_down,
-                         (current_pos-1, 0),
-                         (current_pos+1, 0), 4)
+                         (current_pos-1, 1),
+                         (current_pos+1, 1), 8)
 
 
     def show_notes_staff(self, p_notes_in_all_staff, current_timestamp, top=0, offset_x=0):
         self.screen.fill(self.color_backgroud, pygame.Rect(
             0, top - 15 * self.piano_staff_width,
-            self.screen_rect[0], 30 * self.piano_staff_width))
+            self.screen_rect[0], 27 * self.piano_staff_width))
 
         self.draw_staff_lines(top=top)
         max_timestamp = p_notes_in_all_staff[-1][1]

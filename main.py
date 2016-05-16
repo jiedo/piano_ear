@@ -85,19 +85,20 @@ def main():
                     is_pause = not is_pause
 
                 elif e.button == 1: # left
-                    timestamp_offset_x = (p_staff_offset_x + e.pos[0]) * piano.timestamp_range * 2 / piano.screen_rect[0]
-                    nearest_idx = 0
-                    for idx, midi_line in enumerate(p_all_midi_lines):
-                        cmd, pitch, volecity_data, pitch_timestamp = midi_line[:4]
-                        if timestamp_offset_x > pitch_timestamp:
-                            nearest_idx = idx
-                            continue
-                        if timestamp_offset_x < pitch_timestamp:
-                            break
+                    if e.pos[1] > 60: # progress bar can not click
+                        timestamp_offset_x = (p_staff_offset_x + e.pos[0]) * piano.timestamp_range * 2 / piano.screen_rect[0]
+                        nearest_idx = 0
+                        for idx, midi_line in enumerate(p_all_midi_lines):
+                            cmd, pitch, volecity_data, pitch_timestamp = midi_line[:4]
+                            if timestamp_offset_x > pitch_timestamp:
+                                nearest_idx = idx
+                                continue
+                            if timestamp_offset_x < pitch_timestamp:
+                                break
 
-                    piano.draw_piano()
-                    p_midi_cmd_idx = nearest_idx
-                    last_timestamp = -1
+                        piano.draw_piano()
+                        p_midi_cmd_idx = nearest_idx
+                        last_timestamp = -1
 
             elif e.type == KEYUP:
                 if e.key == K_ESCAPE:
