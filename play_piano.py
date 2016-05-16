@@ -229,6 +229,7 @@ def main():
 
                 elif e.key == K_SPACE:
                     if is_clear:
+                        piano.draw_piano()
                         g_all_midi_lines = play_midi.load_midi("data.midi")
                         g_midi_cmd_idx = 0
                         is_pause = False

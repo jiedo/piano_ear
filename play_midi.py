@@ -26,46 +26,34 @@ g_queue = Queue.Queue()
 g_interval = 500
 g_tpq = 0
 
-class playtrack(threading.Thread):
-    def __init__(self, index, track, tpq):
-        threading.Thread.__init__(self)
-        self.index = index
-        self.track = track
-        self.tpq = tpq
 
-    def run(self):
-        global g_queue, g_interval
+def parse_midi_track(track_cmds, track_index, track):
+    global g_interval
 
-        for e in self.track.events:
-            # if isstop :
-            #     for pitch in range(21,108):
-            #         g_queue.put('NOTE_OFF %d %d %d' % (pitch, 0, 0,))
-            #     return
+    for e in track.events:
+        if e.type == 'NOTE_ON':
+            if e.velocity < 1:
+                # print track_index, "OFF", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
+                track_cmds += ['NOTE_OFF %d %d %d' % (e.pitch, e.velocity, e.time,)]
+            else:
+                # print track_index, "ON ", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
+                track_cmds += ['NOTE_ON %d %d %d' % (e.pitch, e.velocity, e.time,)]
 
-            if e.type == 'NOTE_ON':
-                if e.velocity < 1:
-                    # print self.index, "OFF", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
-                    g_queue.put('NOTE_OFF %d %d %d' % (e.pitch, e.velocity, e.time,))
-                else:
-                    # print self.index, "ON ", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
-                    g_queue.put('NOTE_ON %d %d %d' % (e.pitch, e.velocity, e.time,))
+        elif e.type == 'NOTE_OFF':
+            # print track_index, "OFF", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
+            track_cmds += ['NOTE_OFF %d %d %d' % (e.pitch, e.velocity, e.time,)]
 
-            elif e.type == 'NOTE_OFF':
-                # print self.index, "OFF", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
-                g_queue.put('NOTE_OFF %d %d %d' % (e.pitch, e.velocity, e.time,))
+        elif e.type == 'DeltaTime':
+            if e.time > 0:
+                pass
+                #print track_index, '%-s \t' % e.type, e.time
+                #pygame.time.wait(int(e.time * g_interval / self.tpq ))
 
-            elif e.type == 'DeltaTime':
-                if e.time > 0:
-                    pass
-                    #print self.index, '%-s \t' % e.type, e.time
-                    #pygame.time.wait(int(e.time * g_interval / self.tpq ))
-
-            elif e.type == 'SET_TEMPO': # a 4,time
-                x,y,z = e.data
-                v = ord(x) * 256 * 256 + ord(y) * 256 + ord(z)
-                g_interval = v / 1000
-                #print self.index, '%-s \t' % e.type, e.data
-
+        elif e.type == 'SET_TEMPO': # a 4,time
+            x,y,z = e.data
+            v = ord(x) * 256 * 256 + ord(y) * 256 + ord(z)
+            g_interval = v / 1000
+            #print track_index, '%-s \t' % e.type, e.data
 
 
 
@@ -82,23 +70,10 @@ def load_midi(infile=None):
     g_tpq = m.ticksPerQuarterNote
     print 'ticksPerQuarterNote', g_tpq
 
-    all_threads = []
-    for i, track in enumerate(m.tracks):
-        thread_track = playtrack(i, track, g_tpq)
-        thread_track.start()
-        all_threads += [thread_track]
-
-    for t in all_threads:
-        t.join()
-
     all_midi_lines = []
-    while True:
-        try:
-            line = g_queue.get(True, 2)
-            all_midi_lines += [line]
-        except Exception, e:
-            print "get error", e
-            break
+    for i, track in enumerate(m.tracks):
+        parse_midi_track(all_midi_lines, i, track)
+
 
     all_midi_lines.sort(key=lambda x: x.split()[0])
     all_midi_lines.reverse()
@@ -129,7 +104,6 @@ def load_midi(infile=None):
             pitch_status[pitch] = False
             if not pitch_is_on_in_timestamp.get(timestamp, {}).get(pitch, False):
                 new_all_midi_lines += [code + " 2"]
-
 
     new_all_midi_lines.sort(key=lambda x: x.split()[-1])
     new_all_midi_lines.sort(key=lambda x: int(x.split()[-2]))

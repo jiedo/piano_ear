@@ -31,9 +31,11 @@ class Piano():
         self.whitekeys = {}
         self.blackkeys = {}
 
-        self.color_lines = 100, 100, 100
-        self.color_middle_c_line = 100, 100, 100
-        self.color_add_lines = 100, 100, 100
+        self.color_red_line = 130, 0, 0
+        self.color_blackkey_edge = 90, 90, 90
+        self.color_lines = 130, 130, 130
+        self.color_add_lines = 70, 70, 70
+        self.color_middle_c_line = self.color_add_lines
 
         self.white = 250, 230, 200
         self.black = 0, 0, 0
@@ -134,7 +136,7 @@ class Piano():
 
         middle_c_white_index = 23
         middle_c_white_offset_x = middle_c_white_index * self.piano_white_key_width + self.piano_white_key_width/2
-        for i in range(1, int(n*2)):
+        for i in range(1, int(n*2)-1):
             rx = left + middle_c_white_offset_x + i * 2*self.piano_white_key_width
             lx = left + middle_c_white_offset_x - i * 2*self.piano_white_key_width
             if i < n:
@@ -192,15 +194,15 @@ class Piano():
 
             self.screen.fill(dcolor, r)
             pygame.draw.rect(self.screen, bdcolor, r, 1)
-            if r.width == self.piano_black_key_width: # black
-                pygame.draw.line(self.screen, self.color_lines,
+            if bdcolor == self.black:
+                pygame.draw.line(self.screen, self.color_blackkey_edge,
                                  (r.left + 2, r.top),
                                  (r.left + 2, r.top + r.height - 4), 1)
-                pygame.draw.line(self.screen, self.color_lines,
+                pygame.draw.line(self.screen, self.color_blackkey_edge,
                                  (r.left + r.width - 2, r.top),
                                  (r.left + r.width - 2, r.top + r.height - 4), 1)
 
-                pygame.draw.line(self.screen, self.color_lines,
+                pygame.draw.line(self.screen, self.color_blackkey_edge,
                                  (r.left + 2, r.top + r.height - 4),
                                  (r.left + r.width - 2, r.top + r.height - 4), 1)
 
@@ -220,6 +222,10 @@ class Piano():
 
         self.draw_keys(self.whitekeys.values() )
         self.draw_keys(self.blackkeys.values(), self.black)
+        # red line
+        pygame.draw.line(self.screen, self.color_red_line,
+                         (0, self.top - 3),
+                         (self.screen_rect[0], self.top - 3), 4)
 
         pygame.display.update()
 
