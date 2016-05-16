@@ -66,19 +66,37 @@ def main():
     while not p_done:
         # events
         for e in pygame.event.get():
+            # print pygame.event.event_name(e.type)
             if e.type == QUIT:
                 p_done = True
                 break
 
-            if e.type == MOUSEMOTION:
-                if last_mouse_pos is not None:
-                    p_staff_offset_x = last_mouse_pos - e.pos[0]
+            elif e.type == MOUSEBUTTONDOWN:
+                if e.button == 5:
+                    p_staff_offset_x += 40
 
-            if e.type == MOUSEBUTTONUP:
-                last_mouse_pos = None
+                elif e.button == 4:
+                    p_staff_offset_x -= 40
+                    if p_staff_offset_x < 0:
+                        p_staff_offset_x = 0
 
-            if e.type == MOUSEBUTTONDOWN:
-                last_mouse_pos = p_staff_offset_x + e.pos[0]
+                elif e.button == 3: # right
+                    is_pause = not is_pause
+
+                elif e.button == 1: # left
+                    timestamp_offset_x = (p_staff_offset_x + e.pos[0]) * piano.timestamp_range * 2 / piano.screen_rect[0]
+                    nearest_idx = 0
+                    for idx, midi_line in enumerate(p_all_midi_lines):
+                        cmd, pitch, volecity_data, pitch_timestamp = midi_line[:4]
+                        if timestamp_offset_x > pitch_timestamp:
+                            nearest_idx = idx
+                            continue
+                        if timestamp_offset_x < pitch_timestamp:
+                            break
+
+                    piano.draw_piano()
+                    p_midi_cmd_idx = nearest_idx
+                    last_timestamp = -1
 
             elif e.type == KEYUP:
                 if e.key == K_ESCAPE:
@@ -102,6 +120,7 @@ def main():
                         piano.draw_piano()
                         p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi("data.midi")
                         p_midi_cmd_idx = 0
+                        p_staff_offset_x = 0
                         is_pause = False
                         is_clear = False
 
@@ -116,25 +135,19 @@ def main():
             p_midi_cmd_idx += 1
             # print midi_line
 
-            cmd, pitch, volecity_data, pitch_timestamp = midi_line.split()[:4]
-            volecity = player.get_volecity(int(volecity_data))
-            pitch = int(pitch)
+            cmd, pitch, volecity_data, pitch_timestamp = midi_line[:4]
+            volecity = player.get_volecity(volecity_data)
             if pitch not in player.g_grand_pitch_range:
                 raise Exception("pitch not in range")
-
-            pitch_timestamp = int(pitch_timestamp)
             if last_timestamp == -1:
                 # init last timestamp
                 last_timestamp = pitch_timestamp - 1
-        except Exception, e:
-            print "error:", e
-            pygame.display.update()
-            clock.tick(2)
-            continue
 
-        # show keys
-        piano.show_keys_press(cmd, pitch)
-        piano.show_notes_staff(p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382, p_staff_offset_x)
+        except Exception, e:
+            piano.show_notes_staff(p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382, p_staff_offset_x)
+            pygame.display.update()
+            clock.tick(7)
+            continue
 
         # a chord
         if pitch_timestamp != last_timestamp:
@@ -145,7 +158,6 @@ def main():
             old_time = time.time()
             last_timestamp = pitch_timestamp
             time_pitchs = []
-
 
         # playtrack
         if cmd == "NOTE_ON":
@@ -161,6 +173,9 @@ def main():
             last_cmd = "NOTE_OFF"
             player.stop(devices, pitch, volecity, sounds)
 
+        piano.show_notes_staff(p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382, p_staff_offset_x)
+        # show keys
+        piano.show_keys_press(cmd, pitch)
         #clock.tick(10)
 
 

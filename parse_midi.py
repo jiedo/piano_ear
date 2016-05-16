@@ -34,14 +34,14 @@ def parse_midi_track(track_cmds, track_index, track):
         if e.type == 'NOTE_ON':
             if e.velocity < 1:
                 # print track_index, "OFF", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
-                track_cmds += ['NOTE_OFF %d %d %d' % (e.pitch, e.velocity, e.time,)]
+                track_cmds += [["NOTE_OFF", e.pitch, e.velocity, e.time]]
             else:
                 # print track_index, "ON ", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
-                track_cmds += ['NOTE_ON %d %d %d' % (e.pitch, e.velocity, e.time,)]
+                track_cmds += [["NOTE_ON", e.pitch, e.velocity, e.time]]
 
         elif e.type == 'NOTE_OFF':
             # print track_index, "OFF", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
-            track_cmds += ['NOTE_OFF %d %d %d' % (e.pitch, e.velocity, e.time,)]
+            track_cmds += [["NOTE_OFF", e.pitch, e.velocity, e.time]]
 
         elif e.type == 'DeltaTime':
             if e.time > 0:
@@ -72,24 +72,21 @@ def load_midi(infile=None):
     for i, track in enumerate(m.tracks):
         parse_midi_track(all_midi_lines, i, track)
 
-    all_midi_lines.sort(key=lambda x: x.split()[0])
+    all_midi_lines.sort(key=lambda x: x[0])
     all_midi_lines.reverse()
-    all_midi_lines.sort(key=lambda x: int(x.split()[-1]))
+    all_midi_lines.sort(key=lambda x: x[-1])
 
     new_all_midi_lines = []
     pitch_is_on_in_timestamp = {}
     notes_in_all_staff = []
     pitch_start_timestamp = {}
-    for code in all_midi_lines:
-        cmd, pitch, _, timestamp = code.split()
-        pitch = int(pitch)
-        timestamp = int(timestamp)
-
+    for cmd_data in all_midi_lines:
+        cmd, pitch, _, timestamp = cmd_data
         if cmd == "NOTE_ON":
             if timestamp not in pitch_is_on_in_timestamp:
                 pitch_is_on_in_timestamp[timestamp] = {}
             if pitch_is_on_in_timestamp[timestamp].get(pitch, False):
-                print "midi timestamp dup:", code
+                print "midi timestamp dup:", cmd_data
                 continue
             pitch_is_on_in_timestamp[timestamp][pitch] = True
 
@@ -97,11 +94,11 @@ def load_midi(infile=None):
             if start_timestamp is not None:
                 notes_in_all_staff += [(pitch, start_timestamp, timestamp - start_timestamp)]
                 # add missing OFF:
-                new_all_midi_lines += [code.replace("ON", "OFF") + " 0"]
+                new_all_midi_lines += [["NOTE_OFF"] + cmd_data[1:] + [0]]
 
             pitch_start_timestamp[pitch] = timestamp
 
-            new_all_midi_lines += [code + " 1"]
+            new_all_midi_lines += [cmd_data + [1]]
 
         elif cmd == "NOTE_OFF":
             start_timestamp = pitch_start_timestamp.get(pitch, None)
@@ -110,10 +107,10 @@ def load_midi(infile=None):
 
             pitch_start_timestamp[pitch] = None
             if not pitch_is_on_in_timestamp.get(timestamp, {}).get(pitch, False):
-                new_all_midi_lines += [code + " 2"]
+                new_all_midi_lines += [cmd_data + [2]]
 
-    new_all_midi_lines.sort(key=lambda x: x.split()[-1])
-    new_all_midi_lines.sort(key=lambda x: int(x.split()[-2]))
+    new_all_midi_lines.sort(key=lambda x: x[-1])
+    new_all_midi_lines.sort(key=lambda x: x[-2])
 
     return new_all_midi_lines, notes_in_all_staff
 
