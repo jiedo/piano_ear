@@ -42,7 +42,7 @@ class Piano():
         self.white = 250, 230, 200
         self.black = 0, 0, 0
 
-        self.backgroud_color = self.black
+        self.color_backgroud = self.black
         self.color_black_key_down = 100, 100, 200
         self.color_white_key_down = 100, 100, 200
         self.color_key_down = 0, 170, 200
@@ -175,7 +175,7 @@ class Piano():
 
         self.piano_note_font = pygame.font.Font(pygame.font.match_font('Bravura Text'), 144)
 
-        ren = self.piano_note_font.render(vertical_label, True, self.color_lines, self.backgroud_color)
+        ren = self.piano_note_font.render(vertical_label, True, self.color_lines, self.color_backgroud)
         vertical_label_size = self.piano_note_font.size(vertical_label)
         #print vertical_label_size
         #note_rec = pygame.Rect(note_pos, 100, vertical_label_size[0], vertical_label_size[1])
@@ -219,7 +219,7 @@ class Piano():
             top = self.screen_rect[1] - self.piano_white_key_height
 
         self.top = top
-        # self.screen.fill(self.backgroud_color)
+        # self.screen.fill(self.color_backgroud)
 
         w, h = self.add_piano_keys('l', 0, top, left)
         left += w
@@ -256,12 +256,34 @@ class Piano():
         self.draw_dash_line(self.color_middle_c_line, (left, y), (rightx, y), vertical=False)
 
 
-    def show_notes_staff(self, p_notes_in_all_staff, pitch_timestamp, top=0, offset_x=0):
-        self.screen.fill(self.backgroud_color, pygame.Rect(
+    def show_progress_bar(self, max_timestamp, current_timestamp, offset_x):
+        max_pos = (max_timestamp) * self.screen_rect[0] / (self.timestamp_range*2)
+
+        current_pos = (current_timestamp) * self.screen_rect[0] / (self.timestamp_range*2) * self.screen_rect[0] / max_pos
+        offset_pos = offset_x * self.screen_rect[0] / max_pos
+        screen_width_pos = self.screen_rect[0] * self.screen_rect[0] / max_pos
+
+        pygame.draw.line(self.screen, self.color_backgroud,
+                         (0, 0),
+                         (self.screen_rect[0], 0), 4)
+
+        pygame.draw.line(self.screen, self.color_red_line,
+                         (offset_pos, 0),
+                         (offset_pos + screen_width_pos, 0), 4)
+
+        pygame.draw.line(self.screen, self.color_key_down,
+                         (current_pos-1, 0),
+                         (current_pos+1, 0), 4)
+
+
+    def show_notes_staff(self, p_notes_in_all_staff, current_timestamp, top=0, offset_x=0):
+        self.screen.fill(self.color_backgroud, pygame.Rect(
             0, top - 15 * self.piano_staff_width,
             self.screen_rect[0], 30 * self.piano_staff_width))
 
         self.draw_staff_lines(top=top)
+        max_timestamp = p_notes_in_all_staff[-1][1]
+        self.show_progress_bar(max_timestamp, current_timestamp, offset_x)
 
         first_one = False
         for note_data in p_notes_in_all_staff:
@@ -284,8 +306,8 @@ class Piano():
 
             note_rec = pygame.Rect(note_pos, note_top, note_length, self.piano_staff_width/2)
 
-            if (timestamp <= pitch_timestamp and timestamp + duration > pitch_timestamp) or (
-                    not first_one and timestamp > pitch_timestamp):
+            if (timestamp <= current_timestamp and timestamp + duration > current_timestamp) or (
+                    not first_one and timestamp > current_timestamp):
                 self.screen.fill(self.color_key_down, note_rec)
             else:
                 if is_black:
@@ -319,7 +341,7 @@ class Piano():
         # note_rec, note_pos = self.draw_note(pitch, top=WINSIZE[1] * 0.7)
         # self.draw_lines(WINSIZE[1] * 0.618)
 
-        # pygame.draw.rect(self.screen, self.backgroud_color, note_rec, False)
+        # pygame.draw.rect(self.screen, self.color_backgroud, note_rec, False)
         self.draw_keys(pitch_key_rec, key_color)
         self.draw_keys(pitch_side_blackkeys_rec, self.black)
 
