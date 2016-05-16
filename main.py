@@ -52,10 +52,14 @@ def main():
     p_midi_cmd_idx = 0
     p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi("data.midi")
 
+    p_staff_offset_x = 0
+
     time_pitchs = []
     last_timestamp = -1
     old_time = 0
     last_cmd = ""
+
+    last_mouse_pos = None
 
     is_pause = False
     is_clear = True
@@ -65,6 +69,17 @@ def main():
             if e.type == QUIT:
                 p_done = True
                 break
+
+            if e.type == MOUSEMOTION:
+                if last_mouse_pos is not None:
+                    p_staff_offset_x = last_mouse_pos - e.pos[0]
+
+            if e.type == MOUSEBUTTONUP:
+                last_mouse_pos = None
+
+            if e.type == MOUSEBUTTONDOWN:
+                last_mouse_pos = p_staff_offset_x + e.pos[0]
+
             elif e.type == KEYUP:
                 if e.key == K_ESCAPE:
                     p_done = True
@@ -119,7 +134,7 @@ def main():
 
         # show keys
         piano.show_keys_press(cmd, pitch)
-        piano.show_notes_staff(p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382)
+        piano.show_notes_staff(p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382, p_staff_offset_x)
 
         # a chord
         if pitch_timestamp != last_timestamp:
