@@ -263,6 +263,7 @@ class Piano():
 
         self.draw_staff_lines(top=top)
 
+        first_one = False
         for note_data in p_notes_in_all_staff:
             pitch, timestamp, duration = note_data
 
@@ -272,7 +273,9 @@ class Piano():
             if note_pos > self.screen_rect[0]:
                 break
 
+            is_black = False
             if pitch in self.blackkeys:
+                is_black = True
                 pitch = pitch - 1
 
             key_rec = self.whitekeys[pitch]
@@ -281,11 +284,15 @@ class Piano():
 
             note_rec = pygame.Rect(note_pos, note_top, note_length, self.piano_staff_width/2)
 
-            if timestamp <= pitch_timestamp and timestamp + duration > pitch_timestamp:
+            if (timestamp <= pitch_timestamp and timestamp + duration > pitch_timestamp) or (
+                    not first_one and timestamp > pitch_timestamp):
                 self.screen.fill(self.color_key_down, note_rec)
             else:
-                self.screen.fill(self.white, note_rec)
-                # pygame.draw.rect(self.screen, self.white, note_rec, 1)
+                if is_black:
+                    pygame.draw.rect(self.screen, self.white, note_rec, 1)
+                else:
+                    self.screen.fill(self.white, note_rec)
+            first_one = True
 
 
     def show_keys_press(self, cmd, pitch):
