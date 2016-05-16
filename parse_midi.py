@@ -56,7 +56,6 @@ def parse_midi_track(track_cmds, track_index, track):
             #print track_index, '%-s \t' % e.type, e.data
 
 
-
 def load_midi(infile=None):
     """Play an audio file as a buffered sound sample
     """
@@ -73,15 +72,12 @@ def load_midi(infile=None):
     for i, track in enumerate(m.tracks):
         parse_midi_track(all_midi_lines, i, track)
 
-
     all_midi_lines.sort(key=lambda x: x.split()[0])
     all_midi_lines.reverse()
     all_midi_lines.sort(key=lambda x: int(x.split()[-1]))
 
     new_all_midi_lines = []
-
     pitch_is_on_in_timestamp = {}
-
     notes_in_all_staff = []
     pitch_start_timestamp = {}
     for code in all_midi_lines:

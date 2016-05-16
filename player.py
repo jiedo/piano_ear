@@ -12,8 +12,8 @@ from pygame.locals import *
 from sys import platform as _platform
 import sys
 
-
 __create_time__ = "May 16 2016"
+
 
 _platform_file = _platform
 

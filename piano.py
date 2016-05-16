@@ -12,11 +12,11 @@ from pygame.locals import *
 
 __create_time__ = "Feb 26 2012"
 
+
 class Piano():
     def __init__(self, screen, screen_rect):
         self.screen = screen
         self.screen_rect = screen_rect
-        self.piano_note_font = pygame.font.Font(pygame.font.match_font('Bravura Text'), 144)
         self.notes = """A2 #A2 B2
     C1 #C1 D1 #D1 E1 F1 #F1 G1 #G1 A1 #A1 B1
     C #C D #D E F #F G #G A #A B
@@ -26,7 +26,6 @@ class Piano():
     c3 #c3 d3 #d3 e3 f3 #f3 g3 #g3 a3 #a3 b3
     c4 #c4 d4 #d4 e4 f4 #f4 g4 #g4 a4 #a4 b4
     c5""".replace("\n", " ").split()
-
 
         self.whitekeys = {}
         self.blackkeys = {}
@@ -160,7 +159,6 @@ class Piano():
         self.draw_dash_line(self.color_middle_c_line, (x, top), (x, bottom))
 
 
-
     def draw_note(self, key_note_idx, top=340):
         note = self.notes[key_note_idx-21]
         print note
@@ -175,14 +173,13 @@ class Piano():
         note_pos = key_rec.left + self.piano_white_key_width/2
         note_pos -= 85
 
+        self.piano_note_font = pygame.font.Font(pygame.font.match_font('Bravura Text'), 144)
+
         ren = self.piano_note_font.render(vertical_label, True, self.color_lines, self.backgroud_color)
         vertical_label_size = self.piano_note_font.size(vertical_label)
         #print vertical_label_size
         #note_rec = pygame.Rect(note_pos, 100, vertical_label_size[0], vertical_label_size[1])
         note_rec = pygame.Rect(note_pos, top, vertical_label_size[1], vertical_label_size[0])
-        # print note_rec
-        # print ren
-        # print dir(ren)
         #pygame.draw.rect(ren, self.black, note_rec, True)
 
         ren = pygame.transform.rotate(ren, 270)
@@ -216,6 +213,7 @@ class Piano():
                                  (r.left + 2, r.top + r.height - 4),
                                  (r.left + r.width - 2, r.top + r.height - 4), 1)
 
+
     def draw_piano(self, top=None, left=0):
         if top is None:
             top = self.screen_rect[1] - self.piano_white_key_height
@@ -238,7 +236,6 @@ class Piano():
                          (self.screen_rect[0], self.top - 3), 4)
 
         pygame.display.update()
-
 
 
     def draw_staff_lines(self, top=0, n=6, left=0):
@@ -316,8 +313,6 @@ class Piano():
         self.draw_keys(pitch_side_blackkeys_rec, self.black)
 
 
-
-
 if __name__ == '__main__':
     pygame.init()
     WINSIZE = [1270, 700]
@@ -337,4 +332,4 @@ if __name__ == '__main__':
                 break
             elif e.type == MOUSEBUTTONDOWN and e.button == 1:
                 pass
-        clock.tick(100)
+        clock.tick(30)

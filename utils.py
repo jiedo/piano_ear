@@ -1,9 +1,7 @@
 #encoding: utf8
 
-"""A simple starfield example. Note you can move the 'center' of
-the starfield by leftclicking in the window. This example show
-the basics of creating a window, simple pixel plotting, and input
-event management"""
+"""
+"""
 
 
 import pygame
