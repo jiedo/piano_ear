@@ -31,7 +31,7 @@ class Piano():
         self.blackkeys = {}
 
         self.piano_staff_width = 10
-        self.timestamp_range = 5000
+        self.timestamp_range = 8000
 
         self.color_red_line = 130, 0, 0
         self.color_blackkey_edge = 90, 90, 90
@@ -277,7 +277,7 @@ class Piano():
             note_top = top - ((key_rec.left / self.piano_white_key_width) - 22.5) * self.piano_staff_width
             note_pos = (timestamp) * self.screen_rect[0] / (self.timestamp_range*2) - offset_x
             note_length =  duration * self.screen_rect[0] / (self.timestamp_range*2)
-            note_rec = pygame.Rect(note_pos, note_top, note_length, self.piano_staff_width-2)
+            note_rec = pygame.Rect(note_pos, note_top + 1, note_length, self.piano_staff_width-2)
 
             if timestamp == pitch_timestamp:
                 self.screen.fill(self.color_key_down, note_rec)
