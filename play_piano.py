@@ -25,9 +25,14 @@ import threading
 import time
 
 
+_platform_file = _platform
+
+_platform = "pygame"
+
 if _platform == "darwin":
     # OS X
     import AppKit
+
 elif _platform == "pygame":
     import pygame.mixer
     pygame.mixer.init(44100) #raises exception on fail
@@ -138,7 +143,11 @@ def main():
 
     for g in grand_pitch_range:
         for v in volecity_list:
-            sound_file = "/Users/jie/astudy/jiedo/Piano_Sounds/Grand-%03d-%03d.wav" % (g,v)
+            if _platform_file == "darwin":
+                sound_file = "/Users/jie/astudy/jiedo/Piano_Sounds/Grand-%03d-%03d.wav" % (g,v)
+            else:
+                sound_file = "/media/debian/home/jie/astudy/jiedo/ivory-yamaha-wav/Grand-%03d-%03d.wav" % (g,v)
+
             if _platform == "darwin":
                 sounds[(g,v)] = AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)
 
@@ -147,7 +156,6 @@ def main():
 
             elif _platform in ["linux", "linux2"]:
                 import wave
-                sound_file = "/media/debian/home/jie/astudy/jiedo/ivory-yamaha-wav/Grand-%03d-%03d.wav" % (g,v)
                 sound = wave.open(sound_file, 'rb')
                 sounddata = []
                 data = sound.readframes(1024)
@@ -178,19 +186,26 @@ def main():
 
     #     for key in keys:
     #         print "play key:", key
-    #         sounds[key].setVolume_(0.8)
+    #         if _platform == "darwin":
+    #             sounds[key].setVolume_(0.8)
+    #         elif _platform == "pygame":
+    #             sounds[key].set_volume(0.8)
     #         print sounds[key].play()
 
     #     time.sleep(0.05)
 
     #     for key in keys:
-    #         sounds[key].setVolume_(0.0)
+    #         if _platform == "darwin":
+    #             sounds[key].setVolume_(0.0)
+    #         elif _platform == "pygame":
+    #             sounds[key].set_volume(0.0)
 
     #     time.sleep(0.03)
 
     #     for key in keys:
     #         print "stop key:", key
     #         print sounds[key].stop()
+
 
 
     #print sounds_keys
@@ -329,7 +344,7 @@ def main():
         if cmd == "NOTE_ON":
             if last_cmd == "NOTE_OFF":
                 last_cmd = "NOTE_ON"
-                if _platform == "darwin":
+                if _platform in ["darwin", "pygame"]:
                     time.sleep(0.02)
 
             if pitch not in time_pitchs:
@@ -353,16 +368,11 @@ def main():
 
             elif _platform == "pygame":
                 _sound = sounds[(pitch, volecity)]
+                _sound.stop()
+
                 _sound.set_volume(0.7)
                 if pitch < 160:
                     _sound.play()
-                # for ch_data in channels:
-                #     ch, ch_pitch = ch_data
-                #     if not ch_pitch or pitch == ch_pitch:
-                #         ch_data[1] = pitch
-                #         ch.set_volume(0.8)
-                #         ch.play(_sound) #, maxtime=400, fade_ms=50)
-                #         break
 
             elif _platform in ["linux", "linux2"]:
                 play(devices, pitch, volecity, sounds)
@@ -375,14 +385,11 @@ def main():
                     _sound = sounds[(pitch, volecity)]
                     _sound.setVolume_(0.0)
 
-
             elif _platform == "pygame":
                 volecitys = [48, 60, 71, 82, 91, 100, 115, 127]
                 for volecity in volecitys:
                     _sound = sounds[(pitch, volecity)]
                     _sound.set_volume(0.0)
-                    #time.sleep(0.02)
-                    _sound.stop()
 
             elif _platform in ["linux", "linux2"]:
                 try:
