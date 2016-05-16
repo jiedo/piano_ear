@@ -1,16 +1,7 @@
 #!/usr/bin/env python
 #encoding: utf8
 
-"""extremely simple demonstration playing a soundfile
-and waiting for it to finish. you'll need the pygame.mixer
-module for this to work. Note how in this simple example we
-don't even bother loading all of the pygame package. Just
-pick the mixer for sound and time for the delay function.
-
-Optional command line argument:
-  the name of an audio file.
-
-
+""" piano play center
 """
 
 
@@ -19,7 +10,7 @@ from pygame.locals import *
 
 import os
 import os.path, sys, random
-import play_midi
+import parse_midi
 import pygame.time
 import threading
 import time
@@ -59,7 +50,7 @@ def main():
     # player.test_sounds(sounds_keys, sounds)
 
     p_midi_cmd_idx = 0
-    p_all_midi_lines = play_midi.load_midi("data.midi")
+    p_all_midi_lines = parse_midi.load_midi("data.midi")
 
     time_pitchs = []
     last_timestamp = -1
@@ -93,7 +84,7 @@ def main():
                 elif e.key == K_SPACE:
                     if is_clear:
                         piano.draw_piano()
-                        p_all_midi_lines = play_midi.load_midi("data.midi")
+                        p_all_midi_lines = parse_midi.load_midi("data.midi")
                         p_midi_cmd_idx = 0
                         is_pause = False
                         is_clear = False
@@ -121,8 +112,9 @@ def main():
                 # init last timestamp
                 last_timestamp = pitch_timestamp - 1
         except Exception, e:
+            print "error:", e
             pygame.display.update()
-            clock.tick(10)
+            clock.tick(2)
             continue
 
         # a chord
@@ -153,8 +145,6 @@ def main():
         player.show_keys_press(piano, cmd, pitch)
 
         #clock.tick(10)
-
-    p_done = True
 
 
 if __name__ == '__main__':

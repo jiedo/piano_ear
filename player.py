@@ -10,21 +10,23 @@ import math
 import pygame
 from pygame.locals import *
 from sys import platform as _platform
+import sys
+
 
 __create_time__ = "May 16 2016"
 
-
 _platform_file = _platform
 
-_platform = "pygame"
+
+if "pygame" in sys.argv:
+    _platform = "pygame"
 
 if _platform == "darwin":
     # OS X
     import AppKit
-
 elif _platform == "pygame":
     import pygame.mixer
-    pygame.mixer.init(44100) #raises exception on fail
+    pygame.mixer.init(44100)    #raises exception on fail
 
 
 g_grand_pitch_range  = range(21,109)

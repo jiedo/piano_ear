@@ -19,7 +19,7 @@ import os.path, sys
 import pygame.mixer
 import pygame.time
 
-import parsemidi
+import midi
 
 
 g_queue = Queue.Queue()
@@ -63,7 +63,7 @@ def load_midi(infile=None):
 
     global g_tpq
 
-    m = parsemidi.MidiFile()
+    m = midi.MidiFile()
     m.open(infile)
     m.read()
     m.close()

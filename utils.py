@@ -8,7 +8,7 @@ event management"""
 
 import pygame
 import time
-import play_midi
+import parse_midi
 
 
 class Bps():
@@ -33,7 +33,7 @@ g_bps = Bps()
 def sync_play_time(pitch_timestamp, last_timestamp, old_time):
     # sleep
     deta_timestamp = pitch_timestamp - last_timestamp
-    wait_time = int(deta_timestamp * play_midi.g_interval / play_midi.g_tpq )
+    wait_time = int(deta_timestamp * parse_midi.g_interval / parse_midi.g_tpq )
     print "midi need wait:", wait_time
 
     deta_time = time.time() - old_time
