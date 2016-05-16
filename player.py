@@ -76,20 +76,14 @@ def stop(devices, pitch, volecity, sounds):
             _sound.set_volume(0.0)
 
     elif _platform in ["linux", "linux2"]:
-        try:
-            pcm = None
-            for d in devices.values():
-                if d['pitch'] == pitch:
-                    pcm = d
-                    break
-            if pcm:
-                try:
-                    pcm['pcm'].pause(1)
-                except:
-                    pass
-                pcm['pitch'] = 0
-        except :
-            pass
+        pcm = None
+        for d in devices.values():
+            if d['pitch'] == pitch:
+                pcm = d
+                break
+        if pcm:
+            pcm['pcm'].pause(1)
+            pcm['pitch'] = 0
 
 
 def play(devices, pitch, volecity, sounds):

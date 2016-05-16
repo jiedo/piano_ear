@@ -102,9 +102,11 @@ def load_midi(infile=None):
 
         elif cmd == "NOTE_OFF":
             start_timestamp = pitch_start_timestamp.get(pitch, None)
-            if start_timestamp is not None:
-                notes_in_all_staff += [(pitch, start_timestamp, timestamp - start_timestamp)]
-
+            if start_timestamp is None:
+                continue
+            if timestamp - start_timestamp <= 0:
+                continue
+            notes_in_all_staff += [(pitch, start_timestamp, timestamp - start_timestamp)]
             pitch_start_timestamp[pitch] = None
             if not pitch_is_on_in_timestamp.get(timestamp, {}).get(pitch, False):
                 new_all_midi_lines += [cmd_data + [2]]
