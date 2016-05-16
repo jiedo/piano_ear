@@ -198,32 +198,3 @@ def load_sounds():
             sounds_keys += [(g,v)]
 
     return sounds_keys, sounds
-
-
-def show_keys_press(piano, cmd, pitch):
-    pitch_side_blackkeys_rec = []
-    if pitch in piano.whitekeys.keys():
-        pitch_key_rec = [piano.whitekeys[pitch]]
-        key_color = piano.white
-        if pitch + 1 in piano.blackkeys.keys():
-            pitch_side_blackkeys_rec += [piano.blackkeys[pitch+1]]
-        if pitch - 1 in piano.blackkeys.keys():
-            pitch_side_blackkeys_rec += [piano.blackkeys[pitch-1]]
-
-    elif pitch in piano.blackkeys.keys():
-        pitch_key_rec = [piano.blackkeys[pitch]]
-        key_color = piano.black
-
-    key_color_down = piano.color_key_down
-    if key_color != piano.black:
-        key_color_down = piano.color_key_down
-
-    if cmd == "NOTE_ON":
-        key_color = key_color_down
-
-    # note_rec, note_pos = piano.draw_note(pitch, top=WINSIZE[1] * 0.7)
-    # piano.draw_lines(WINSIZE[1] * 0.618)
-
-    # pygame.draw.rect(piano.screen, piano.backgroud_color, note_rec, False)
-    piano.draw_keys(pitch_key_rec, key_color)
-    piano.draw_keys(pitch_side_blackkeys_rec, piano.black)

@@ -50,7 +50,7 @@ def main():
     # player.test_sounds(sounds_keys, sounds)
 
     p_midi_cmd_idx = 0
-    p_all_midi_lines = parse_midi.load_midi("data.midi")
+    p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi("data.midi")
 
     time_pitchs = []
     last_timestamp = -1
@@ -60,6 +60,7 @@ def main():
     is_pause = False
     is_clear = True
     while not p_done:
+        # events
         for e in pygame.event.get():
             if e.type == QUIT:
                 p_done = True
@@ -84,7 +85,7 @@ def main():
                 elif e.key == K_SPACE:
                     if is_clear:
                         piano.draw_piano()
-                        p_all_midi_lines = parse_midi.load_midi("data.midi")
+                        p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi("data.midi")
                         p_midi_cmd_idx = 0
                         is_pause = False
                         is_clear = False
@@ -92,8 +93,7 @@ def main():
             elif e.type == MOUSEBUTTONDOWN and e.button == 1:
                 pass
 
-
-        # playtrack
+        # get cmd
         try:
             if is_pause or p_midi_cmd_idx >= len(p_all_midi_lines):
                 raise Exception("paused")
@@ -117,6 +117,10 @@ def main():
             clock.tick(2)
             continue
 
+        # show keys
+        piano.show_keys_press(cmd, pitch)
+        piano.show_notes_staff(p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382)
+
         # a chord
         if pitch_timestamp != last_timestamp:
             print "bps:", utils.g_bps.get_bps_count()
@@ -127,22 +131,20 @@ def main():
             last_timestamp = pitch_timestamp
             time_pitchs = []
 
+
+        # playtrack
         if cmd == "NOTE_ON":
             # sleep after pitch off
             if last_cmd == "NOTE_OFF":
                 last_cmd = "NOTE_ON"
                 time.sleep(0.02)
             player.play(devices, pitch, volecity, sounds)
-
             # build chord
             if pitch not in time_pitchs:
                 time_pitchs += [pitch]
-
         elif cmd == "NOTE_OFF":
             last_cmd = "NOTE_OFF"
             player.stop(devices, pitch, volecity, sounds)
-
-        player.show_keys_press(piano, cmd, pitch)
 
         #clock.tick(10)
 

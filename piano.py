@@ -31,6 +31,8 @@ class Piano():
         self.whitekeys = {}
         self.blackkeys = {}
 
+        self.piano_staff_width = 10
+
         self.color_red_line = 130, 0, 0
         self.color_blackkey_edge = 90, 90, 90
         self.color_lines = 130, 130, 130
@@ -39,7 +41,8 @@ class Piano():
 
         self.white = 250, 230, 200
         self.black = 0, 0, 0
-        self.backgroud_color = 255, 255, 255
+
+        self.backgroud_color = self.black
         self.color_black_key_down = 100, 100, 200
         self.color_white_key_down = 100, 100, 200
         self.color_key_down = 0, 170, 200
@@ -122,13 +125,19 @@ class Piano():
                 self.piano_white_key_height * h)
 
 
-    def draw_dash_line(self, color, start_pos, end_pos, w=1, deta_h=7):
-        x, top = start_pos
-        x, bottom = end_pos
-        for dh in range(0,int((bottom - top)/deta_h),2):
-            pygame.draw.line(self.screen, color, (x, top + dh * deta_h),
-                             (x, top + (dh+1) * deta_h), 1)
-
+    def draw_dash_line(self, color, start_pos, end_pos, w=1, deta_h=7, vertical=True):
+        if vertical:
+            x, top = start_pos
+            x, bottom = end_pos
+            for dh in range(0,int((bottom - top)/deta_h),2):
+                pygame.draw.line(self.screen, color, (x, top + dh * deta_h),
+                                 (x, top + (dh+1) * deta_h), 1)
+        else:
+            top, y = start_pos
+            bottom, y = end_pos
+            for dh in range(0,int((bottom - top)/deta_h),2):
+                pygame.draw.line(self.screen, color, (top + dh * deta_h, y),
+                                 (top + (dh+1) * deta_h, y), 1)
 
 
     def draw_lines(self, top=0, n=6, left=0):
@@ -228,6 +237,85 @@ class Piano():
                          (self.screen_rect[0], self.top - 3), 4)
 
         pygame.display.update()
+
+
+
+    def draw_staff_lines(self, top=0, n=6, left=0):
+        rightx = self.screen_rect[0]
+        middle_c_white_offset_y = top
+
+        for i in range(1, int(n*2)-1):
+            downy = left + middle_c_white_offset_y + i * self.piano_staff_width
+            topy = left + middle_c_white_offset_y - i * self.piano_staff_width
+            if i < n:
+                pygame.draw.line(self.screen, self.color_lines, (left, topy), (rightx, topy))
+                pygame.draw.line(self.screen, self.color_lines, (left, downy), (rightx, downy))
+            else:
+                self.draw_dash_line(self.color_add_lines, (left, topy), (rightx, topy), vertical=False)
+                self.draw_dash_line(self.color_add_lines, (left, downy), (rightx, downy), vertical=False)
+
+        y = left + middle_c_white_offset_y
+        self.draw_dash_line(self.color_middle_c_line, (left, y), (rightx, y), vertical=False)
+
+
+    def show_notes_staff(self, p_notes_in_all_staff, pitch_timestamp, top=0):
+        self.screen.fill(self.backgroud_color, pygame.Rect(
+            0, top - 15 * self.piano_staff_width,
+            self.screen_rect[0], 26 * self.piano_staff_width))
+
+        self.draw_staff_lines(top=top)
+
+        timestamp_range = 5000
+        for note_data in p_notes_in_all_staff:
+            pitch, timestamp, duration = note_data
+            if timestamp < pitch_timestamp - timestamp_range:
+                continue
+            if timestamp > pitch_timestamp + timestamp_range:
+                break
+
+            if pitch in self.blackkeys:
+                pitch = pitch - 1
+            key_rec = self.whitekeys[pitch]
+
+            note_top = top - ((key_rec.left / self.piano_white_key_width) - 22.5) * self.piano_staff_width
+            note_pos = (timestamp - pitch_timestamp + timestamp_range) * self.screen_rect[0] / (timestamp_range*2)
+            note_length =  duration * self.screen_rect[0] / (timestamp_range*2)
+            note_rec = pygame.Rect(note_pos, note_top, note_length, self.piano_staff_width-2)
+
+            if timestamp == pitch_timestamp:
+                self.screen.fill(self.color_key_note, note_rec)
+            pygame.draw.rect(self.screen, self.color_key_note, note_rec, 1)
+
+
+    def show_keys_press(self, cmd, pitch):
+        pitch_side_blackkeys_rec = []
+        if pitch in self.whitekeys.keys():
+            pitch_key_rec = [self.whitekeys[pitch]]
+            key_color = self.white
+            if pitch + 1 in self.blackkeys.keys():
+                pitch_side_blackkeys_rec += [self.blackkeys[pitch+1]]
+            if pitch - 1 in self.blackkeys.keys():
+                pitch_side_blackkeys_rec += [self.blackkeys[pitch-1]]
+
+        elif pitch in self.blackkeys.keys():
+            pitch_key_rec = [self.blackkeys[pitch]]
+            key_color = self.black
+
+        key_color_down = self.color_key_down
+        if key_color != self.black:
+            key_color_down = self.color_key_down
+
+        if cmd == "NOTE_ON":
+            key_color = key_color_down
+
+        # note_rec, note_pos = self.draw_note(pitch, top=WINSIZE[1] * 0.7)
+        # self.draw_lines(WINSIZE[1] * 0.618)
+
+        # pygame.draw.rect(self.screen, self.backgroud_color, note_rec, False)
+        self.draw_keys(pitch_key_rec, key_color)
+        self.draw_keys(pitch_side_blackkeys_rec, self.black)
+
+
 
 
 if __name__ == '__main__':

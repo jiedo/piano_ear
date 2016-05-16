@@ -60,7 +60,6 @@ def parse_midi_track(track_cmds, track_index, track):
 def load_midi(infile=None):
     """Play an audio file as a buffered sound sample
     """
-
     global g_tpq
 
     m = midi.MidiFile()
@@ -82,11 +81,15 @@ def load_midi(infile=None):
     new_all_midi_lines = []
 
     pitch_is_on_in_timestamp = {}
-    pitch_status = {}
+
+    notes_in_all_staff = []
+    pitch_start_timestamp = {}
     for code in all_midi_lines:
         cmd, pitch, _, timestamp = code.split()
-        if cmd == "NOTE_ON":
+        pitch = int(pitch)
+        timestamp = int(timestamp)
 
+        if cmd == "NOTE_ON":
             if timestamp not in pitch_is_on_in_timestamp:
                 pitch_is_on_in_timestamp[timestamp] = {}
             if pitch_is_on_in_timestamp[timestamp].get(pitch, False):
@@ -94,21 +97,29 @@ def load_midi(infile=None):
                 continue
             pitch_is_on_in_timestamp[timestamp][pitch] = True
 
-            if pitch_status.get(pitch, False):
+            start_timestamp = pitch_start_timestamp.get(pitch, None)
+            if start_timestamp is not None:
+                notes_in_all_staff += [(pitch, start_timestamp, timestamp - start_timestamp)]
+                # add missing OFF:
                 new_all_midi_lines += [code.replace("ON", "OFF") + " 0"]
 
-            pitch_status[pitch] = True
+            pitch_start_timestamp[pitch] = timestamp
+
             new_all_midi_lines += [code + " 1"]
 
         elif cmd == "NOTE_OFF":
-            pitch_status[pitch] = False
+            start_timestamp = pitch_start_timestamp.get(pitch, None)
+            if start_timestamp is not None:
+                notes_in_all_staff += [(pitch, start_timestamp, timestamp - start_timestamp)]
+
+            pitch_start_timestamp[pitch] = None
             if not pitch_is_on_in_timestamp.get(timestamp, {}).get(pitch, False):
                 new_all_midi_lines += [code + " 2"]
 
     new_all_midi_lines.sort(key=lambda x: x.split()[-1])
     new_all_midi_lines.sort(key=lambda x: int(x.split()[-2]))
 
-    return new_all_midi_lines
+    return new_all_midi_lines, notes_in_all_staff
 
 
 if __name__ == '__main__':
