@@ -276,16 +276,37 @@ class Piano():
                          (current_pos+1, 1), 8)
 
 
-    def show_notes_staff(self, p_notes_in_all_staff, current_timestamp, top=0, offset_x=0):
+    def show_notes_staff(self, p_notes_in_all_staff, current_timestamp, top, bar_duration, offset_x):
         self.screen.fill(self.color_backgroud, pygame.Rect(
             0, top - 15 * self.piano_staff_width,
             self.screen_rect[0], 27 * self.piano_staff_width))
 
-        self.draw_staff_lines(top=top)
-        max_timestamp = p_notes_in_all_staff[-1][1]
+        # show_progress_bar
+        max_timestamp = p_notes_in_all_staff[-1][1] + p_notes_in_all_staff[-1][2]
         self.show_progress_bar(max_timestamp, current_timestamp, offset_x)
 
-        first_one = False
+        # draw_staff_lines
+        self.draw_staff_lines(top=top)
+
+        # draw bars
+        offset_bar = max_timestamp - (max_timestamp / bar_duration * bar_duration)
+        _bar_pos = offset_bar
+        while True:
+            bar_pos = _bar_pos * self.screen_rect[0] / (self.timestamp_range*2) - offset_x
+            pygame.draw.line(self.screen, self.color_lines,
+                             (bar_pos, top - 5 * self.piano_staff_width),
+                             (bar_pos, top - self.piano_staff_width))
+            pygame.draw.line(self.screen, self.color_lines,
+                             (bar_pos, top + self.piano_staff_width),
+                             (bar_pos, top + 5 * self.piano_staff_width))
+
+            _bar_pos += bar_duration
+            if bar_pos < 0:
+                continue
+            if bar_pos >= self.screen_rect[0]:
+                break
+
+        # draw notes
         for note_data in p_notes_in_all_staff:
             pitch, timestamp, duration = note_data
 
@@ -306,15 +327,13 @@ class Piano():
 
             note_rec = pygame.Rect(note_pos, note_top, note_length, self.piano_staff_width/2)
 
-            if (timestamp <= current_timestamp and timestamp + duration > current_timestamp) or (
-                    not first_one and timestamp > current_timestamp):
+            if timestamp <= current_timestamp and timestamp + duration > current_timestamp:
                 self.screen.fill(self.color_key_down, note_rec)
             else:
                 if is_black:
                     pygame.draw.rect(self.screen, self.white, note_rec, 1)
                 else:
                     self.screen.fill(self.white, note_rec)
-            first_one = True
 
 
     def show_keys_press(self, cmd, pitch):

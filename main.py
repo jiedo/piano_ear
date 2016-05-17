@@ -152,16 +152,18 @@ def main():
                 last_timestamp = pitch_timestamp - 1
 
         except Exception, e:
-            piano.show_notes_staff(p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382, p_staff_offset_x)
+            piano.show_notes_staff(p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382,
+                                   parse_midi.g_bar_duration,
+                                   p_staff_offset_x)
             pygame.display.update()
             clock.tick(7)
             continue
 
         # a chord
         if pitch_timestamp != last_timestamp:
-            print "bps:", utils.g_bps.get_bps_count()
+            # print "bps:", utils.g_bps.get_bps_count()
+            # utils.show_chord_keys_by_ascii(time_pitchs)
 
-            utils.show_chord_keys_by_ascii(time_pitchs)
             utils.sync_play_time(pitch_timestamp, last_timestamp, old_time)
             old_time = time.time()
             last_timestamp = pitch_timestamp
@@ -181,7 +183,9 @@ def main():
             last_cmd = "NOTE_OFF"
             player.stop(devices, pitch, volecity, sounds)
 
-        piano.show_notes_staff(p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382, p_staff_offset_x)
+        piano.show_notes_staff(p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382,
+                               parse_midi.g_bar_duration,
+                               p_staff_offset_x)
         # show keys
         piano.show_keys_press(cmd, pitch)
         #clock.tick(10)

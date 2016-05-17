@@ -23,16 +23,19 @@ import midi
 
 
 g_queue = Queue.Queue()
-g_interval = 500
-g_tpq = 0
-g_time_signature_n = 4
-g_time_signature_note = 4
+g_mseconds_per_quarter = 500
+g_ticks_per_quarter = 0
+g_time_signature_n = 0
+g_time_signature_note = 0
+g_bar_duration = 0
 
 def parse_midi_track(track_cmds, track_index, track):
-    global g_interval, g_time_signature_n, g_time_signature_note
+    global g_mseconds_per_quarter, g_time_signature_n, g_time_signature_note, g_bar_duration
 
-    g_time_signature_n = 4
-    g_time_signature_note = 4
+    if not g_bar_duration:
+        g_time_signature_n = 4
+        g_time_signature_note = 4
+        g_bar_duration =  g_ticks_per_quarter * g_time_signature_n * 4 / g_time_signature_note
 
     for e in track.events:
         if e.type == 'NOTE_ON':
@@ -51,37 +54,44 @@ def parse_midi_track(track_cmds, track_index, track):
             # Time signature is expressed as 4 numbers. nn and dd represent the "numerator" and "denominator" of the signature as notated on sheet music. The denominator is a negative power of 2: 2 = quarter note, 3 = eighth, etc.
             #print len(e.data)
             nn, dd, cc, bb = e.data
-            g_time_signature_n = nn
-            g_time_signature_note = 2**dd
+            g_time_signature_n = ord(nn)
+            g_time_signature_note = 2**ord(dd)
+            g_bar_duration =  g_ticks_per_quarter * g_time_signature_n * 4 / g_time_signature_note
+
+            print " %d / %d" % (g_time_signature_n, g_time_signature_note)
+            print "bar: ", g_bar_duration
 
         elif e.type == 'DeltaTime':
             if e.time > 0:
                 pass
                 #print track_index, '%-s \t' % e.type, e.time
-                #pygame.time.wait(int(e.time * g_interval / self.tpq ))
+                #pygame.time.wait(int(e.time * g_mseconds_per_quarter / self.tpq ))
 
         elif e.type == 'SET_TEMPO': # a 4,time
             x,y,z = e.data
             v = ord(x) * 256 * 256 + ord(y) * 256 + ord(z)
-            g_interval = v / 1000
+            g_mseconds_per_quarter = v / 1000
+            print "%d bps", 60000 / g_mseconds_per_quarter
             #print track_index, '%-s \t' % e.type, e.data
 
 
 def load_midi(infile=None):
     """Play an audio file as a buffered sound sample
     """
-    global g_tpq
+    global g_ticks_per_quarter
 
     m = midi.MidiFile()
     m.open(infile)
     m.read()
     m.close()
-    g_tpq = m.ticksPerQuarterNote
-    print 'ticksPerQuarterNote', g_tpq
+    g_ticks_per_quarter = m.ticksPerQuarterNote
+    print 'ticksPerQuarterNote', g_ticks_per_quarter
 
     all_midi_lines = []
     for i, track in enumerate(m.tracks):
         parse_midi_track(all_midi_lines, i, track)
+        print "bar1: ", g_bar_duration
+        print "bar2: ", g_bar_duration
 
     all_midi_lines.sort(key=lambda x: x[0])
     all_midi_lines.reverse()

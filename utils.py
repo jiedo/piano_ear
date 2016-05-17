@@ -31,7 +31,7 @@ g_bps = Bps()
 def sync_play_time(pitch_timestamp, last_timestamp, old_time):
     # sleep
     deta_timestamp = pitch_timestamp - last_timestamp
-    wait_time = int(deta_timestamp * parse_midi.g_interval / parse_midi.g_tpq )
+    wait_time = int(deta_timestamp * parse_midi.g_mseconds_per_quarter / parse_midi.g_ticks_per_quarter )
     print "midi need wait:", wait_time
 
     deta_time = time.time() - old_time
