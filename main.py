@@ -45,7 +45,27 @@ def get_menu_data():
         elif not dirnames:
             menu_data += [u"."]
 
-    return menu_data_dict["data"]
+    menu_data = []
+    for data in menu_data_dict["data"]:
+        if not isinstance(data, list):
+            continue
+
+        sub_menu_data = []
+        for data_inner in data[1:]:
+            if not isinstance(data_inner, list):
+                sub_menu_data += [data_inner]
+                continue
+
+            subsub_menu_data = []
+            for data_inner_inner in data_inner[1:]:
+                if not isinstance(data_inner_inner, list):
+                    subsub_menu_data += [data_inner_inner]
+
+            sub_menu_data += [MenuSystem.Menu(data_inner[0], subsub_menu_data)]
+
+        menu_data += [MenuSystem.Menu(data[0], sub_menu_data)]
+
+    return menu_data
 
 
 def main():
@@ -65,11 +85,7 @@ def main():
     MenuSystem.BORDER_HL = Color(200,200,200,200)
 
     menu_bar = MenuSystem.MenuBar(top=10)
-
-    menu_data = get_menu_data()
-    menus_in_bar = [MenuSystem.Menu(data[0], data[1:])
-                    for data in menu_data if isinstance(data, list)]
-
+    menus_in_bar = get_menu_data()
     menu_bar.set(menus_in_bar)
 
     piano = Piano(screen, WINSIZE)
@@ -116,7 +132,7 @@ def main():
                 pygame.display.update(menu_bar_screen)
             if menu_bar.choice:
                 try:
-                    midi_filename = menu_bar.choice_label[1]
+                    midi_filename = menu_bar.choice_label[-1]
                     print midi_filename
 
                     p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi(midi_filename)
@@ -194,9 +210,7 @@ def main():
                     is_pause = not is_pause
 
                 elif ev.key == K_RETURN:
-                    menu_data = get_menu_data()
-                    menus_in_bar = [MenuSystem.Menu(data[0], data[1:])
-                                    for data in menu_data if isinstance(data, list)]
+                    menus_in_bar = get_menu_data()
                     menu_bar.set(menus_in_bar)
 
         if menu_bar:
