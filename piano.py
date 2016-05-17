@@ -268,12 +268,12 @@ class Piano():
                          (self.screen_rect[0], 0), 10)
 
         pygame.draw.line(self.screen, self.white,
-                         (offset_pos, 3),
-                         (offset_pos + screen_width_pos, 3), 5)
+                         (offset_pos, 0),
+                         (offset_pos + screen_width_pos, 0), 9)
 
         pygame.draw.line(self.screen, self.color_key_down,
                          (current_pos-1, 1),
-                         (current_pos+1, 1), 8)
+                         (current_pos+1, 1), 9)
 
 
     def show_notes_staff(self, p_notes_in_all_staff, current_timestamp, top, bar_duration, offset_x):
