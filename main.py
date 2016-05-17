@@ -106,11 +106,17 @@ def main():
                     break
 
                 elif e.key == K_LEFT:
-                    p_staff_offset_x -= WINSIZE[0] * 0.618
+                    p_staff_offset_x -= WINSIZE[0]
                     if p_staff_offset_x < 0:
                         p_staff_offset_x = 0
                 elif e.key == K_RIGHT:
-                    p_staff_offset_x += WINSIZE[0] * 0.618
+                    p_staff_offset_x += WINSIZE[0]
+                elif e.key == K_DOWN:
+                    p_staff_offset_x -= 30
+                    if p_staff_offset_x < 0:
+                        p_staff_offset_x = 0
+                elif e.key == K_UP:
+                    p_staff_offset_x += 30
 
                 elif e.key in [K_a, K_b, K_c, K_d, K_e, K_f, K_g, ]:
                     p_key_press = e.key
