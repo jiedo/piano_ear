@@ -25,10 +25,14 @@ import midi
 g_queue = Queue.Queue()
 g_interval = 500
 g_tpq = 0
-
+g_time_signature_n = 4
+g_time_signature_note = 4
 
 def parse_midi_track(track_cmds, track_index, track):
-    global g_interval
+    global g_interval, g_time_signature_n, g_time_signature_note
+
+    g_time_signature_n = 4
+    g_time_signature_note = 4
 
     for e in track.events:
         if e.type == 'NOTE_ON':
@@ -42,6 +46,13 @@ def parse_midi_track(track_cmds, track_index, track):
         elif e.type == 'NOTE_OFF':
             # print track_index, "OFF", '%-s \t' % e.type, e.pitch, e.velocity, e.channel
             track_cmds += [["NOTE_OFF", e.pitch, e.velocity, e.time]]
+
+        elif e.type == 'TIME_SIGNATURE': # a 4,time
+            # Time signature is expressed as 4 numbers. nn and dd represent the "numerator" and "denominator" of the signature as notated on sheet music. The denominator is a negative power of 2: 2 = quarter note, 3 = eighth, etc.
+            #print len(e.data)
+            nn, dd, cc, bb = e.data
+            g_time_signature_n = nn
+            g_time_signature_note = 2**dd
 
         elif e.type == 'DeltaTime':
             if e.time > 0:
