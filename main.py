@@ -17,6 +17,39 @@ import time
 import player
 import utils
 
+progname = sys.argv[0]
+progdir = os.path.dirname(progname)
+sys.path.append(os.path.join(progdir,'gamelib'))
+
+from popup_menu import PopupMenu
+
+menu_data = (
+    'Main',
+    'Item 0',
+    'Item 1',
+    (
+        'Things',
+        'Item 0',
+        'Item 1',
+        'Item 2',
+        (
+            'More Things',
+            'Item 0',
+            'Item 1',
+        ),
+    ),
+    'Quit',
+)
+
+def handle_menu(e):
+    print 'Menu event: %s.%d: %s' % (e.name,e.item_id,e.text)
+    if e.name == 'Main':
+        if e.text == 'Quit':
+            quit()
+    elif e.name == 'Things':
+        pass
+    elif e.name == 'More Things':
+        pass
 
 def main():
     """Play a midi file with sound samples
@@ -73,6 +106,14 @@ def main():
             if e.type == QUIT:
                 p_done = True
                 break
+
+            if e.type == MOUSEBUTTONUP:
+                if e.pos[1] < 60: # progress bar can not click
+                    PopupMenu(menu_data)
+
+            elif e.type == USEREVENT:
+                if e.code == 'MENU':
+                    handle_menu(e)
 
             elif e.type == MOUSEBUTTONDOWN:
                 if e.button == 5:
