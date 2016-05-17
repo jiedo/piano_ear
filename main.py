@@ -54,6 +54,20 @@ def main():
     screen = pygame.display.set_mode(WINSIZE)
     pygame.display.set_caption('Piano Center')
 
+    # menu
+    MenuSystem.init()
+    MenuSystem.BGCOLOR = Color(200,200,200,80)
+    MenuSystem.FGCOLOR = Color(200,200,200,255)
+    MenuSystem.BGHIGHTLIGHT = Color(0,0,0,180)
+    MenuSystem.BORDER_HL = Color(200,200,200,180)
+
+    menu_bar = MenuSystem.MenuBar(top=10)
+
+    menu_data = get_menu_data()
+    menus_in_bar = [MenuSystem.Menu(data[0], data[1:])
+                    for data in menu_data if isinstance(data, list)]
+    menu_bar.set(menus_in_bar)
+
     piano = Piano(screen, WINSIZE)
     piano.draw_piano()
     piano.draw_lines(WINSIZE[1] * 0.618)
@@ -89,34 +103,31 @@ def main():
     last_cmd = ""
 
     last_mouse_pos = None
-
+    is_freezing = False
     is_pause = False
     while not p_done:
         # events
         for e in pygame.event.get():
             # print pygame.event.event_name(e.type)
-
             if e.type == QUIT:
                 p_done = True
                 break
 
-            if e.type == MOUSEBUTTONUP:
-                if e.pos[1] < 60: # progress bar can not click
-                    try:
-                        PopupMenu(get_menu_data())
-                    except Exception, e:
-                        print "menu error:", e
+            menu_bar_screen = menu_bar.update(e)
+            # if menu_bar_screen:
+            #     pygame.display.update(menu_bar_screen)
+            if menu_bar.choice:
+                try:
+                    midi_filename = menu_bar.choice_label[1]
+                    print midi_filename
 
-            elif e.type == USEREVENT:
-                if e.code == 'MENU':
+                    p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi(midi_filename)
                     piano.draw_piano()
-                    try:
-                        p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi(e.text)
-                        p_midi_cmd_idx = 0
-                        p_staff_offset_x = 0
-                        is_pause = False
-                    except Exception, e:
-                        print "menu error:", e
+                    p_midi_cmd_idx = 0
+                    p_staff_offset_x = 0
+                    is_pause = False
+                except Exception, e:
+                    print "menu error:", e
 
             elif e.type == MOUSEBUTTONDOWN:
                 if e.button == 5:
@@ -178,6 +189,22 @@ def main():
 
                 elif e.key == K_SPACE:
                     is_pause = not is_pause
+                    is_freezing = False
+
+                elif e.key == K_RETURN:
+                    is_pause = True
+                    is_freezing = True
+
+                    menu_data = get_menu_data()
+                    menus_in_bar = [MenuSystem.Menu(data[0], data[1:])
+                                    for data in menu_data if isinstance(data, list)]
+                    menu_bar.set(menus_in_bar)
+
+
+        if is_freezing:
+            pygame.display.update()
+            clock.tick(7)
+            continue
 
         # get cmd
         try:
@@ -231,6 +258,7 @@ def main():
         piano.show_notes_staff(p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382,
                                parse_midi.g_bar_duration,
                                p_staff_offset_x)
+
         # show keys
         piano.show_keys_press(cmd, pitch)
         #clock.tick(10)

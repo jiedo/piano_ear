@@ -15,7 +15,7 @@ BORDER_LEFT  = Color(0xc0c0c0f0)
 BORDER_RIGHT = Color(0x303030f0)
 BUTTON       = 1
 SWITCH       = 0
-FONT         = font.Font(font.match_font("SongTi TC") ,16)
+FONT         = font.Font(font.match_font("SongTi TC") ,26)
 try:                   Arrow        = "»".decode('utf-8')
 except AttributeError: Arrow        = "»"
 
@@ -251,9 +251,11 @@ class MenuFix(MenuSystem,object):
 
 class MenuBar(MenuSystem,object):
 
-    def __init__(self):
+    def __init__(self, top=10):
         self.lineheigth = FONT.get_height()
-        self.rect = Rect(0,0,DISPLAYRECT.width,self.lineheigth)
+        self.top = top
+        self.rect = Rect(0, self.top, DISPLAYRECT.width, self.lineheigth)
+
 
     def set(self,menuboxlist=None):
         self.bg = DISPLAY.subsurface(self.rect).copy()
@@ -263,13 +265,12 @@ class MenuBar(MenuSystem,object):
             self.rects = []
             for item in self.menuboxlist:
                 w,h = FONT.size(item.label)
-                self.rects.append(Rect(x,0,w+self.lineheigth,h))
+                self.rects.append(Rect(x, self.top, w+self.lineheigth, h))
                 x = self.rects[-1].right
         self.index = -1
         self.draw()
         self.choice = None
         return self.rect
-
 
 
     def update(self,ev):
@@ -296,6 +297,7 @@ class MenuBar(MenuSystem,object):
                         ret = self.clear()
                         ret += [self.draw()]
                         ret += super(MenuBar,self).set(self.menuboxlist[self.index],self.rects[self.index].bottomleft)
+
             return ret
 
     def undraw(self):
