@@ -278,7 +278,7 @@ class Piano():
 
     def show_notes_staff(self, p_notes_in_all_staff, current_timestamp, top, bar_duration, offset_x):
         self.screen.fill(self.color_backgroud, pygame.Rect(
-            0, top - 15 * self.piano_staff_width,
+            0, 0,
             self.screen_rect[0], 27 * self.piano_staff_width))
 
         # show_progress_bar

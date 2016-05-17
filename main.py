@@ -23,33 +23,31 @@ sys.path.append(os.path.join(progdir,'gamelib'))
 
 from popup_menu import PopupMenu
 
-menu_data = (
-    'Main',
-    'Item 0',
-    'Item 1',
-    (
-        'Things',
-        'Item 0',
-        'Item 1',
-        'Item 2',
-        (
-            'More Things',
-            'Item 0',
-            'Item 1',
-        ),
-    ),
-    'Quit',
-)
 
-def handle_menu(e):
-    print 'Menu event: %s.%d: %s' % (e.name,e.item_id,e.text)
-    if e.name == 'Main':
-        if e.text == 'Quit':
-            quit()
-    elif e.name == 'Things':
-        pass
-    elif e.name == 'More Things':
-        pass
+def get_menu_data():
+    menu_data_dict = {}
+    for (dir_full_path, dirnames, filenames) in os.walk("data"):
+        dirpath = dir_full_path.split("/")[-1]
+        if dirpath not in menu_data_dict:
+            menu_data_dict[dirpath] = []
+
+        menu_data = menu_data_dict[dirpath]
+        menu_data += [dirpath]
+
+        for dirname in dirnames:
+            if dirname not in menu_data_dict:
+                menu_data_dict[dirname] = []
+            menu_data += [menu_data_dict[dirname]]
+
+        midi_filenames = [dir_full_path + "/" + filename for filename in filenames
+                          if (filename.endswith(".mid") or filename.endswith(".midi"))]
+        if midi_filenames:
+            menu_data += midi_filenames
+        elif not dirnames:
+            menu_data += ["."]
+
+    return menu_data_dict["data"]
+
 
 def main():
     """Play a midi file with sound samples
@@ -97,7 +95,6 @@ def main():
     last_mouse_pos = None
 
     is_pause = False
-    is_clear = True
     while not p_done:
         # events
         for e in pygame.event.get():
@@ -109,11 +106,21 @@ def main():
 
             if e.type == MOUSEBUTTONUP:
                 if e.pos[1] < 60: # progress bar can not click
-                    PopupMenu(menu_data)
+                    try:
+                        PopupMenu(get_menu_data())
+                    except Exception, e:
+                        print "menu error:", e
 
             elif e.type == USEREVENT:
                 if e.code == 'MENU':
-                    handle_menu(e)
+                    piano.draw_piano()
+                    try:
+                        p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi(e.text)
+                        p_midi_cmd_idx = 0
+                        p_staff_offset_x = 0
+                        is_pause = False
+                    except Exception, e:
+                        print "menu error:", e
 
             elif e.type == MOUSEBUTTONDOWN:
                 if e.button == 5:
@@ -174,17 +181,7 @@ def main():
                     last_timestamp = -1
 
                 elif e.key == K_SPACE:
-                    is_clear = True
                     is_pause = not is_pause
-
-                elif e.key == K_RETURN:
-                    if is_clear:
-                        piano.draw_piano()
-                        p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi("data.midi")
-                        p_midi_cmd_idx = 0
-                        p_staff_offset_x = 0
-                        is_pause = False
-                        is_clear = False
 
         # get cmd
         try:
