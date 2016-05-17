@@ -23,7 +23,9 @@ import MenuSystem
 def get_menu_data():
     menu_data_dict = {}
     for (dir_full_path, dirnames, filenames) in os.walk("data"):
-        dirpath = dir_full_path.split("/")[-1]
+        dir_full_path = dir_full_path.decode("utf8")
+
+        dirpath = dir_full_path.split(u"/")[-1]
         if dirpath not in menu_data_dict:
             menu_data_dict[dirpath] = []
 
@@ -31,16 +33,17 @@ def get_menu_data():
         menu_data += [dirpath]
 
         for dirname in dirnames:
+            dirname = dirname.decode("utf8")
             if dirname not in menu_data_dict:
                 menu_data_dict[dirname] = []
             menu_data += [menu_data_dict[dirname]]
 
-        midi_filenames = [dir_full_path + "/" + filename for filename in filenames
+        midi_filenames = [dir_full_path + u"/" + filename.decode("utf8") for filename in filenames
                           if (filename.endswith(".mid") or filename.endswith(".midi"))]
         if midi_filenames:
             menu_data += midi_filenames
         elif not dirnames:
-            menu_data += ["."]
+            menu_data += [u"."]
 
     return menu_data_dict["data"]
 
@@ -56,16 +59,17 @@ def main():
 
     # menu
     MenuSystem.init()
-    MenuSystem.BGCOLOR = Color(200,200,200,80)
-    MenuSystem.FGCOLOR = Color(200,200,200,255)
-    MenuSystem.BGHIGHTLIGHT = Color(0,0,0,180)
-    MenuSystem.BORDER_HL = Color(200,200,200,180)
+    MenuSystem.BGCOLOR = Color(200,200,200, 255)
+    MenuSystem.FGCOLOR = Color(0, 0, 0, 0)
+    MenuSystem.BGHIGHTLIGHT = Color(40,40,40,40)
+    MenuSystem.BORDER_HL = Color(200,200,200,200)
 
     menu_bar = MenuSystem.MenuBar(top=10)
 
     menu_data = get_menu_data()
     menus_in_bar = [MenuSystem.Menu(data[0], data[1:])
                     for data in menu_data if isinstance(data, list)]
+
     menu_bar.set(menus_in_bar)
 
     piano = Piano(screen, WINSIZE)
@@ -103,19 +107,13 @@ def main():
     last_cmd = ""
 
     last_mouse_pos = None
-    is_freezing = False
     is_pause = False
     while not p_done:
         # events
-        for e in pygame.event.get():
-            # print pygame.event.event_name(e.type)
-            if e.type == QUIT:
-                p_done = True
-                break
-
-            menu_bar_screen = menu_bar.update(e)
-            # if menu_bar_screen:
-            #     pygame.display.update(menu_bar_screen)
+        for ev in pygame.event.get():
+            menu_bar_screen = menu_bar.update(ev)
+            if menu_bar:
+                pygame.display.update(menu_bar_screen)
             if menu_bar.choice:
                 try:
                     midi_filename = menu_bar.choice_label[1]
@@ -129,21 +127,26 @@ def main():
                 except Exception, e:
                     print "menu error:", e
 
-            elif e.type == MOUSEBUTTONDOWN:
-                if e.button == 5:
+            # print pygame.event.event_name(ev.type)
+            if ev.type == QUIT:
+                p_done = True
+                break
+
+            elif ev.type == MOUSEBUTTONDOWN:
+                if ev.button == 5:
                     p_staff_offset_x += 40
 
-                elif e.button == 4:
+                elif ev.button == 4:
                     p_staff_offset_x -= 40
                     if p_staff_offset_x < 0:
                         p_staff_offset_x = 0
 
-                elif e.button == 3: # right
+                elif ev.button == 3: # right
                     is_pause = not is_pause
 
-                elif e.button == 1: # left
-                    if e.pos[1] > 60: # progress bar can not click
-                        timestamp_offset_x = (p_staff_offset_x + e.pos[0]) * piano.timestamp_range * 2 / piano.screen_rect[0]
+                elif ev.button == 1: # left
+                    if ev.pos[1] > 60: # progress bar can not click
+                        timestamp_offset_x = (p_staff_offset_x + ev.pos[0]) * piano.timestamp_range * 2 / piano.screen_rect[0]
                         nearest_idx = 0
                         for idx, midi_line in enumerate(p_all_midi_lines):
                             cmd, pitch, volecity_data, pitch_timestamp = midi_line[:4]
@@ -157,51 +160,46 @@ def main():
                         p_midi_cmd_idx = nearest_idx
                         last_timestamp = -1
 
-            elif e.type == KEYUP:
-                if e.key == K_ESCAPE:
+            elif ev.type == KEYUP:
+                if ev.key == K_ESCAPE:
                     p_done = True
                     break
 
-                elif e.key == K_LEFT:
+                elif ev.key == K_LEFT:
                     p_staff_offset_x -= WINSIZE[0]
                     if p_staff_offset_x < 0:
                         p_staff_offset_x = 0
-                elif e.key == K_RIGHT:
+                elif ev.key == K_RIGHT:
                     p_staff_offset_x += WINSIZE[0]
-                elif e.key == K_DOWN:
+                elif ev.key == K_DOWN:
                     p_staff_offset_x -= 30
                     if p_staff_offset_x < 0:
                         p_staff_offset_x = 0
-                elif e.key == K_UP:
+                elif ev.key == K_UP:
                     p_staff_offset_x += 30
 
-                elif e.key == K_m:
+                elif ev.key == K_m:
                     p_is_metro_on = not p_is_metro_on
 
-                elif e.key in [K_a, K_b, K_c, K_d, K_e, K_f, K_g, ]:
-                    p_key_press = e.key
+                elif ev.key in [K_a, K_b, K_c, K_d, K_e, K_f, K_g, ]:
+                    p_key_press = ev.key
 
-                elif e.key in [K_0, K_1, K_2, K_3, K_4, K_5, K_6, K_7, K_8, K_9]:
-                    print "Progress:", e.key - 48
+                elif ev.key in [K_0, K_1, K_2, K_3, K_4, K_5, K_6, K_7, K_8, K_9]:
+                    print "Progress:", ev.key - 48
                     piano.draw_piano()
-                    p_midi_cmd_idx = len(p_all_midi_lines) * (e.key - 48) / 10
+                    p_midi_cmd_idx = len(p_all_midi_lines) * (ev.key - 48) / 10
                     last_timestamp = -1
 
-                elif e.key == K_SPACE:
+                elif ev.key == K_SPACE:
                     is_pause = not is_pause
-                    is_freezing = False
 
-                elif e.key == K_RETURN:
-                    is_pause = True
-                    is_freezing = True
-
+                elif ev.key == K_RETURN:
                     menu_data = get_menu_data()
                     menus_in_bar = [MenuSystem.Menu(data[0], data[1:])
                                     for data in menu_data if isinstance(data, list)]
                     menu_bar.set(menus_in_bar)
 
-
-        if is_freezing:
+        if menu_bar:
             pygame.display.update()
             clock.tick(7)
             continue
