@@ -17,11 +17,7 @@ import time
 import player
 import utils
 
-progname = sys.argv[0]
-progdir = os.path.dirname(progname)
-sys.path.append(os.path.join(progdir,'gamelib'))
-
-from popup_menu import PopupMenu
+import MenuSystem
 
 
 def get_menu_data():
