@@ -49,6 +49,8 @@ def main():
     # print sounds_keys
     # player.test_sounds(sounds_keys, sounds)
 
+    p_is_metro_on = False
+
     p_midi_cmd_idx = 0
     p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi("data.midi")
 
@@ -118,6 +120,9 @@ def main():
                 elif e.key == K_UP:
                     p_staff_offset_x += 30
 
+                elif e.key == K_m:
+                    p_is_metro_on = not p_is_metro_on
+
                 elif e.key in [K_a, K_b, K_c, K_d, K_e, K_f, K_g, ]:
                     p_key_press = e.key
 
@@ -139,7 +144,6 @@ def main():
                         p_staff_offset_x = 0
                         is_pause = False
                         is_clear = False
-
 
         # get cmd
         try:
@@ -174,9 +178,10 @@ def main():
             old_time = time.time()
             last_timestamp = pitch_timestamp
             time_pitchs = []
+            last_cmd = ""
 
         # playtrack
-        if cmd == "NOTE_ON":
+        if cmd == "NOTE_ON" or (p_is_metro_on and cmd == "METRO_ON"):
             # sleep after pitch off
             if last_cmd == "NOTE_OFF":
                 last_cmd = "NOTE_ON"
@@ -185,7 +190,7 @@ def main():
             # build chord
             if pitch not in time_pitchs:
                 time_pitchs += [pitch]
-        elif cmd == "NOTE_OFF":
+        elif cmd == "NOTE_OFF" or (p_is_metro_on and cmd == "METRO_OFF"):
             last_cmd = "NOTE_OFF"
             player.stop(devices, pitch, volecity, sounds)
 

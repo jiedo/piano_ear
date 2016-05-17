@@ -90,8 +90,6 @@ def load_midi(infile=None):
     all_midi_lines = []
     for i, track in enumerate(m.tracks):
         parse_midi_track(all_midi_lines, i, track)
-        print "bar1: ", g_bar_duration
-        print "bar2: ", g_bar_duration
 
     all_midi_lines.sort(key=lambda x: x[0])
     all_midi_lines.reverse()
@@ -131,6 +129,21 @@ def load_midi(infile=None):
             pitch_start_timestamp[pitch] = None
             if not pitch_is_on_in_timestamp.get(timestamp, {}).get(pitch, False):
                 new_all_midi_lines += [cmd_data + [2]]
+
+    max_timestamp = notes_in_all_staff[-1][1] + notes_in_all_staff[-1][2]
+    offset_bar = max_timestamp - (max_timestamp / g_bar_duration * g_bar_duration)
+
+    _bar_pos = offset_bar
+    while _bar_pos < max_timestamp:
+        interval = g_bar_duration/g_time_signature_n
+        for pos in range(0, g_bar_duration, interval):
+            pitch = 81
+            if pos == 0:
+                pitch = 87
+            new_all_midi_lines += [["METRO_ON", pitch, 60, _bar_pos+pos, 1]]
+            new_all_midi_lines += [["METRO_OFF", pitch, 60, _bar_pos+pos+interval/4, 2]]
+
+        _bar_pos += g_bar_duration
 
     new_all_midi_lines.sort(key=lambda x: x[-1])
     new_all_midi_lines.sort(key=lambda x: x[-2])
