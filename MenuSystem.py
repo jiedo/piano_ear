@@ -193,7 +193,7 @@ class MenuSystem(list,object):
 
     @property
     def select(self):
-        return [(b.index,b.choice if isinstance(b.choice,str) else b.choice.label) for b in self if b.index!=None]
+        return [(b.index,b.choice if (isinstance(b.choice,str) or isinstance(b.choice,unicode)) else b.choice.label) for b in self if b.index!=None]
 
     def update(self,ev):
 
@@ -204,7 +204,7 @@ class MenuSystem(list,object):
                 if boxindexlist:
                     self.boxindex = boxindexlist[-1]
                     box           = self[self.boxindex]
-                    if ev.type == MOUSEBUTTONUP and ev.button == 1 and isinstance(box.choice,str) and not box.exc_index and self[-1].index != None:
+                    if ev.type == MOUSEBUTTONUP and ev.button == 1 and (isinstance(box.choice,str) or isinstance(box.choice,unicode)) and not box.exc_index and self[-1].index != None:
                         self.choice = self.select
                         return self.clear()
                     if box.update(ev) or (len(self)-1 != boxindexlist[-1] and self[-1].index != None):
