@@ -503,30 +503,46 @@ def main(argv):
         print 'm.ticksPerQuarterNote', m.ticksPerQuarterNote
         interval = 500
         for i in m.tracks:
+            print "################################################################"
             timestamp = 0
-            #for e in i.
-            #print type(i) , dir(i.events[0])
+            count_set_temp = 0
+            count_change = 0
+
+            events_count = {}
+            # print type(i) , dir(i.events[0])
             for e in i.events:
+                if e.type not in events_count:
+                    events_count[e.type] = 0
+                events_count[e.type] = events_count[e.type] + 1
+
                 if e.type == 'SET_TEMPO':
+                    count_set_temp += 1
                     x,y,z = e.data
                     v = ord(x) * 256 * 256 + ord(y) * 256 + ord(z)
                     interval = v / 1000
-                    print e.type,(interval), 60000 / interval
+                    print e.type, interval, 60000 / interval
                     #continue
-                if e.type == 'TIME_SIGNATURE': # a 4,time
+                elif e.type == 'TIME_SIGNATURE': # a 4,time
                     #print len(e.data)
                     w,x,y,z = e.data
                     #v = ord(w)* (256**3) + ord(x)*(256**2) + ord(y)*256 + ord(z)
                     print '%-s \t' % e.type, ord(w),ord(x),ord(y),ord(z)
+                elif e.type == 'KEY_SIGNATURE': # a 4,time
+                    #print len(e.data)
+                    w, x = e.data
+                    #v = ord(w)* (256**3) + ord(x)*(256**2) + ord(y)*256 + ord(z)
+                    print '%-s \t' % e.type, ord(w), ord(x)
                 elif e.type == 'INSTRUMENT_NAME':
                     print '%-s \t' % e.type, e.data
 
-                elif e.type not in ['NOTE_ON','NOTE_OFF','DeltaTime']:
+                elif e.type in ['NOTE_ON','NOTE_OFF','DeltaTime']:
                     #print '%-s \t' % e.type, e.pitch, e.velocity, e.channel, (e.data,)
-                #print dir (e)
-                    pass
-                #continue
-                if e.type == 'NOTE_ON':
+                    #print dir (e)
+                    continue
+
+                elif e.type == "CONTROLLER_CHANGE":
+                    count_change += 1
+                elif e.type == 'NOTE_ON':
                     print '%-s \t' % e.type, e.pitch, e.velocity
                     pass
                 elif e.type == 'NOTE_OFF':
@@ -535,7 +551,12 @@ def main(argv):
                     if e.time > 0:
                         timestamp += e.time
                         print '%-s \t' % e.type, e.time
-        print 'm.ticksPerQuarterNote', m.ticksPerQuarterNote
+                else:
+                    print e.type, e.data
+
+            for k, v in events_count.items():
+                print k, v
+
         #print 'm.ticksPerSecond', m.ticksPerSecond
     else:
         m.open(outfile, "wb")

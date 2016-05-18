@@ -13,6 +13,17 @@ from pygame.locals import *
 __create_time__ = "Feb 26 2012"
 
 
+CHANNEL_COLORS = [
+    (0, 100, 100),
+    (100, 0, 100),
+    (100, 100, 0),
+    (0, 0, 100),
+    (0, 100, 0),
+    (0, 0, 100),
+    (0, 0, 0),
+]
+
+
 class Piano():
     piano_white_key_height = 140
     piano_white_key_width = 24
@@ -284,7 +295,8 @@ class Piano():
                          (current_pos+1, 0), 9)
 
 
-    def show_notes_staff(self, p_notes_in_all_staff, current_timestamp, middle, bar_duration, offset_x):
+    def show_notes_staff(self, enabled_channels, p_notes_in_all_staff,
+                         current_timestamp, middle, bar_duration, offset_x):
         self.screen.fill(self.color_backgroud, pygame.Rect(
             0, middle - 15 * self.piano_staff_width,
             self.screen_rect[0], 28 * self.piano_staff_width))
@@ -316,7 +328,11 @@ class Piano():
 
         # draw notes
         for note_data in p_notes_in_all_staff:
-            pitch, timestamp, duration = note_data
+            pitch, timestamp, duration, channel_idx = note_data
+            if not enabled_channels.get(channel_idx, False):
+                #raise Exception("channel not enabled")
+                continue
+
             note_pos = (timestamp) * self.screen_rect[0] / (self.timestamp_range*2) - offset_x
             if note_pos < 0:
                 continue
@@ -337,10 +353,11 @@ class Piano():
             if timestamp <= current_timestamp and timestamp + duration > current_timestamp:
                 self.screen.fill(self.color_key_down, note_rec)
             else:
+                note_color = CHANNEL_COLORS[channel_idx]
                 if is_black:
-                    pygame.draw.rect(self.screen, self.white, note_rec, 1)
+                    pygame.draw.rect(self.screen, note_color, note_rec, 1)
                 else:
-                    self.screen.fill(self.white, note_rec)
+                    self.screen.fill(note_color, note_rec)
 
 
     def show_keys_press(self, cmd, pitch):

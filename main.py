@@ -104,9 +104,16 @@ def main():
 
     p_midi_filename = "data.midi"
     p_midi_cmd_idx = 0
-    p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi(p_midi_filename)
-
     p_staff_offset_x = 0
+    p_all_midi_lines, p_notes_in_all_staff, p_enabled_channels = parse_midi.load_midi(p_midi_filename)
+
+    p_enabled_channels_switch = {}
+    for idx, ch in enumerate(p_enabled_channels):
+        sw = MenuSystem.Button(u'X', 29, 20)
+        sw.topleft = idx * 30, menu_bar.top + menu_bar.lineheigth
+        sw.set(type=MenuSystem.SWITCH, switchlabel="O")
+        sw.switch = True
+        p_enabled_channels_switch[ch] = sw
 
     time_pitchs = []
     last_timestamp = -1
@@ -115,8 +122,6 @@ def main():
     last_cmd = ""
 
     is_pause = True
-
-
     def get_menus_info_bar():
         gen_menu_data = []
         # gen_menu_data += ["Metro: %.1f" % player.g_metronome_volume]
@@ -126,17 +131,34 @@ def main():
 
         return [MenuSystem.Menu(m, ()) for m in gen_menu_data]
 
-
     while not p_done:
         # events
         for ev in pygame.event.get():
+            for ch in p_enabled_channels:
+                sw = p_enabled_channels_switch[ch]
+                if sw.update(ev):
+                    p_enabled_channels[ch] = sw.switch
+
             menu_bar_screen = menu_bar.update(ev)
             if menu_bar:
                 pygame.display.update(menu_bar_screen)
             if menu_bar.choice:
                 try:
-                    p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi(menu_bar.choice_label[-1])
+                    p_all_midi_lines, p_notes_in_all_staff, p_enabled_channels = parse_midi.load_midi(
+                        menu_bar.choice_label[-1])
                     p_midi_filename = menu_bar.choice_label[-1]
+
+                    for idx, ch in enumerate(p_enabled_channels):
+                        if ch in p_enabled_channels_switch:
+                            sw = p_enabled_channels_switch[ch]
+                        else:
+                            sw = MenuSystem.Button(u'X', 29, 20)
+                            p_enabled_channels_switch[ch] = sw
+
+                        sw.topleft = idx * 30, menu_bar.top + menu_bar.lineheigth
+                        sw.set(type=MenuSystem.SWITCH, switchlabel="O")
+                        sw.switch = True
+
                     print p_midi_filename
                     piano.draw_piano()
                     p_midi_cmd_idx = 0
@@ -171,7 +193,7 @@ def main():
                         timestamp_offset_x = (p_staff_offset_x + ev.pos[0]) * piano.timestamp_range * 2 / piano.screen_rect[0]
                         nearest_idx = 0
                         for idx, midi_line in enumerate(p_all_midi_lines):
-                            cmd, pitch, volecity_data, pitch_timestamp = midi_line[:4]
+                            cmd, pitch, volecity_data, channel_idx, pitch_timestamp = midi_line[:5]
                             if timestamp_offset_x > pitch_timestamp:
                                 nearest_idx = idx
                                 continue
@@ -238,16 +260,20 @@ def main():
             p_midi_cmd_idx += 1
             # print midi_line
 
-            cmd, pitch, volecity_data, pitch_timestamp = midi_line[:4]
+            cmd, pitch, volecity_data, channel_idx, pitch_timestamp = midi_line[:5]
             volecity = player.get_volecity(volecity_data)
             if pitch not in [0, 1] + player.g_grand_pitch_range:
                 raise Exception("pitch not in range")
+
+            if channel_idx >= 0 and not p_enabled_channels.get(channel_idx, False):
+                raise Exception("channel not enabled")
+
             if last_timestamp == -1:
                 # init last timestamp
                 last_timestamp = pitch_timestamp - 1
 
         except Exception, e:
-            piano.show_notes_staff(p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382,
+            piano.show_notes_staff(p_enabled_channels, p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382,
                                    parse_midi.g_bar_duration,
                                    p_staff_offset_x)
             pygame.display.update()
@@ -283,7 +309,7 @@ def main():
         elif cmd == "METRO_ON" and player.g_metronome_volume > 0:
             player.play(devices, pitch, volecity, sounds)
 
-        piano.show_notes_staff(p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382,
+        piano.show_notes_staff(p_enabled_channels, p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382,
                                parse_midi.g_bar_duration,
                                p_staff_offset_x)
 
