@@ -5,7 +5,7 @@
 """
 
 
-from piano import Piano
+from piano import Piano, CHANNEL_COLORS
 from pygame.locals import *
 
 import os
@@ -107,13 +107,15 @@ def main():
     p_staff_offset_x = 0
     p_all_midi_lines, p_notes_in_all_staff, p_enabled_channels = parse_midi.load_midi(p_midi_filename)
 
+    # draw channel pick
+    piano.screen.fill(piano.color_backgroud, pygame.Rect(0, menu_bar.top + menu_bar.lineheigth,
+                                                         piano.screen_rect[0], 20))
     p_enabled_channels_switch = {}
     for idx, ch in enumerate(p_enabled_channels):
-        sw = MenuSystem.Button(u'X', 29, 20)
-        sw.topleft = idx * 30, menu_bar.top + menu_bar.lineheigth
-        sw.set(type=MenuSystem.SWITCH, switchlabel="O")
-        sw.switch = True
+        sw = pygame.Rect(idx * 30, menu_bar.top + menu_bar.lineheigth, 29, 20)
         p_enabled_channels_switch[ch] = sw
+        note_color = CHANNEL_COLORS[ch]
+        piano.screen.fill(note_color, sw)
 
     time_pitchs = []
     last_timestamp = -1
@@ -134,11 +136,6 @@ def main():
     while not p_done:
         # events
         for ev in pygame.event.get():
-            for ch in p_enabled_channels:
-                sw = p_enabled_channels_switch[ch]
-                if sw.update(ev):
-                    p_enabled_channels[ch] = sw.switch
-
             menu_bar_screen = menu_bar.update(ev)
             if menu_bar:
                 pygame.display.update(menu_bar_screen)
@@ -147,19 +144,21 @@ def main():
                     p_all_midi_lines, p_notes_in_all_staff, p_enabled_channels = parse_midi.load_midi(
                         menu_bar.choice_label[-1])
                     p_midi_filename = menu_bar.choice_label[-1]
+                    print p_midi_filename
 
+                    # draw channel pick
+                    piano.screen.fill(piano.color_backgroud, pygame.Rect(0, menu_bar.top + menu_bar.lineheigth,
+                                                                         piano.screen_rect[0], 20))
                     for idx, ch in enumerate(p_enabled_channels):
                         if ch in p_enabled_channels_switch:
                             sw = p_enabled_channels_switch[ch]
                         else:
-                            sw = MenuSystem.Button(u'X', 29, 20)
+                            sw = pygame.Rect(idx * 30, menu_bar.top + menu_bar.lineheigth, 29, 20)
                             p_enabled_channels_switch[ch] = sw
 
-                        sw.topleft = idx * 30, menu_bar.top + menu_bar.lineheigth
-                        sw.set(type=MenuSystem.SWITCH, switchlabel="O")
-                        sw.switch = True
+                        note_color = CHANNEL_COLORS[ch]
+                        piano.screen.fill(note_color, sw)
 
-                    print p_midi_filename
                     piano.draw_piano()
                     p_midi_cmd_idx = 0
                     p_staff_offset_x = 0
@@ -175,6 +174,13 @@ def main():
             if ev.type == QUIT:
                 p_done = True
                 break
+
+            elif ev.type == MOUSEBUTTONUP:
+                if ev.pos[1] < 60: # progress bar can not click
+                    for ch in p_enabled_channels:
+                        sw = p_enabled_channels_switch[ch]
+                        if sw.collidepoint(ev.pos):
+                            p_enabled_channels[ch] = not p_enabled_channels[ch]
 
             elif ev.type == MOUSEBUTTONDOWN:
                 if ev.button == 5:
