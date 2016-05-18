@@ -263,17 +263,16 @@ def main():
             cmd, pitch, volecity_data, channel_idx, pitch_timestamp = midi_line[:5]
             volecity = player.get_volecity(volecity_data)
             if pitch not in [0, 1] + player.g_grand_pitch_range:
-                raise Exception("pitch not in range")
-
+                continue
             if channel_idx >= 0 and not p_enabled_channels.get(channel_idx, False):
-                raise Exception("channel not enabled")
+                continue
 
             if last_timestamp == -1:
                 # init last timestamp
                 last_timestamp = pitch_timestamp - 1
 
         except Exception, e:
-            piano.show_notes_staff(p_enabled_channels, p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382,
+            piano.show_notes_staff(p_enabled_channels, p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.414,
                                    parse_midi.g_bar_duration,
                                    p_staff_offset_x)
             pygame.display.update()
@@ -309,7 +308,7 @@ def main():
         elif cmd == "METRO_ON" and player.g_metronome_volume > 0:
             player.play(devices, pitch, volecity, sounds)
 
-        piano.show_notes_staff(p_enabled_channels, p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382,
+        piano.show_notes_staff(p_enabled_channels, p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.414,
                                parse_midi.g_bar_duration,
                                p_staff_offset_x)
 

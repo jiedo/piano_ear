@@ -12,17 +12,13 @@ from pygame.locals import *
 
 __create_time__ = "Feb 26 2012"
 
+CHANNEL_COLORS = []
 
-CHANNEL_COLORS = [
-    (0, 100, 100),
-    (100, 0, 100),
-    (100, 100, 0),
-    (0, 0, 100),
-    (0, 100, 0),
-    (0, 0, 100),
-    (0, 0, 0),
-]
-
+import random
+for i in range(123):
+    CHANNEL_COLORS += [(random.choice(range(100, 250, 20)),
+                        random.choice(range(100, 250, 20)),
+                        random.choice(range(100, 250, 20)))]
 
 class Piano():
     piano_white_key_height = 140
