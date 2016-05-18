@@ -31,7 +31,7 @@ elif _platform == "pygame":
 
 g_grand_pitch_range  = range(21,109)
 g_volecity_list = [48, 60, 71, 82, 91, 100, 115, 127]
-
+g_metronome_volume = 0
 
 def get_volecity(v):
     selectv = 48
@@ -87,12 +87,20 @@ def stop(devices, pitch, volecity, sounds):
 
 
 def play(devices, pitch, volecity, sounds):
+    global g_metronome_volume
+
     if _platform == "darwin":
         _sound = sounds[(pitch, volecity)]
         if _sound.isPlaying():
             _sound.stop()
 
-        _sound.setVolume_(0.7)
+        if g_metronome_volume < 0 or g_metronome_volume > 1:
+            g_metronome_volume = 0
+
+        if pitch < 2:
+            _sound.setVolume_(g_metronome_volume)
+        else:
+            _sound.setVolume_(0.7 * (1 - g_metronome_volume))
         is_ok = _sound.play()
         if not is_ok:
             print "playing is:", _sound.isPlaying()
@@ -102,8 +110,7 @@ def play(devices, pitch, volecity, sounds):
         _sound.stop()
 
         _sound.set_volume(0.7)
-        if pitch < 160:
-            _sound.play()
+        _sound.play()
 
     elif _platform in ["linux", "linux2"]:
         pcm = None
@@ -163,6 +170,13 @@ def load_sounds():
     #volecity_list = [100]
     sounds = {}
     sounds_keys = []
+
+    if _platform_file == "darwin":
+        sound_file = "data/beat.wav"
+        sounds[(0, 48)] = AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)
+        sound_file = "data/accent.wav"
+        sounds[(1, 48)] = AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)
+
     for g in g_grand_pitch_range:
         for v in g_volecity_list:
             if _platform_file == "darwin":

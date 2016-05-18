@@ -137,11 +137,11 @@ def load_midi(infile=None):
     while _bar_pos < max_timestamp:
         interval = g_bar_duration/g_time_signature_n
         for pos in range(0, g_bar_duration, interval):
-            pitch = 81
+            pitch = 1
             if pos == 0:
-                pitch = 87
-            new_all_midi_lines += [["METRO_ON", pitch, 60, _bar_pos+pos, 1]]
-            new_all_midi_lines += [["METRO_OFF", pitch, 60, _bar_pos+pos+interval/4, 2]]
+                pitch = 0
+            new_all_midi_lines += [["METRO_ON", pitch, 48, _bar_pos+pos, 1]]
+            # new_all_midi_lines += [["METRO_OFF", pitch, 48, _bar_pos+pos+interval/4, 2]]
 
         _bar_pos += g_bar_duration
 

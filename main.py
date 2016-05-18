@@ -110,8 +110,6 @@ def main():
     # print sounds_keys
     # player.test_sounds(sounds_keys, sounds)
 
-    p_is_metro_on = False
-
     p_midi_cmd_idx = 0
     p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi("data.midi")
 
@@ -169,6 +167,11 @@ def main():
                             if timestamp_offset_x > pitch_timestamp:
                                 nearest_idx = idx
                                 continue
+
+                            # debug
+                            for i in p_all_midi_lines[idx:idx+100]:
+                                print i
+
                             if timestamp_offset_x < pitch_timestamp:
                                 break
 
@@ -195,7 +198,10 @@ def main():
                     p_staff_offset_x += 30
 
                 elif ev.key == K_m:
-                    p_is_metro_on = not p_is_metro_on
+                    if (1.0 - player.g_metronome_volume) / 2 < 0.1:
+                        player.g_metronome_volume += 0.1
+                    else:
+                        player.g_metronome_volume += (1.0 - player.g_metronome_volume) / 2
 
                 elif ev.key in [K_a, K_b, K_c, K_d, K_e, K_f, K_g, ]:
                     p_key_press = ev.key
@@ -228,7 +234,7 @@ def main():
 
             cmd, pitch, volecity_data, pitch_timestamp = midi_line[:4]
             volecity = player.get_volecity(volecity_data)
-            if pitch not in player.g_grand_pitch_range:
+            if pitch not in [0, 1] + player.g_grand_pitch_range:
                 raise Exception("pitch not in range")
             if last_timestamp == -1:
                 # init last timestamp
@@ -254,7 +260,7 @@ def main():
             last_cmd = ""
 
         # playtrack
-        if cmd == "NOTE_ON" or (p_is_metro_on and cmd == "METRO_ON"):
+        if cmd == "NOTE_ON":
             # sleep after pitch off
             if last_cmd == "NOTE_OFF":
                 last_cmd = "NOTE_ON"
@@ -263,16 +269,21 @@ def main():
             # build chord
             if pitch not in time_pitchs:
                 time_pitchs += [pitch]
-        elif cmd == "NOTE_OFF" or (p_is_metro_on and cmd == "METRO_OFF"):
+
+        elif cmd == "NOTE_OFF":
             last_cmd = "NOTE_OFF"
             player.stop(devices, pitch, volecity, sounds)
+
+        elif cmd == "METRO_ON" and player.g_metronome_volume > 0:
+            player.play(devices, pitch, volecity, sounds)
 
         piano.show_notes_staff(p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.382,
                                parse_midi.g_bar_duration,
                                p_staff_offset_x)
 
         # show keys
-        piano.show_keys_press(cmd, pitch)
+        if pitch > 1:
+            piano.show_keys_press(cmd, pitch)
         #clock.tick(10)
 
 
