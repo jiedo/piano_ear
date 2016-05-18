@@ -105,13 +105,13 @@ class Menu(Rect,object):
                 x,y = ev.pos
                 if ev.button == 4:
                     if self.itemsrect.top < self.top:
-                        self.itemsrect.top += self.lineheight
+                        self.itemsrect.top += 20*self.lineheight
                         if self.itemsrect.top > self.top: self.itemsrect.top = self.top
                         self.index = (y-self.itemsrect.top) // self.lineheight
                         return True
                 if ev.button == 5:
                     if self.itemsrect.bottom > self.bottom:
-                        self.itemsrect.top -= self.lineheight
+                        self.itemsrect.top -= 20*self.lineheight
                         if self.itemsrect.bottom < self.bottom: self.itemsrect.bottom = self.bottom
                         self.index = (y-self.itemsrect.top) // self.lineheight
                         return True

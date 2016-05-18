@@ -179,10 +179,7 @@ def load_sounds():
 
     for g in g_grand_pitch_range:
         for v in g_volecity_list:
-            if _platform_file == "darwin":
-                sound_file = "/Users/jie/astudy/jiedo/Piano_Sounds/Grand-%03d-%03d.wav" % (g,v)
-            else:
-                sound_file = "/media/debian/home/jie/astudy/jiedo/ivory-yamaha-wav/Grand-%03d-%03d.wav" % (g,v)
+            sound_file = "data/Piano_Sounds/Grand-%03d-%03d.wav" % (g,v)
 
             if _platform == "darwin":
                 sounds[(g,v)] = AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)

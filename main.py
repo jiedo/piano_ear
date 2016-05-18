@@ -5,7 +5,7 @@
 """
 
 
-from piano import Piano, CHANNEL_COLORS
+from piano import Piano, CHANNEL_COLORS, TIMESTAMP_RANGE
 from pygame.locals import *
 
 import os
@@ -106,7 +106,7 @@ def main():
     p_midi_cmd_idx = 0
     p_staff_offset_x = 0
     p_all_midi_lines, p_notes_in_all_staff, p_enabled_channels = parse_midi.load_midi(p_midi_filename)
-
+    piano.timestamp_range = TIMESTAMP_RANGE * parse_midi.g_ticks_per_quarter / parse_midi.g_mseconds_per_quarter
     # draw channel pick
     piano.screen.fill(piano.color_backgroud, pygame.Rect(0, menu_bar.top + menu_bar.lineheigth,
                                                          piano.screen_rect[0], 20))
@@ -114,7 +114,7 @@ def main():
     for idx, ch in enumerate(p_enabled_channels):
         sw = pygame.Rect(idx * 30, menu_bar.top + menu_bar.lineheigth, 29, 20)
         p_enabled_channels_switch[ch] = sw
-        note_color = CHANNEL_COLORS[ch]
+        note_color = CHANNEL_COLORS[ch % len(CHANNEL_COLORS)]
         piano.screen.fill(note_color, sw)
 
     time_pitchs = []
@@ -138,11 +138,14 @@ def main():
         for ev in pygame.event.get():
             menu_bar_screen = menu_bar.update(ev)
             if menu_bar:
+                menu_bar_info.set(get_menus_info_bar())
                 pygame.display.update(menu_bar_screen)
+                menu_bar_info.update(ev)
             if menu_bar.choice:
                 try:
                     p_all_midi_lines, p_notes_in_all_staff, p_enabled_channels = parse_midi.load_midi(
                         menu_bar.choice_label[-1])
+                    piano.timestamp_range = TIMESTAMP_RANGE * parse_midi.g_ticks_per_quarter / parse_midi.g_mseconds_per_quarter
                     p_midi_filename = menu_bar.choice_label[-1]
                     print p_midi_filename
 
@@ -152,11 +155,12 @@ def main():
                     for idx, ch in enumerate(p_enabled_channels):
                         if ch in p_enabled_channels_switch:
                             sw = p_enabled_channels_switch[ch]
+                            sw.left = idx * 30
                         else:
                             sw = pygame.Rect(idx * 30, menu_bar.top + menu_bar.lineheigth, 29, 20)
                             p_enabled_channels_switch[ch] = sw
 
-                        note_color = CHANNEL_COLORS[ch]
+                        note_color = CHANNEL_COLORS[ch % len(CHANNEL_COLORS)]
                         piano.screen.fill(note_color, sw)
 
                     piano.draw_piano()
@@ -196,7 +200,7 @@ def main():
 
                 elif ev.button == 1:   # left
                     if ev.pos[1] > 60: # progress bar can not click
-                        timestamp_offset_x = (p_staff_offset_x + ev.pos[0]) * piano.timestamp_range * 2 / piano.screen_rect[0]
+                        timestamp_offset_x = (p_staff_offset_x + ev.pos[0]) * piano.timestamp_range / piano.screen_rect[0]
                         nearest_idx = 0
                         for idx, midi_line in enumerate(p_all_midi_lines):
                             cmd, pitch, volecity_data, channel_idx, pitch_timestamp = midi_line[:5]
@@ -224,12 +228,15 @@ def main():
                         p_staff_offset_x = 0
                 elif ev.key == K_RIGHT:
                     p_staff_offset_x += WINSIZE[0]
+
                 elif ev.key == K_DOWN:
-                    p_staff_offset_x -= 30
-                    if p_staff_offset_x < 0:
-                        p_staff_offset_x = 0
+                    parse_midi.g_mseconds_per_quarter = int(60000 / (60000 / parse_midi.g_mseconds_per_quarter - 10))
+                    if parse_midi.g_mseconds_per_quarter > 2000:
+                        parse_midi.g_mseconds_per_quarter = 2000
                 elif ev.key == K_UP:
-                    p_staff_offset_x += 30
+                    parse_midi.g_mseconds_per_quarter = int(60000 / (60000 / parse_midi.g_mseconds_per_quarter + 10))
+                    if parse_midi.g_mseconds_per_quarter <= 200:
+                        parse_midi.g_mseconds_per_quarter = 200
 
                 elif ev.key == K_m:
                     if (1.0 - player.g_metronome_volume) / 2 < 0.1:

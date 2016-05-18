@@ -12,13 +12,22 @@ from pygame.locals import *
 
 __create_time__ = "Feb 26 2012"
 
-CHANNEL_COLORS = []
-
-import random
-for i in range(123):
-    CHANNEL_COLORS += [(random.choice(range(100, 250, 20)),
-                        random.choice(range(100, 250, 20)),
-                        random.choice(range(100, 250, 20)))]
+TIMESTAMP_RANGE = 10000
+CHANNEL_COLORS = [(192,192,192),
+                  (240,240,240),
+	          (200,200,0),
+	          (0,200,0),
+                  (0,200,200),
+	          (200,0,200),
+	          (200,0,0),
+	          (0,0,200),
+	          (128,128,0),
+	          (0,128,128),
+	          (128,0,128),
+	          (128,0,0),
+	          (0,128,0),
+	          (0,0,128),
+]
 
 class Piano():
     piano_white_key_height = 140
@@ -47,7 +56,7 @@ class Piano():
         self.piano_staff_width = 16
 
         # time range of window width
-        self.timestamp_range = 4000
+        self.timestamp_range = 8000
 
         self.color_red_line = 130, 0, 0
         self.color_blackkey_edge = 90, 90, 90
@@ -272,9 +281,9 @@ class Piano():
 
 
     def show_progress_bar(self, max_timestamp, current_timestamp, offset_x):
-        max_pos = (max_timestamp) * self.screen_rect[0] / (self.timestamp_range*2)
+        max_pos = (max_timestamp) * self.screen_rect[0] / (self.timestamp_range)
 
-        current_pos = (current_timestamp) * self.screen_rect[0] / (self.timestamp_range*2) * self.screen_rect[0] / max_pos
+        current_pos = (current_timestamp) * self.screen_rect[0] / (self.timestamp_range) * self.screen_rect[0] / max_pos
         offset_pos = offset_x * self.screen_rect[0] / max_pos
         screen_width_pos = self.screen_rect[0] * self.screen_rect[0] / max_pos
 
@@ -308,7 +317,7 @@ class Piano():
         offset_bar = max_timestamp - (max_timestamp / bar_duration * bar_duration)
         _bar_pos = offset_bar
         while True:
-            bar_pos = _bar_pos * self.screen_rect[0] / (self.timestamp_range*2) - offset_x
+            bar_pos = _bar_pos * self.screen_rect[0] / (self.timestamp_range) - offset_x
             pygame.draw.line(self.screen, self.color_lines,
                              (bar_pos, middle - 5 * self.piano_staff_width),
                              (bar_pos, middle - self.piano_staff_width))
@@ -329,7 +338,7 @@ class Piano():
                 #raise Exception("channel not enabled")
                 continue
 
-            note_pos = (timestamp) * self.screen_rect[0] / (self.timestamp_range*2) - offset_x
+            note_pos = (timestamp) * self.screen_rect[0] / (self.timestamp_range) - offset_x
             if note_pos < 0:
                 continue
             if note_pos > self.screen_rect[0]:
@@ -342,14 +351,14 @@ class Piano():
 
             key_rec = self.whitekeys[pitch]
             note_top = middle - ((key_rec.left / self.piano_white_key_width) - 22.5) * self.piano_staff_width / 2
-            note_length =  duration * self.screen_rect[0] / (self.timestamp_range*2) - 1
+            note_length =  duration * self.screen_rect[0] / (self.timestamp_range) - 1
 
             note_rec = pygame.Rect(note_pos, note_top-1, note_length, self.piano_staff_width/2+3 )
 
             if timestamp <= current_timestamp and timestamp + duration > current_timestamp:
                 self.screen.fill(self.color_key_down, note_rec)
             else:
-                note_color = CHANNEL_COLORS[channel_idx]
+                note_color = CHANNEL_COLORS[channel_idx % len(CHANNEL_COLORS)]
                 if is_black:
                     pygame.draw.rect(self.screen, note_color, note_rec, 1)
                 else:
