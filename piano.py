@@ -14,7 +14,9 @@ __create_time__ = "Feb 26 2012"
 
 
 class Piano():
-    def __init__(self, screen, screen_rect):
+    piano_white_key_height = 140
+
+    def __init__(self, screen, screen_rect, top=None):
         self.screen = screen
         self.screen_rect = screen_rect
         self.notes = """A2 #A2 B2
@@ -52,6 +54,11 @@ class Piano():
         self.piano_white_key_height = 140
         self.piano_black_key_height = 74
         self.piano_black_key_width = 14
+
+        if top is None:
+            top = self.screen_rect[1] - self.piano_white_key_height
+
+        self.top = top
 
 
     def add_piano_keys(self, key_type, key_pitch,
@@ -216,9 +223,8 @@ class Piano():
 
     def draw_piano(self, top=None, left=0):
         if top is None:
-            top = self.screen_rect[1] - self.piano_white_key_height
+            top = self.top
 
-        self.top = top
         # self.screen.fill(self.color_backgroud)
 
         w, h = self.add_piano_keys('l', 0, top, left)
@@ -238,9 +244,9 @@ class Piano():
         pygame.display.update()
 
 
-    def draw_staff_lines(self, top=0, n=6, left=0):
+    def draw_staff_lines(self, middle=0, n=6, left=0):
         rightx = self.screen_rect[0]
-        middle_c_white_offset_y = top
+        middle_c_white_offset_y = middle
 
         for i in range(1, int(n*2)-1):
             downy = left + middle_c_white_offset_y + i * self.piano_staff_width
@@ -265,20 +271,20 @@ class Piano():
 
         pygame.draw.line(self.screen, self.color_backgroud,
                          (0, 0),
-                         (self.screen_rect[0], 0), 10)
+                         (self.screen_rect[0], 0), 9)
 
         pygame.draw.line(self.screen, self.white,
                          (offset_pos, 0),
                          (offset_pos + screen_width_pos, 0), 9)
 
         pygame.draw.line(self.screen, self.color_key_down,
-                         (current_pos-1, 1),
-                         (current_pos+1, 1), 9)
+                         (current_pos-1, 0),
+                         (current_pos+1, 0), 9)
 
 
-    def show_notes_staff(self, p_notes_in_all_staff, current_timestamp, top, bar_duration, offset_x):
+    def show_notes_staff(self, p_notes_in_all_staff, current_timestamp, middle, bar_duration, offset_x):
         self.screen.fill(self.color_backgroud, pygame.Rect(
-            0, 50,
+            0, middle - 15 * self.piano_staff_width,
             self.screen_rect[0], 28 * self.piano_staff_width))
 
         # show_progress_bar
@@ -286,7 +292,7 @@ class Piano():
         self.show_progress_bar(max_timestamp, current_timestamp, offset_x)
 
         # draw_staff_lines
-        self.draw_staff_lines(top=top)
+        self.draw_staff_lines(middle=middle)
 
         # draw bars
         offset_bar = max_timestamp - (max_timestamp / bar_duration * bar_duration)
@@ -294,11 +300,11 @@ class Piano():
         while True:
             bar_pos = _bar_pos * self.screen_rect[0] / (self.timestamp_range*2) - offset_x
             pygame.draw.line(self.screen, self.color_lines,
-                             (bar_pos, top - 5 * self.piano_staff_width),
-                             (bar_pos, top - self.piano_staff_width))
+                             (bar_pos, middle - 5 * self.piano_staff_width),
+                             (bar_pos, middle - self.piano_staff_width))
             pygame.draw.line(self.screen, self.color_lines,
-                             (bar_pos, top + self.piano_staff_width),
-                             (bar_pos, top + 5 * self.piano_staff_width))
+                             (bar_pos, middle + self.piano_staff_width),
+                             (bar_pos, middle + 5 * self.piano_staff_width))
 
             _bar_pos += bar_duration
             if bar_pos < 0:
@@ -322,7 +328,7 @@ class Piano():
                 pitch = pitch - 1
 
             key_rec = self.whitekeys[pitch]
-            note_top = top - ((key_rec.left / self.piano_white_key_width) - 22.5) * self.piano_staff_width / 2
+            note_top = middle - ((key_rec.left / self.piano_white_key_width) - 22.5) * self.piano_staff_width / 2
             note_length =  duration * self.screen_rect[0] / (self.timestamp_range*2) - 1
 
             note_rec = pygame.Rect(note_pos, note_top-1, note_length, self.piano_staff_width/2+3 )

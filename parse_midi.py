@@ -13,7 +13,6 @@ Optional command line argument:
 """
 
 import threading
-import Queue
 import os
 import os.path, sys
 import pygame.mixer
@@ -22,7 +21,6 @@ import pygame.time
 import midi
 
 
-g_queue = Queue.Queue()
 g_mseconds_per_quarter = 500
 g_ticks_per_quarter = 0
 g_time_signature_n = 0

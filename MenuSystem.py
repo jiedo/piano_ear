@@ -16,9 +16,7 @@ BORDER_RIGHT = Color(0x303030f0)
 BUTTON       = 1
 SWITCH       = 0
 FONT         = font.Font(font.match_font("SongTi TC") ,18)
-try:                   Arrow        = "»".decode('utf-8')
-except AttributeError: Arrow        = "»"
-
+Arrow        = "..."
 
 
 def init():

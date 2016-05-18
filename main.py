@@ -84,21 +84,13 @@ def main():
     MenuSystem.BGHIGHTLIGHT = Color(40,40,40,40)
     MenuSystem.BORDER_HL = Color(200,200,200,200)
 
-    menu_bar = MenuSystem.MenuBar(top=10)
+    menu_bar = MenuSystem.MenuBar()
     menus_in_bar = get_menu_data()
     menu_bar.set(menus_in_bar)
-
-    piano = Piano(screen, WINSIZE)
+    menu_bar_info = MenuSystem.MenuBar(top=WINSIZE[1] - menu_bar.lineheigth)
+    piano = Piano(screen, WINSIZE, top=menu_bar_info.top - Piano.piano_white_key_height - 2)
     piano.draw_piano()
     piano.draw_lines(WINSIZE[1] * 0.618)
-
-    # import os
-    # os.system("convert -density 100 -depth 24 -quality 99 data.pdf data.png")
-    # staff_img_png = pygame.image.load("data.png").convert_alpha()
-    # staff_img = staff_img_png
-    # staff_img_rect = staff_img.get_rect()
-    # print staff_img_rect
-    # piano.screen.blit(staff_img, staff_img_rect, (0, 0, WINSIZE[0], WINSIZE[1] * 0.618))
 
     clock = pygame.time.Clock()
 
@@ -110,18 +102,31 @@ def main():
     # print sounds_keys
     # player.test_sounds(sounds_keys, sounds)
 
+    p_midi_filename = "data.midi"
     p_midi_cmd_idx = 0
-    p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi("data.midi")
+    p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi(p_midi_filename)
 
     p_staff_offset_x = 0
 
     time_pitchs = []
     last_timestamp = -1
+    pitch_timestamp = 0
     old_time = 0
     last_cmd = ""
 
-    last_mouse_pos = None
-    is_pause = False
+    is_pause = True
+
+
+    def get_menus_info_bar():
+        gen_menu_data = []
+        # gen_menu_data += ["Metro: %.1f" % player.g_metronome_volume]
+        gen_menu_data += ["Time: %d/%d" % (parse_midi.g_time_signature_n, parse_midi.g_time_signature_note)]
+        gen_menu_data += ["Temp: %d" % (60000 / parse_midi.g_mseconds_per_quarter)]
+        gen_menu_data += ["Playing: %s" % p_midi_filename.split("/")[-1].replace(".midi", "").replace(".mid", "")]
+
+        return [MenuSystem.Menu(m, ()) for m in gen_menu_data]
+
+
     while not p_done:
         # events
         for ev in pygame.event.get():
@@ -130,16 +135,19 @@ def main():
                 pygame.display.update(menu_bar_screen)
             if menu_bar.choice:
                 try:
-                    midi_filename = menu_bar.choice_label[-1]
-                    print midi_filename
-
-                    p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi(midi_filename)
+                    p_all_midi_lines, p_notes_in_all_staff = parse_midi.load_midi(menu_bar.choice_label[-1])
+                    p_midi_filename = menu_bar.choice_label[-1]
+                    print p_midi_filename
                     piano.draw_piano()
                     p_midi_cmd_idx = 0
                     p_staff_offset_x = 0
                     is_pause = False
                 except Exception, e:
                     print "menu error:", e
+
+            if menu_bar.choice:
+                menu_bar_info.set(get_menus_info_bar())
+                menu_bar_info.update(ev)
 
             # print pygame.event.event_name(ev.type)
             if ev.type == QUIT:
@@ -158,7 +166,7 @@ def main():
                 elif ev.button == 3: # right
                     is_pause = not is_pause
 
-                elif ev.button == 1: # left
+                elif ev.button == 1:   # left
                     if ev.pos[1] > 60: # progress bar can not click
                         timestamp_offset_x = (p_staff_offset_x + ev.pos[0]) * piano.timestamp_range * 2 / piano.screen_rect[0]
                         nearest_idx = 0
@@ -167,11 +175,9 @@ def main():
                             if timestamp_offset_x > pitch_timestamp:
                                 nearest_idx = idx
                                 continue
-
-                            # debug
-                            for i in p_all_midi_lines[idx:idx+100]:
-                                print i
-
+                            # # debug
+                            # for i in p_all_midi_lines[idx:idx+100]:
+                            #     print i
                             if timestamp_offset_x < pitch_timestamp:
                                 break
 
