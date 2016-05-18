@@ -15,6 +15,10 @@ __create_time__ = "Feb 26 2012"
 
 class Piano():
     piano_white_key_height = 140
+    piano_white_key_width = 24
+    piano_white_key_height = 140
+    piano_black_key_height = 74
+    piano_black_key_width = 14
 
     def __init__(self, screen, screen_rect, top=None):
         self.screen = screen
@@ -32,7 +36,10 @@ class Piano():
         self.whitekeys = {}
         self.blackkeys = {}
 
+        # distance between lines
         self.piano_staff_width = 16
+
+        # time range of window width
         self.timestamp_range = 4000
 
         self.color_red_line = 130, 0, 0
@@ -49,11 +56,6 @@ class Piano():
         self.color_white_key_down = 100, 100, 200
         self.color_key_down = 0, 170, 200
         self.color_key_note = 140, 155, 100
-
-        self.piano_white_key_width = 24
-        self.piano_white_key_height = 140
-        self.piano_black_key_height = 74
-        self.piano_black_key_width = 14
 
         if top is None:
             top = self.screen_rect[1] - self.piano_white_key_height
@@ -315,7 +317,6 @@ class Piano():
         # draw notes
         for note_data in p_notes_in_all_staff:
             pitch, timestamp, duration = note_data
-
             note_pos = (timestamp) * self.screen_rect[0] / (self.timestamp_range*2) - offset_x
             if note_pos < 0:
                 continue

@@ -19,6 +19,7 @@ import pygame.mixer
 import pygame.time
 
 import midi
+from player import g_grand_pitch_range
 
 
 g_mseconds_per_quarter = 500
@@ -99,6 +100,9 @@ def load_midi(infile=None):
     pitch_start_timestamp = {}
     for cmd_data in all_midi_lines:
         cmd, pitch, _, timestamp = cmd_data
+        if pitch not in g_grand_pitch_range:
+            continue
+
         if cmd == "NOTE_ON":
             if timestamp not in pitch_is_on_in_timestamp:
                 pitch_is_on_in_timestamp[timestamp] = {}
