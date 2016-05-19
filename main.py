@@ -239,20 +239,20 @@ def main():
                     break
 
                 elif ev.key == K_LEFT:
-                    p_staff_offset_x -= WINSIZE[0]
-                    if p_staff_offset_x < 0:
-                        p_staff_offset_x = 0
-                elif ev.key == K_RIGHT:
-                    p_staff_offset_x += WINSIZE[0]
-
-                elif ev.key == K_DOWN:
                     parse_midi.g_mseconds_per_quarter = int(60000 / (60000 / parse_midi.g_mseconds_per_quarter - 10))
                     if parse_midi.g_mseconds_per_quarter > 2000:
                         parse_midi.g_mseconds_per_quarter = 2000
-                elif ev.key == K_UP:
+                elif ev.key == K_RIGHT:
                     parse_midi.g_mseconds_per_quarter = int(60000 / (60000 / parse_midi.g_mseconds_per_quarter + 10))
                     if parse_midi.g_mseconds_per_quarter <= 200:
                         parse_midi.g_mseconds_per_quarter = 200
+
+                elif ev.key == K_DOWN:
+                    p_staff_offset_x += WINSIZE[0]
+                elif ev.key == K_UP:
+                    p_staff_offset_x -= WINSIZE[0]
+                    if p_staff_offset_x < 0:
+                        p_staff_offset_x = 0
 
                 elif ev.key == K_m:
                     if (1.0 - player.g_metronome_volume) / 2 < 0.1:
