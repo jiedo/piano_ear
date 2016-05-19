@@ -22,7 +22,7 @@ import midi
 from player import g_grand_pitch_range
 
 
-METRO_CHANNEL_IDX = -1
+METRO_TRACK_IDX = -1
 METRO_VOLECITY = 48
 
 g_mseconds_per_quarter = 500
@@ -31,7 +31,7 @@ g_time_signature_n = 0
 g_time_signature_note = 0
 g_bar_duration = 0
 
-def parse_midi_track(track_cmds, all_channels, track_index, track):
+def parse_midi_track(track_cmds, all_enabled_tracks, track_idx, track):
     global g_mseconds_per_quarter, g_time_signature_n, g_time_signature_note, g_bar_duration
 
     if not g_bar_duration:
@@ -39,20 +39,22 @@ def parse_midi_track(track_cmds, all_channels, track_index, track):
         g_time_signature_note = 4
         g_bar_duration =  g_ticks_per_quarter * g_time_signature_n * 4 / g_time_signature_note
 
-    for idx, evt in enumerate(track.events):
+    for evt in track.events:
         if evt.type == 'NOTE_ON':
-            all_channels[track_index] = True
+            if track_idx not in all_enabled_tracks:
+                all_enabled_tracks[track_idx] = 0
+            all_enabled_tracks[track_idx] += 1
 
             if evt.velocity < 1:
-                # print track_index, "OFF", '%-s \t' % evt.type, evt.pitch, evt.velocity, evt.channel
-                track_cmds += [["NOTE_OFF", evt.pitch, evt.velocity, track_index, evt.time]]
+                # print track_idx, "OFF", '%-s \t' % evt.type, evt.pitch, evt.velocity, evt.channel
+                track_cmds += [["NOTE_OFF", evt.pitch, evt.velocity, track_idx, evt.time]]
             else:
-                # print track_index, "ON ", '%-s \t' % evt.type, evt.pitch, evt.velocity, evt.channel
-                track_cmds += [["NOTE_ON", evt.pitch, evt.velocity, track_index, evt.time]]
+                # print track_idx, "ON ", '%-s \t' % evt.type, evt.pitch, evt.velocity, evt.channel
+                track_cmds += [["NOTE_ON", evt.pitch, evt.velocity, track_idx, evt.time]]
 
         elif evt.type == 'NOTE_OFF':
-            # print track_index, "OFF", '%-s \t' % evt.type, evt.pitch, evt.velocity, evt.channel
-            track_cmds += [["NOTE_OFF", evt.pitch, evt.velocity, track_index, evt.time]]
+            # print track_idx, "OFF", '%-s \t' % evt.type, evt.pitch, evt.velocity, evt.channel
+            track_cmds += [["NOTE_OFF", evt.pitch, evt.velocity, track_idx, evt.time]]
 
         elif evt.type == 'TIME_SIGNATURE': # a 4,time
             # Time signature is expressed as 4 numbers. nn and dd represent the "numerator" and "denominator" of the signature as notated on sheet music. The denominator is a negative power of 2: 2 = quarter note, 3 = eighth, etc.
@@ -68,7 +70,7 @@ def parse_midi_track(track_cmds, all_channels, track_index, track):
         elif evt.type == 'DeltaTime':
             if evt.time > 0:
                 pass
-                #print track_index, '%-s \t' % evt.type, evt.time
+                #print track_idx, '%-s \t' % evt.type, evt.time
                 #pygamevt.time.wait(int(evt.time * g_mseconds_per_quarter / self.tpq ))
 
         elif evt.type == 'SET_TEMPO': # a 4,time
@@ -76,7 +78,7 @@ def parse_midi_track(track_cmds, all_channels, track_index, track):
             v = ord(x) * 256 * 256 + ord(y) * 256 + ord(z)
             g_mseconds_per_quarter = v / 1000
             print "%d bps", 60000 / g_mseconds_per_quarter
-            #print track_index, '%-s \t' % evt.type, evt.data
+            #print track_idx, '%-s \t' % evt.type, evt.data
 
 
 def load_midi(infile=None):
@@ -91,10 +93,17 @@ def load_midi(infile=None):
     g_ticks_per_quarter = m.ticksPerQuarterNote
     print 'ticksPerQuarterNote', g_ticks_per_quarter
 
-    all_channels = {}
+    all_enabled_tracks = {}
     all_midi_lines = []
     for i, track in enumerate(m.tracks):
-        parse_midi_track(all_midi_lines, all_channels, i, track)
+        parse_midi_track(all_midi_lines, all_enabled_tracks, i, track)
+
+    all_enabled_tracks_items = all_enabled_tracks.items()
+    all_enabled_tracks_items.sort(key=lambda x:x[1])
+    all_tracks_order_idx = {track_idx: idx for idx, (track_idx, _) in enumerate(
+        all_enabled_tracks_items)}
+
+    all_enabled_tracks = {track_idx: True for track_idx in all_enabled_tracks}
 
     all_midi_lines.sort(key=lambda x: x[0])
     all_midi_lines.reverse()
@@ -105,7 +114,7 @@ def load_midi(infile=None):
     notes_in_all_staff = []
     pitch_start_timestamp = {}
     for cmd_data in all_midi_lines:
-        cmd, pitch, _, idx, timestamp = cmd_data
+        cmd, pitch, _, track_idx, timestamp = cmd_data
         if pitch not in g_grand_pitch_range:
             continue
 
@@ -119,7 +128,7 @@ def load_midi(infile=None):
 
             start_timestamp = pitch_start_timestamp.get(pitch, None)
             if start_timestamp is not None:
-                notes_in_all_staff += [(pitch, start_timestamp, timestamp - start_timestamp, idx)]
+                notes_in_all_staff += [(pitch, start_timestamp, timestamp - start_timestamp, track_idx)]
                 # add missing OFF:
                 new_all_midi_lines += [["NOTE_OFF"] + cmd_data[1:] + [0]]
 
@@ -133,7 +142,7 @@ def load_midi(infile=None):
                 continue
             if timestamp - start_timestamp <= 0:
                 continue
-            notes_in_all_staff += [(pitch, start_timestamp, timestamp - start_timestamp, idx)]
+            notes_in_all_staff += [(pitch, start_timestamp, timestamp - start_timestamp, track_idx)]
             pitch_start_timestamp[pitch] = None
             if not pitch_is_on_in_timestamp.get(timestamp, {}).get(pitch, False):
                 new_all_midi_lines += [cmd_data + [2]]
@@ -148,7 +157,7 @@ def load_midi(infile=None):
             pitch = 1
             if pos == 0:
                 pitch = 0
-            new_all_midi_lines += [["METRO_ON", pitch, METRO_VOLECITY, METRO_CHANNEL_IDX, _bar_pos+pos, 1]]
+            new_all_midi_lines += [["METRO_ON", pitch, METRO_VOLECITY, METRO_TRACK_IDX, _bar_pos+pos, 1]]
             # new_all_midi_lines += [["METRO_OFF", pitch, 48, _bar_pos+pos+interval/4, 2]]
 
         _bar_pos += g_bar_duration
@@ -156,7 +165,7 @@ def load_midi(infile=None):
     new_all_midi_lines.sort(key=lambda x: x[-1])
     new_all_midi_lines.sort(key=lambda x: x[-2])
 
-    return new_all_midi_lines, notes_in_all_staff, all_channels
+    return new_all_midi_lines, notes_in_all_staff, all_enabled_tracks, all_tracks_order_idx
 
 
 if __name__ == '__main__':

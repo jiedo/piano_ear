@@ -5,7 +5,7 @@
 """
 
 
-from piano import Piano, CHANNEL_COLORS, TIMESTAMP_RANGE
+from piano import Piano, TRACK_COLORS, TIMESTAMP_RANGE
 from pygame.locals import *
 
 import os
@@ -105,16 +105,16 @@ def main():
     p_midi_filename = "data.midi"
     p_midi_cmd_idx = 0
     p_staff_offset_x = 0
-    p_all_midi_lines, p_notes_in_all_staff, p_enabled_channels = parse_midi.load_midi(p_midi_filename)
+    p_all_midi_lines, p_notes_in_all_staff, p_enabled_tracks, p_tracks_order_idx = parse_midi.load_midi(p_midi_filename)
     piano.timestamp_range = TIMESTAMP_RANGE * parse_midi.g_ticks_per_quarter / parse_midi.g_mseconds_per_quarter
-    # draw channel pick
+    # draw track pick
     piano.screen.fill(piano.color_backgroud, pygame.Rect(0, menu_bar.top + menu_bar.lineheigth,
                                                          piano.screen_rect[0], 20))
-    p_enabled_channels_switch = {}
-    for idx, ch in enumerate(p_enabled_channels):
+    p_enabled_tracks_switch = {}
+    for track_idx, idx in p_tracks_order_idx.items():
         sw = pygame.Rect(idx * 30, menu_bar.top + menu_bar.lineheigth, 29, 20)
-        p_enabled_channels_switch[ch] = sw
-        note_color = CHANNEL_COLORS[ch % len(CHANNEL_COLORS)]
+        p_enabled_tracks_switch[track_idx] = sw
+        note_color = TRACK_COLORS[idx % len(TRACK_COLORS)]
         piano.screen.fill(note_color, sw)
 
     time_pitchs = []
@@ -143,24 +143,24 @@ def main():
                 menu_bar_info.update(ev)
             if menu_bar.choice:
                 try:
-                    p_all_midi_lines, p_notes_in_all_staff, p_enabled_channels = parse_midi.load_midi(
+                    p_all_midi_lines, p_notes_in_all_staff, p_enabled_tracks, p_tracks_order_idx = parse_midi.load_midi(
                         menu_bar.choice_label[-1])
                     piano.timestamp_range = TIMESTAMP_RANGE * parse_midi.g_ticks_per_quarter / parse_midi.g_mseconds_per_quarter
                     p_midi_filename = menu_bar.choice_label[-1]
                     print p_midi_filename
 
-                    # draw channel pick
+                    # draw track pick
                     piano.screen.fill(piano.color_backgroud, pygame.Rect(0, menu_bar.top + menu_bar.lineheigth,
                                                                          piano.screen_rect[0], 20))
-                    for idx, ch in enumerate(p_enabled_channels):
-                        if ch in p_enabled_channels_switch:
-                            sw = p_enabled_channels_switch[ch]
+                    for track_idx, idx in p_tracks_order_idx.items():
+                        if track_idx in p_enabled_tracks_switch:
+                            sw = p_enabled_tracks_switch[track_idx]
                             sw.left = idx * 30
                         else:
                             sw = pygame.Rect(idx * 30, menu_bar.top + menu_bar.lineheigth, 29, 20)
-                            p_enabled_channels_switch[ch] = sw
+                            p_enabled_tracks_switch[track_idx] = sw
 
-                        note_color = CHANNEL_COLORS[ch % len(CHANNEL_COLORS)]
+                        note_color = TRACK_COLORS[idx % len(TRACK_COLORS)]
                         piano.screen.fill(note_color, sw)
 
                     piano.draw_piano()
@@ -181,10 +181,10 @@ def main():
 
             elif ev.type == MOUSEBUTTONUP:
                 if ev.pos[1] < 60: # progress bar can not click
-                    for ch in p_enabled_channels:
-                        sw = p_enabled_channels_switch[ch]
+                    for track_idx in p_enabled_tracks:
+                        sw = p_enabled_tracks_switch[track_idx]
                         if sw.collidepoint(ev.pos):
-                            p_enabled_channels[ch] = not p_enabled_channels[ch]
+                            p_enabled_tracks[track_idx] = not p_enabled_tracks[track_idx]
 
             elif ev.type == MOUSEBUTTONDOWN:
                 if ev.button == 5:
@@ -203,7 +203,7 @@ def main():
                         timestamp_offset_x = (p_staff_offset_x + ev.pos[0]) * piano.timestamp_range / piano.screen_rect[0]
                         nearest_idx = 0
                         for idx, midi_line in enumerate(p_all_midi_lines):
-                            cmd, pitch, volecity_data, channel_idx, pitch_timestamp = midi_line[:5]
+                            cmd, pitch, volecity_data, track_idx, pitch_timestamp = midi_line[:5]
                             if timestamp_offset_x > pitch_timestamp:
                                 nearest_idx = idx
                                 continue
@@ -273,11 +273,11 @@ def main():
             p_midi_cmd_idx += 1
             # print midi_line
 
-            cmd, pitch, volecity_data, channel_idx, pitch_timestamp = midi_line[:5]
+            cmd, pitch, volecity_data, track_idx, pitch_timestamp = midi_line[:5]
             volecity = player.get_volecity(volecity_data)
             if pitch not in [0, 1] + player.g_grand_pitch_range:
                 continue
-            if channel_idx >= 0 and not p_enabled_channels.get(channel_idx, False):
+            if track_idx >= 0 and not p_enabled_tracks.get(track_idx, False):
                 continue
 
             if last_timestamp == -1:
@@ -285,7 +285,7 @@ def main():
                 last_timestamp = pitch_timestamp - 1
 
         except Exception, e:
-            piano.show_notes_staff(p_enabled_channels, p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.414,
+            piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.414,
                                    parse_midi.g_bar_duration,
                                    p_staff_offset_x)
             pygame.display.update()
@@ -321,7 +321,7 @@ def main():
         elif cmd == "METRO_ON" and player.g_metronome_volume > 0:
             player.play(devices, pitch, volecity, sounds)
 
-        piano.show_notes_staff(p_enabled_channels, p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.414,
+        piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.414,
                                parse_midi.g_bar_duration,
                                p_staff_offset_x)
 

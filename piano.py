@@ -13,20 +13,20 @@ from pygame.locals import *
 __create_time__ = "Feb 26 2012"
 
 TIMESTAMP_RANGE = 10000
-CHANNEL_COLORS = [(192,192,192),
-                  (240,240,240),
-	          (200,200,0),
-	          (0,200,0),
-                  (0,200,200),
-	          (200,0,200),
-	          (200,0,0),
-	          (0,0,200),
-	          (128,128,0),
-	          (0,128,128),
-	          (128,0,128),
-	          (128,0,0),
-	          (0,128,0),
-	          (0,0,128),
+TRACK_COLORS = [(240,240,240),
+                (182,182,182),
+	        (200,200,0),
+	        (0,200,0),
+                (0,200,200),
+	        (200,0,200),
+	        (200,0,0),
+	        (0,0,200),
+	        (128,128,0),
+	        (0,128,128),
+	        (128,0,128),
+	        (128,0,0),
+	        (0,128,0),
+	        (0,0,128),
 ]
 
 class Piano():
@@ -300,7 +300,7 @@ class Piano():
                          (current_pos+1, 0), 9)
 
 
-    def show_notes_staff(self, enabled_channels, p_notes_in_all_staff,
+    def show_notes_staff(self, p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
                          current_timestamp, middle, bar_duration, offset_x):
         self.screen.fill(self.color_backgroud, pygame.Rect(
             0, middle - 15 * self.piano_staff_width,
@@ -333,9 +333,9 @@ class Piano():
 
         # draw notes
         for note_data in p_notes_in_all_staff:
-            pitch, timestamp, duration, channel_idx = note_data
-            if not enabled_channels.get(channel_idx, False):
-                #raise Exception("channel not enabled")
+            pitch, timestamp, duration, track_idx = note_data
+            if not p_enabled_tracks.get(track_idx, False):
+                #raise Exception("track not enabled")
                 continue
 
             note_pos = (timestamp) * self.screen_rect[0] / (self.timestamp_range) - offset_x
@@ -358,7 +358,7 @@ class Piano():
             if timestamp <= current_timestamp and timestamp + duration > current_timestamp:
                 self.screen.fill(self.color_key_down, note_rec)
             else:
-                note_color = CHANNEL_COLORS[channel_idx % len(CHANNEL_COLORS)]
+                note_color = TRACK_COLORS[p_tracks_order_idx[track_idx] % len(TRACK_COLORS)]
                 if is_black:
                     pygame.draw.rect(self.screen, note_color, note_rec, 1)
                 else:
