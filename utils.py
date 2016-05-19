@@ -38,7 +38,12 @@ def sync_play_time(pitch_timestamp, last_timestamp, old_time, sounds):
     print "midi need wait:", wait_time
 
     deta_time = time.time() - old_time
-    #print "after python:", int(deta_time*1000)
+    print "after python:", int(deta_time*1000)
+
+    if wait_time - deta_time*1000 > 80:
+        pygame.display.update()
+    deta_time = time.time() - old_time
+    print "after pygame:", int(deta_time*1000)
 
     for s_data in sounds.values():
         _sound1_status, _sound2_status, _sound1, _sound2 = s_data
@@ -48,7 +53,7 @@ def sync_play_time(pitch_timestamp, last_timestamp, old_time, sounds):
         elif _sound1_status == player.IS_PLAYING:
             if not _sound1.isPlaying():
                 _sound1.stop()
-            s_data[0] = player.IS_FREE
+                s_data[0] = player.IS_FREE
 
         if _sound2_status == player.IS_SET_STOP:
             _sound2.stop()
@@ -56,13 +61,10 @@ def sync_play_time(pitch_timestamp, last_timestamp, old_time, sounds):
         elif _sound2_status == player.IS_PLAYING:
             if not _sound2.isPlaying():
                 _sound2.stop()
-            s_data[1] = player.IS_FREE
+                s_data[1] = player.IS_FREE
 
-
-    if wait_time - deta_time*1000 > 80:
-        pygame.display.update()
     deta_time = time.time() - old_time
-    #print "after pygame:", int(deta_time*1000)
+    print "after stop:", int(deta_time*1000)
 
     if wait_time/1000.0 - deta_time > 0:
         time.sleep((wait_time/1000.0 - deta_time))
