@@ -84,7 +84,7 @@ def main():
     MenuSystem.BGHIGHTLIGHT = Color(40,40,40,40)
     MenuSystem.BORDER_HL = Color(200,200,200,200)
 
-    menu_bar = MenuSystem.MenuBar(top=10)
+    menu_bar = MenuSystem.MenuBar(top=5)
     menus_in_bar = get_menu_data()
     menu_bar.set(menus_in_bar)
     menu_bar_info = MenuSystem.MenuBar(top=WINSIZE[1] - menu_bar.lineheigth)
@@ -268,7 +268,7 @@ def main():
 
         if menu_bar:
             pygame.display.update()
-            clock.tick(7)
+            clock.tick(70)
             continue
 
         # get cmd
@@ -296,7 +296,7 @@ def main():
                                    parse_midi.g_bar_duration,
                                    p_staff_offset_x)
             pygame.display.update()
-            clock.tick(7)
+            clock.tick(70)
             continue
 
         # a chord
@@ -309,6 +309,10 @@ def main():
             last_timestamp = pitch_timestamp
             time_pitchs = []
             last_cmd = ""
+            piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp,
+                                   p_staff_top,
+                                   parse_midi.g_bar_duration,
+                                   p_staff_offset_x)
 
         # playtrack
         if cmd == "NOTE_ON":
@@ -327,11 +331,6 @@ def main():
 
         elif cmd == "METRO_ON" and player.g_metronome_volume > 0:
             player.play(devices, pitch, volecity, sounds)
-
-        piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp,
-                               p_staff_top,
-                               parse_midi.g_bar_duration,
-                               p_staff_offset_x)
 
         # show keys
         if pitch > 1:

@@ -307,7 +307,7 @@ class Piano():
 
         while True:
             if self.top - p_staff_top < 28 * self.piano_staff_width:
-                return
+                break
             middle = p_staff_top + 15 * self.piano_staff_width
             self._show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
                               current_timestamp, middle, bar_duration, offset_x)
