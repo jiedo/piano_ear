@@ -13,8 +13,8 @@ from pygame.locals import *
 __create_time__ = "Feb 26 2012"
 
 TIMESTAMP_RANGE = 10000
-TRACK_COLORS = [(240,240,240),
-                (182,182,182),
+TRACK_COLORS = [(250, 230, 200),
+                (240,240,240),
 	        (200,200,0),
 	        (0,200,0),
 	        (200,0,200),
@@ -299,7 +299,7 @@ class Piano():
 
 
     def show_notes_staff(self, p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
-                         current_timestamp, p_staff_top, bar_duration, offset_x):
+                         current_timestamp, p_staff_top, bar_duration, offset_x, is_pause):
         progress_offset_x = offset_x
         progress_multi_lines = 0
 
@@ -308,7 +308,7 @@ class Piano():
                 break
             middle = p_staff_top + 15 * self.piano_staff_width
             self._show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
-                              current_timestamp, middle, bar_duration, offset_x)
+                                   current_timestamp, middle, bar_duration, offset_x, is_pause)
 
             progress_multi_lines += 1
             offset_x += self.screen_rect[0]
@@ -320,7 +320,7 @@ class Piano():
 
 
     def _show_notes_staff(self, p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
-                         current_timestamp, middle, bar_duration, offset_x):
+                          current_timestamp, middle, bar_duration, offset_x, is_pause):
         self.screen.fill(self.color_backgroud, pygame.Rect(
             0, middle - 15 * self.piano_staff_width,
             self.screen_rect[0], 28 * self.piano_staff_width))
@@ -370,12 +370,14 @@ class Piano():
             note_top = middle - ((key_rec.left / self.piano_white_key_width) - 22.5) * self.piano_staff_width / 2
             note_length =  duration * self.screen_rect[0] / (self.timestamp_range) - 1
 
-            note_rec = pygame.Rect(note_pos, note_top-1, note_length, self.piano_staff_width/2+3 )
+            note_rec = pygame.Rect(note_pos, note_top, note_length, self.piano_staff_width/2+1)
 
             if timestamp <= current_timestamp and timestamp + duration > current_timestamp:
                 self.screen.fill(self.color_key_down, note_rec)
             else:
-                note_color = TRACK_COLORS[p_tracks_order_idx[track_idx] % len(TRACK_COLORS)]
+                note_color = TRACK_COLORS[0]
+                if is_pause:
+                    note_color = TRACK_COLORS[p_tracks_order_idx[track_idx] % len(TRACK_COLORS)]
                 if is_black:
                     pygame.draw.rect(self.screen, note_color, note_rec, 1)
                 else:

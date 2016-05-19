@@ -73,6 +73,8 @@ def init():
 def stop(devices, pitch, volecity, sounds):
     if _platform == "darwin":
         for volecity in g_volecity_list:
+            if (pitch, volecity) not in sounds:
+                continue
             for s_data in sounds[(pitch, volecity)]:
                 _sound_status, _sound = s_data
                 if _sound_status == IS_PLAYING:

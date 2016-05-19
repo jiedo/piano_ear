@@ -191,6 +191,13 @@ def main():
                         if sw.collidepoint(ev.pos):
                             p_enabled_tracks[track_idx] = not p_enabled_tracks[track_idx]
 
+                            idx = p_tracks_order_idx[track_idx]
+                            note_color = TRACK_COLORS[idx % len(TRACK_COLORS)]
+                            if p_enabled_tracks[track_idx]:
+                                piano.screen.fill(note_color, sw)
+                            else:
+                                piano.screen.fill(piano.color_lines, sw)
+
             elif ev.type == MOUSEBUTTONDOWN:
                 if ev.button == 5:
                     p_staff_offset_x += 40
@@ -297,7 +304,7 @@ def main():
             piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp,
                                    p_staff_top,
                                    parse_midi.g_bar_duration,
-                                   p_staff_offset_x)
+                                   p_staff_offset_x, is_pause)
             pygame.display.update()
             clock.tick(10)
             continue
@@ -314,7 +321,7 @@ def main():
             piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp,
                                    p_staff_top,
                                    parse_midi.g_bar_duration,
-                                   p_staff_offset_x)
+                                   p_staff_offset_x, is_pause)
 
         # playtrack
         if cmd == "NOTE_ON":
