@@ -100,6 +100,7 @@ def load_midi(infile=None):
 
     all_enabled_tracks_items = all_enabled_tracks.items()
     all_enabled_tracks_items.sort(key=lambda x:x[1])
+    all_enabled_tracks_items.reverse()
     all_tracks_order_idx = {track_idx: idx for idx, (track_idx, _) in enumerate(
         all_enabled_tracks_items)}
 

@@ -59,15 +59,19 @@ def sync_play_time(pitch_timestamp, last_timestamp, old_time, sounds):
                 s_data[0] = player.IS_FREE
         s_datas.rotate(-1)
 
+    deta_time = time.time() - old_time
+    # print "after stop:", int(deta_time*1000)
+
     if wait_time - deta_time*1000 > 80:
         pygame.display.update()
+    # print "after pygame:", int(deta_time*1000)
     deta_time = time.time() - old_time
-    #print "after pygame:", int(deta_time*1000)
 
     if wait_time/1000.0 - deta_time > 0:
         time.sleep((wait_time/1000.0 - deta_time))
-    deta_time = time.time() - old_time
-    #print "after all:", int(deta_time*1000)
+
+    # deta_time = time.time() - old_time
+    # print "after all:", int(deta_time*1000)
 
 
 def show_chord_keys_by_ascii(time_pitchs):

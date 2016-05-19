@@ -268,7 +268,7 @@ def main():
 
         if menu_bar:
             pygame.display.update()
-            clock.tick(70)
+            clock.tick(10)
             continue
 
         # get cmd
@@ -296,7 +296,7 @@ def main():
                                    parse_midi.g_bar_duration,
                                    p_staff_offset_x)
             pygame.display.update()
-            clock.tick(70)
+            clock.tick(10)
             continue
 
         # a chord

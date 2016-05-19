@@ -21,8 +21,8 @@ _platform_file = _platform
 IS_FREE = 0
 IS_SET_STOP = 1
 IS_PLAYING = 2
-SOUND_BUFFER_REPEAT = 10
-NON_FREE_LIMIT = SOUND_BUFFER_REPEAT - 4
+SOUND_BUFFER_REPEAT = 5
+NON_FREE_LIMIT = SOUND_BUFFER_REPEAT - 1
 
 if "pygame" in sys.argv:
     _platform = "pygame"
