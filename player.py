@@ -11,6 +11,7 @@ import pygame
 from pygame.locals import *
 from sys import platform as _platform
 import sys
+from collections import deque
 
 __create_time__ = "May 16 2016"
 
@@ -20,6 +21,8 @@ _platform_file = _platform
 IS_FREE = 0
 IS_SET_STOP = 1
 IS_PLAYING = 2
+SOUND_BUFFER_REPEAT = 10
+NON_FREE_LIMIT = SOUND_BUFFER_REPEAT - 4
 
 if "pygame" in sys.argv:
     _platform = "pygame"
@@ -70,14 +73,11 @@ def init():
 def stop(devices, pitch, volecity, sounds):
     if _platform == "darwin":
         for volecity in g_volecity_list:
-            s_data = sounds[(pitch, volecity)]
-            _sound1_status, _sound2_status, _sound1, _sound2 = s_data
-            if _sound1_status == IS_PLAYING:
-                _sound1.setVolume_(0.0)
-                s_data[0] = IS_SET_STOP
-            if _sound2_status == IS_PLAYING:
-                _sound2.setVolume_(0.0)
-                s_data[1] = IS_SET_STOP
+            for s_data in sounds[(pitch, volecity)]:
+                _sound_status, _sound = s_data
+                if _sound_status == IS_PLAYING:
+                    _sound.setVolume_(0.0)
+                    s_data[0] = IS_SET_STOP
 
     elif _platform == "pygame":
         for volecity in g_volecity_list:
@@ -99,31 +99,27 @@ def play(devices, pitch, volecity, sounds):
     global g_metronome_volume
 
     if _platform == "darwin":
-        s_data = sounds[(pitch, volecity)]
-        _sound1_status, _sound2_status, _sound1, _sound2 = s_data
-        if _sound1_status == IS_FREE:
-            _sound = _sound1
+        for s_data in sounds[(pitch, volecity)]:
+            _sound_status, _sound = s_data
+            if _sound_status != IS_FREE:
+                continue
             s_data[0] = IS_PLAYING
-        elif _sound2_status == IS_FREE:
-            _sound = _sound2
-            s_data[1] = IS_PLAYING
-        else:
-            print "sound idx error:", pitch, _sound1_status, _sound2_status
 
-        #_sound = sounds[(pitch, volecity)]
-        if _sound.isPlaying():
-            _sound.stop()
+            #_sound = sounds[(pitch, volecity)]
+            if _sound.isPlaying():
+                _sound.stop()
 
-        if g_metronome_volume < 0 or g_metronome_volume > 1:
-            g_metronome_volume = 0
+            if g_metronome_volume < 0 or g_metronome_volume > 1:
+                g_metronome_volume = 0
 
-        if pitch < 2:
-            _sound.setVolume_(g_metronome_volume)
-        else:
-            _sound.setVolume_(0.7 * (1 - g_metronome_volume))
-        is_ok = _sound.play()
-        if not is_ok:
-            print "playing is:", _sound.isPlaying()
+            if pitch < 2:
+                _sound.setVolume_(g_metronome_volume)
+            else:
+                _sound.setVolume_(0.7 * (1 - g_metronome_volume))
+            is_ok = _sound.play()
+            if not is_ok:
+                print "playing is:", _sound.isPlaying()
+            break
 
     elif _platform == "pygame":
         _sound = sounds[(pitch, volecity)]
@@ -193,24 +189,18 @@ def load_sounds():
 
     if _platform_file == "darwin":
         sound_file = "data/beat.wav"
-        sounds[(0, 48)] = [ IS_FREE, IS_FREE,  # free index
-            AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False),
-            AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False),
-        ]
+
+        sounds[(0, 48)] = deque([[IS_FREE, AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)] for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
+
         sound_file = "data/accent.wav"
-        sounds[(1, 48)] = [ IS_FREE, IS_FREE,
-            AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False),
-            AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False),
-            ]
+        sounds[(1, 48)] = deque([[IS_FREE, AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)] for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
 
     for g in g_grand_pitch_range:
         for v in g_volecity_list:
             sound_file = "data/Piano_Sounds/Grand-%03d-%03d.wav" % (g,v)
 
             if _platform == "darwin":
-                sounds[(g,v)] = [ IS_FREE, IS_FREE,
-                    AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False),
-                    AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False),]
+                sounds[(g,v)] = deque([[IS_FREE, AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)] for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
 
             elif _platform == "pygame":
                 sounds[(g,v)] = pygame.mixer.Sound(sound_file)
