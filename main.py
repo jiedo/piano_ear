@@ -99,11 +99,6 @@ def main():
     p_done = False
     p_key_press = None
 
-    devices = player.init()
-    sounds_keys, sounds = player.load_sounds()
-    # print sounds_keys
-    # player.test_sounds(sounds_keys, sounds)
-
     p_midi_filename = "data.midi"
     p_midi_cmd_idx = 0
     p_staff_offset_x = 0
@@ -118,6 +113,11 @@ def main():
         p_enabled_tracks_switch[track_idx] = sw
         note_color = TRACK_COLORS[idx % len(TRACK_COLORS)]
         piano.screen.fill(note_color, sw)
+
+    # load sounds
+    devices = player.init()
+    sounds = {}
+    player.load_sounds(p_all_midi_lines, sounds)
 
     time_pitchs = []
     last_timestamp = -1
@@ -164,6 +164,9 @@ def main():
 
                         note_color = TRACK_COLORS[idx % len(TRACK_COLORS)]
                         piano.screen.fill(note_color, sw)
+
+                    # finish missing sounds
+                    player.load_sounds(p_all_midi_lines, sounds)
 
                     piano.draw_piano()
                     p_midi_cmd_idx = 0
