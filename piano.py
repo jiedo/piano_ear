@@ -53,7 +53,7 @@ class Piano():
         self.blackkeys = {}
 
         # distance between lines
-        self.piano_staff_width = 16
+        self.piano_staff_width = 8
 
         # time range of window width
         self.timestamp_range = 8000
@@ -280,12 +280,12 @@ class Piano():
         self.draw_dash_line(self.color_middle_c_line, (left, y), (rightx, y), deta_h=15, vertical=False)
 
 
-    def show_progress_bar(self, max_timestamp, current_timestamp, offset_x):
+    def show_progress_bar(self, max_timestamp, current_timestamp, offset_x, multi_lines=1):
         max_pos = (max_timestamp) * self.screen_rect[0] / (self.timestamp_range)
 
         current_pos = (current_timestamp) * self.screen_rect[0] / (self.timestamp_range) * self.screen_rect[0] / max_pos
         offset_pos = offset_x * self.screen_rect[0] / max_pos
-        screen_width_pos = self.screen_rect[0] * self.screen_rect[0] / max_pos
+        screen_width_pos = multi_lines*self.screen_rect[0] * self.screen_rect[0] / max_pos
 
         pygame.draw.line(self.screen, self.color_backgroud,
                          (0, 0),
@@ -301,19 +301,37 @@ class Piano():
 
 
     def show_notes_staff(self, p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
+                         current_timestamp, p_staff_top, bar_duration, offset_x):
+        progress_offset_x = offset_x
+        progress_multi_lines = 0
+
+        while True:
+            if self.top - p_staff_top < 28 * self.piano_staff_width:
+                return
+            middle = p_staff_top + 15 * self.piano_staff_width
+            self._show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
+                              current_timestamp, middle, bar_duration, offset_x)
+
+            progress_multi_lines += 1
+            offset_x += self.screen_rect[0]
+            p_staff_top += 28 * self.piano_staff_width
+
+        # show_progress_bar
+        max_timestamp = p_notes_in_all_staff[-1][1] + p_notes_in_all_staff[-1][2]
+        self.show_progress_bar(max_timestamp, current_timestamp, progress_offset_x, progress_multi_lines)
+
+
+    def _show_notes_staff(self, p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
                          current_timestamp, middle, bar_duration, offset_x):
         self.screen.fill(self.color_backgroud, pygame.Rect(
             0, middle - 15 * self.piano_staff_width,
             self.screen_rect[0], 28 * self.piano_staff_width))
 
-        # show_progress_bar
-        max_timestamp = p_notes_in_all_staff[-1][1] + p_notes_in_all_staff[-1][2]
-        self.show_progress_bar(max_timestamp, current_timestamp, offset_x)
-
         # draw_staff_lines
         self.draw_staff_lines(middle=middle)
 
         # draw bars
+        max_timestamp = p_notes_in_all_staff[-1][1] + p_notes_in_all_staff[-1][2]
         offset_bar = max_timestamp - (max_timestamp / bar_duration * bar_duration)
         _bar_pos = offset_bar
         while True:
@@ -338,9 +356,10 @@ class Piano():
                 #raise Exception("track not enabled")
                 continue
 
-            note_pos = (timestamp) * self.screen_rect[0] / (self.timestamp_range) - offset_x
-            if note_pos < 0:
+            note_tail_pos = (timestamp + duration) * self.screen_rect[0] / (self.timestamp_range) - offset_x
+            if note_tail_pos < 0:
                 continue
+            note_pos = (timestamp) * self.screen_rect[0] / (self.timestamp_range) - offset_x
             if note_pos > self.screen_rect[0]:
                 break
 

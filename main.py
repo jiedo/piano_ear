@@ -84,13 +84,15 @@ def main():
     MenuSystem.BGHIGHTLIGHT = Color(40,40,40,40)
     MenuSystem.BORDER_HL = Color(200,200,200,200)
 
-    menu_bar = MenuSystem.MenuBar()
+    menu_bar = MenuSystem.MenuBar(top=10)
     menus_in_bar = get_menu_data()
     menu_bar.set(menus_in_bar)
     menu_bar_info = MenuSystem.MenuBar(top=WINSIZE[1] - menu_bar.lineheigth)
     piano = Piano(screen, WINSIZE, top=menu_bar_info.top - Piano.piano_white_key_height - 2)
     piano.draw_piano()
     piano.draw_lines(WINSIZE[1] * 0.618)
+
+    p_staff_top = menu_bar.top + menu_bar.lineheigth + 30
 
     clock = pygame.time.Clock()
 
@@ -200,7 +202,11 @@ def main():
 
                 elif ev.button == 1:   # left
                     if ev.pos[1] > 60: # progress bar can not click
-                        timestamp_offset_x = (p_staff_offset_x + ev.pos[0]) * piano.timestamp_range / piano.screen_rect[0]
+                        timestamp_offset_x = (
+                            p_staff_offset_x +
+                            ev.pos[0] +
+                            int((ev.pos[1] - p_staff_top) / (28 * piano.piano_staff_width)) * piano.screen_rect[0]
+                        ) * piano.timestamp_range / piano.screen_rect[0]
                         nearest_idx = 0
                         for idx, midi_line in enumerate(p_all_midi_lines):
                             cmd, pitch, volecity_data, track_idx, pitch_timestamp = midi_line[:5]
@@ -285,7 +291,8 @@ def main():
                 last_timestamp = pitch_timestamp - 1
 
         except Exception, e:
-            piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.414,
+            piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp,
+                                   p_staff_top,
                                    parse_midi.g_bar_duration,
                                    p_staff_offset_x)
             pygame.display.update()
@@ -321,7 +328,8 @@ def main():
         elif cmd == "METRO_ON" and player.g_metronome_volume > 0:
             player.play(devices, pitch, volecity, sounds)
 
-        piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp, WINSIZE[1] * 0.414,
+        piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp,
+                               p_staff_top,
                                parse_midi.g_bar_duration,
                                p_staff_offset_x)
 
