@@ -303,8 +303,7 @@ def main():
         if pitch_timestamp != last_timestamp:
             # print "bps:", utils.g_bps.get_bps_count()
             # utils.show_chord_keys_by_ascii(time_pitchs)
-
-            utils.sync_play_time(pitch_timestamp, last_timestamp, old_time)
+            utils.sync_play_time(pitch_timestamp, last_timestamp, old_time, sounds)
             old_time = time.time()
             last_timestamp = pitch_timestamp
             time_pitchs = []
@@ -319,7 +318,7 @@ def main():
             # sleep after pitch off
             if last_cmd == "NOTE_OFF":
                 last_cmd = "NOTE_ON"
-                time.sleep(0.02)
+                #time.sleep(0.02)
             player.play(devices, pitch, volecity, sounds)
             # build chord
             if pitch not in time_pitchs:

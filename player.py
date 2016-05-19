@@ -17,6 +17,9 @@ __create_time__ = "May 16 2016"
 
 _platform_file = _platform
 
+IS_FREE = 0
+IS_SET_STOP = 1
+IS_PLAYING = 2
 
 if "pygame" in sys.argv:
     _platform = "pygame"
@@ -67,8 +70,14 @@ def init():
 def stop(devices, pitch, volecity, sounds):
     if _platform == "darwin":
         for volecity in g_volecity_list:
-            _sound = sounds[(pitch, volecity)]
-            _sound.setVolume_(0.0)
+            s_data = sounds[(pitch, volecity)]
+            _sound1_status, _sound2_status, _sound1, _sound2 = s_data
+            if _sound1_status == IS_PLAYING:
+                _sound1.setVolume_(0.0)
+                s_data[0] = IS_SET_STOP
+            if _sound2_status == IS_PLAYING:
+                _sound2.setVolume_(0.0)
+                s_data[1] = IS_SET_STOP
 
     elif _platform == "pygame":
         for volecity in g_volecity_list:
@@ -90,7 +99,18 @@ def play(devices, pitch, volecity, sounds):
     global g_metronome_volume
 
     if _platform == "darwin":
-        _sound = sounds[(pitch, volecity)]
+        s_data = sounds[(pitch, volecity)]
+        _sound1_status, _sound2_status, _sound1, _sound2 = s_data
+        if _sound1_status == IS_FREE:
+            _sound = _sound1
+            s_data[0] = IS_PLAYING
+        elif _sound2_status == IS_FREE:
+            _sound = _sound2
+            s_data[1] = IS_PLAYING
+        else:
+            print "sound idx error:", pitch, _sound1_status, _sound2_status
+
+        #_sound = sounds[(pitch, volecity)]
         if _sound.isPlaying():
             _sound.stop()
 
@@ -173,16 +193,24 @@ def load_sounds():
 
     if _platform_file == "darwin":
         sound_file = "data/beat.wav"
-        sounds[(0, 48)] = AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)
+        sounds[(0, 48)] = [ IS_FREE, IS_FREE,  # free index
+            AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False),
+            AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False),
+        ]
         sound_file = "data/accent.wav"
-        sounds[(1, 48)] = AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)
+        sounds[(1, 48)] = [ IS_FREE, IS_FREE,
+            AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False),
+            AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False),
+            ]
 
     for g in g_grand_pitch_range:
         for v in g_volecity_list:
             sound_file = "data/Piano_Sounds/Grand-%03d-%03d.wav" % (g,v)
 
             if _platform == "darwin":
-                sounds[(g,v)] = AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)
+                sounds[(g,v)] = [ IS_FREE, IS_FREE,
+                    AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False),
+                    AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False),]
 
             elif _platform == "pygame":
                 sounds[(g,v)] = pygame.mixer.Sound(sound_file)

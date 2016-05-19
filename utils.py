@@ -9,6 +9,9 @@ import time
 import parse_midi
 
 
+import player
+
+
 class Bps():
     def __init__(self):
         self.bps_count = 0
@@ -28,7 +31,7 @@ class Bps():
 g_bps = Bps()
 
 
-def sync_play_time(pitch_timestamp, last_timestamp, old_time):
+def sync_play_time(pitch_timestamp, last_timestamp, old_time, sounds):
     # sleep
     deta_timestamp = pitch_timestamp - last_timestamp
     wait_time = int(deta_timestamp * parse_midi.g_mseconds_per_quarter / parse_midi.g_ticks_per_quarter )
@@ -36,6 +39,25 @@ def sync_play_time(pitch_timestamp, last_timestamp, old_time):
 
     deta_time = time.time() - old_time
     #print "after python:", int(deta_time*1000)
+
+    for s_data in sounds.values():
+        _sound1_status, _sound2_status, _sound1, _sound2 = s_data
+        if _sound1_status == player.IS_SET_STOP:
+            _sound1.stop()
+            s_data[0] = player.IS_FREE
+        elif _sound1_status == player.IS_PLAYING:
+            if not _sound1.isPlaying():
+                _sound1.stop()
+            s_data[0] = player.IS_FREE
+
+        if _sound2_status == player.IS_SET_STOP:
+            _sound2.stop()
+            s_data[1] = player.IS_FREE
+        elif _sound2_status == player.IS_PLAYING:
+            if not _sound2.isPlaying():
+                _sound2.stop()
+            s_data[1] = player.IS_FREE
+
 
     if wait_time - deta_time*1000 > 80:
         pygame.display.update()
