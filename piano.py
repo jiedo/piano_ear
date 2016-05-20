@@ -359,7 +359,7 @@ class Piano():
 
         # draw visual metronome
         interval = bar_duration / time_signature_n
-        _beat_pos = (current_timestamp + bar_duration - offset_bar) / interval * interval - bar_duration
+        _beat_pos = (current_timestamp + bar_duration - offset_bar) / interval * interval - bar_duration + offset_bar
         beat_pos = _beat_pos * self.screen_rect[0] / (self.timestamp_range) - offset_x
         beat_length =  interval * self.screen_rect[0] / (self.timestamp_range)
         beat_top = middle - 10 * self.piano_staff_width

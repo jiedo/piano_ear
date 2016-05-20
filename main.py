@@ -120,7 +120,7 @@ def main():
     player.load_sounds(p_all_midi_lines, sounds)
 
     time_pitchs = []
-    last_timestamp = -1
+    last_timestamp = 0
     pitch_timestamp = 0
     old_time = 0
     last_cmd = ""
@@ -171,19 +171,19 @@ def main():
                     piano.draw_piano()
                     p_midi_cmd_idx = 0
                     p_staff_offset_x = 0
-                    is_pause = False
+                    last_timestamp = 0
+                    is_pause = True
                 except Exception, e:
                     print "menu error:", e
 
+            # print pygame.event.event_name(ev.type)
             if menu_bar.choice:
                 menu_bar_info.set(get_menus_info_bar())
                 menu_bar_info.update(ev)
-
-            # print pygame.event.event_name(ev.type)
-            if ev.type == QUIT:
+                # if have choice, continue event
+            elif ev.type == QUIT:
                 p_done = True
                 break
-
             elif ev.type == MOUSEBUTTONUP:
                 if ev.pos[1] < 60: # progress bar can not click
                     for track_idx in p_enabled_tracks:
@@ -301,7 +301,7 @@ def main():
                 last_timestamp = pitch_timestamp - 1
 
         except Exception, e:
-            piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp,
+            piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, last_timestamp,
                                    p_staff_top,
                                    parse_midi.g_bar_duration,
                                    parse_midi.g_time_signature_n,
