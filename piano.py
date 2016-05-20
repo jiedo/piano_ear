@@ -299,7 +299,7 @@ class Piano():
 
 
     def show_notes_staff(self, p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
-                         current_timestamp, p_staff_top, bar_duration, offset_x, is_pause):
+                         current_timestamp, p_staff_top, bar_duration, time_signature_n, offset_x, is_pause):
         progress_offset_x = offset_x
         progress_multi_lines = 0
 
@@ -308,7 +308,7 @@ class Piano():
                 break
             middle = p_staff_top + 15 * self.piano_staff_width
             self._show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
-                                   current_timestamp, middle, bar_duration, offset_x, is_pause)
+                                   current_timestamp, middle, bar_duration, time_signature_n, offset_x, is_pause)
 
             progress_multi_lines += 1
             offset_x += self.screen_rect[0]
@@ -320,7 +320,7 @@ class Piano():
 
 
     def _show_notes_staff(self, p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
-                          current_timestamp, middle, bar_duration, offset_x, is_pause):
+                          current_timestamp, middle, bar_duration, time_signature_n, offset_x, is_pause):
         self.screen.fill(self.color_backgroud, pygame.Rect(
             0, middle - 15 * self.piano_staff_width,
             self.screen_rect[0], 28 * self.piano_staff_width))
@@ -328,9 +328,10 @@ class Piano():
         # draw_staff_lines
         self.draw_staff_lines(middle=middle)
 
-        # draw bars
         max_timestamp = p_notes_in_all_staff[-1][1] + p_notes_in_all_staff[-1][2]
         offset_bar = max_timestamp - (max_timestamp / bar_duration * bar_duration)
+
+        # draw bars
         _bar_pos = offset_bar
         while True:
             bar_pos = _bar_pos * self.screen_rect[0] / (self.timestamp_range) - offset_x
@@ -346,6 +347,16 @@ class Piano():
                 continue
             if bar_pos >= self.screen_rect[0]:
                 break
+
+        # draw visual metronome
+        interval = bar_duration / time_signature_n
+        _beat_pos = (current_timestamp + bar_duration - offset_bar) / interval * interval - bar_duration
+        beat_pos = _beat_pos * self.screen_rect[0] / (self.timestamp_range) - offset_x
+        beat_length =  interval * self.screen_rect[0] / (self.timestamp_range)
+        beat_top = middle - 5 * self.piano_staff_width
+        if beat_pos + beat_length > 0 and beat_pos < self.screen_rect[0]:
+            beat_rec = pygame.Rect(beat_pos, beat_top, beat_length, self.piano_staff_width*10)
+            pygame.draw.rect(self.screen, self.color_key_down, beat_rec, 1)
 
         # draw notes
         for note_data in p_notes_in_all_staff:

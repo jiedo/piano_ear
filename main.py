@@ -304,6 +304,7 @@ def main():
             piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp,
                                    p_staff_top,
                                    parse_midi.g_bar_duration,
+                                   parse_midi.g_time_signature_n,
                                    p_staff_offset_x, is_pause)
             pygame.display.update()
             clock.tick(10)
@@ -321,6 +322,7 @@ def main():
             piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp,
                                    p_staff_top,
                                    parse_midi.g_bar_duration,
+                                   parse_midi.g_time_signature_n,
                                    p_staff_offset_x, is_pause)
 
         # playtrack
