@@ -191,9 +191,8 @@ def test_sounds(sounds_keys, sounds):
             print sounds[key].stop()
 
 
-def load_sounds(p_all_midi_lines, sounds):
+def load_sounds(sound_keys, sounds):
     # load sounds needed
-
     if _platform_file == "darwin":
         sound_file = "data/beat.wav"
         if (0, 48) not in sounds:
@@ -203,9 +202,7 @@ def load_sounds(p_all_midi_lines, sounds):
         if (1, 48) not in sounds:
             sounds[(1, 48)] = deque([[IS_FREE, AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)] for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
 
-
-    for midi_line in p_all_midi_lines:
-        cmd, pitch, volecity_data, track_idx, pitch_timestamp = midi_line[:5]
+    for pitch, volecity_data in sound_keys:
         volecity = get_volecity(volecity_data)
         if (pitch, volecity) in sounds:
             continue
