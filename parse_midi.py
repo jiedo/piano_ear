@@ -151,6 +151,7 @@ def load_midi(infile=None):
     max_timestamp = notes_in_all_staff[-1][1] + notes_in_all_staff[-1][2]
     offset_bar = max_timestamp - (max_timestamp / g_bar_duration * g_bar_duration)
 
+    # add metronome
     _bar_pos = offset_bar
     while _bar_pos < max_timestamp:
         interval = g_bar_duration/g_time_signature_n
@@ -163,6 +164,7 @@ def load_midi(infile=None):
 
         _bar_pos += g_bar_duration
 
+    # sort by timestamp
     new_all_midi_lines.sort(key=lambda x: x[-1])
     new_all_midi_lines.sort(key=lambda x: x[-2])
 

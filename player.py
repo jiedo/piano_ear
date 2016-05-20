@@ -83,6 +83,8 @@ def stop(devices, pitch, volecity, sounds):
 
     elif _platform == "pygame":
         for volecity in g_volecity_list:
+            if (pitch, volecity) not in sounds:
+                continue
             _sound = sounds[(pitch, volecity)]
             _sound.set_volume(0.0)
 
