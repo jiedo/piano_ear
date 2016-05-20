@@ -407,7 +407,7 @@ class Piano():
 
         # retrun is beat_right_most
         beat_right_margin = self.screen_rect[0] - beat_pos
-        if beat_right_margin > 0 and beat_right_margin < beat_length:
+        if beat_right_margin >= 0 and beat_right_margin < beat_length:
             return True
         else:
             return False
