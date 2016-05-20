@@ -37,29 +37,7 @@ def sync_play_time(pitch_timestamp, last_timestamp, old_time, sounds):
     wait_time = int(deta_timestamp * parse_midi.g_mseconds_per_quarter / parse_midi.g_ticks_per_quarter )
     # print "midi need wait:", wait_time
 
-    if player._platform == "darwin":
-        for s_datas in sounds.values():
-            non_free_count = 0
-            for s_data in s_datas:
-                _sound_status, _ = s_data
-                if _sound_status == player.IS_FREE:
-                    break
-                non_free_count += 1
-
-            if non_free_count < player.NON_FREE_LIMIT:
-                continue
-
-            s_data = s_datas[0]
-            _sound_status, _sound = s_data
-            if _sound_status == player.IS_SET_STOP:
-                _sound.stop()
-                s_data[0] = player.IS_FREE
-            elif _sound_status == player.IS_PLAYING:
-                if not _sound.isPlaying():
-                    _sound.stop()
-                    s_data[0] = player.IS_FREE
-            s_datas.rotate(-1)
-
+    player.real_stop(sounds)
     deta_time = time.time() - old_time
     # print "after stop:", int(deta_time*1000)
 

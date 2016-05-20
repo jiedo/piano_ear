@@ -173,7 +173,7 @@ class PlayCenter():
                                     K_i, K_9,
                                     K_o,
                                     K_p, K_MINUS,
-                                    K_LEFTBRACKET, K_PLUS,
+                                    K_LEFTBRACKET, K_EQUALS,
                                     K_RIGHTBRACKET, K_BACKSPACE,
                                     K_BACKSLASH, ]
 
@@ -184,9 +184,6 @@ class PlayCenter():
                 if self.menu_bar:
                     self.menu_bar_info.set(self.get_menus_info_bar())
                     self.menu_bar_info.update(ev)
-                    pygame.display.update()
-                    clock.tick(10)
-                    continue
 
                 if self.menu_bar.choice:
                     try:
@@ -263,6 +260,7 @@ class PlayCenter():
                     # Stop
                     elif ev.key == K_s:
                         self.piano.draw_piano()
+                        self.staff_offset_x = 0
                         self.midi_cmd_idx = 0
                         self.last_timestamp = 0
                         self.is_pause = True
@@ -323,23 +321,31 @@ class PlayCenter():
                     #     self.last_timestamp = -1
 
                     # Set Pitch Offset
-                    elif ev.key in [K_z, K_x, K_c]:
-                        p_pitch_offset = {K_z: -24,  K_x: 0,  K_c: 24}[ev.key]
+                    elif ev.key in [K_v, K_b, K_n]:
+                        p_pitch_offset = {K_v: 36,  K_b: 60,  K_n: 84}[ev.key]
 
                     # Play Piano with keys
                     elif ev.key in p_pitch_of_key_on_keyboard:
                         pitch = p_pitch_offset + p_pitch_of_key_on_keyboard.index(ev.key)
                         player.stop(devices, pitch, 100, self.sounds)
+                        player.real_stop(self.sounds)
+                        player.load_sounds([(pitch, 100)], self.sounds)
                         cmd = "NOTE_OFF"
                         self.piano.show_keys_press(cmd, pitch)
 
                 elif ev.type == KEYDOWN:
                     if ev.key in p_pitch_of_key_on_keyboard:
                         pitch = p_pitch_offset + p_pitch_of_key_on_keyboard.index(ev.key)
-                        cmd = "NOTE_ON"
                         player.load_sounds([(pitch, 100)], self.sounds)
                         player.play(devices, pitch, 100, self.sounds)
+                        cmd = "NOTE_ON"
                         self.piano.show_keys_press(cmd, pitch)
+
+            # must out of events loop
+            if self.menu_bar:
+                pygame.display.update()
+                clock.tick(10)
+                continue
 
             # get cmd
             try:

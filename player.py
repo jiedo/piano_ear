@@ -70,6 +70,31 @@ def init():
     return devices
 
 
+def real_stop(sounds):
+    if _platform == "darwin":
+        for s_datas in sounds.values():
+            non_free_count = 0
+            for s_data in s_datas:
+                _sound_status, _ = s_data
+                if _sound_status == IS_FREE:
+                    break
+                non_free_count += 1
+
+            if non_free_count < NON_FREE_LIMIT:
+                continue
+
+            s_data = s_datas[0]
+            _sound_status, _sound = s_data
+            if _sound_status == IS_SET_STOP:
+                _sound.stop()
+                s_data[0] = IS_FREE
+            elif _sound_status == IS_PLAYING:
+                if not _sound.isPlaying():
+                    _sound.stop()
+                    s_data[0] = IS_FREE
+            s_datas.rotate(-1)
+
+
 def stop(devices, pitch, volecity, sounds):
     if _platform == "darwin":
         for volecity in g_volecity_list:
