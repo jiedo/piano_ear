@@ -353,9 +353,9 @@ class Piano():
         _beat_pos = (current_timestamp + bar_duration - offset_bar) / interval * interval - bar_duration
         beat_pos = _beat_pos * self.screen_rect[0] / (self.timestamp_range) - offset_x
         beat_length =  interval * self.screen_rect[0] / (self.timestamp_range)
-        beat_top = middle - 5 * self.piano_staff_width
+        beat_top = middle - 10 * self.piano_staff_width
         if beat_pos + beat_length > 0 and beat_pos < self.screen_rect[0]:
-            beat_rec = pygame.Rect(beat_pos, beat_top, beat_length, self.piano_staff_width*10)
+            beat_rec = pygame.Rect(beat_pos, beat_top, beat_length, self.piano_staff_width*20)
             pygame.draw.rect(self.screen, self.color_key_down, beat_rec, 1)
 
         # draw notes
