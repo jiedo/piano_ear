@@ -314,12 +314,7 @@ def main():
         if pitch_timestamp != last_timestamp:
             # print "bps:", utils.g_bps.get_bps_count()
             # utils.show_chord_keys_by_ascii(time_pitchs)
-            utils.sync_play_time(pitch_timestamp, last_timestamp, old_time, sounds)
-            old_time = time.time()
-            last_timestamp = pitch_timestamp
-            time_pitchs = []
-            last_cmd = ""
-            is_beat_at_right_most, current_play_percent, progress_multi_lines = piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp,
+            is_beat_at_right_most, current_play_percent, progress_multi_lines = piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, last_timestamp,
                                    p_staff_top,
                                    parse_midi.g_bar_duration,
                                    parse_midi.g_time_signature_n,
@@ -328,6 +323,12 @@ def main():
             # scroll page automatically
             if not is_pause and is_beat_at_right_most and current_play_percent > 60:
                 p_staff_offset_x += WINSIZE[0] * progress_multi_lines
+
+            utils.sync_play_time(pitch_timestamp, last_timestamp, old_time, sounds)
+            old_time = time.time()
+            last_timestamp = pitch_timestamp
+            time_pitchs = []
+            last_cmd = ""
 
         # playtrack
         if cmd == "NOTE_ON":
