@@ -102,7 +102,7 @@ class PlayCenter():
         if len(self.midi_filename_data) > 0:
             self.midi_filename = self.midi_filename_data[self.midi_filename_idx]
 
-        self.load_resource()
+        self.load_resource(self.midi_filename)
 
 
     def get_menus_info_bar(self):
@@ -115,15 +115,23 @@ class PlayCenter():
         return [MenuSystem.Menu(m, ()) for m in gen_menu_data]
 
 
-    def load_resource(self):
-        print self.midi_filename
+    def load_resource(self, midi_filename):
+        print midi_filename
+        try:
+            self.all_midi_lines, self.notes_in_all_staff, self.enabled_tracks, self.tracks_order_idx = parse_midi.load_midi(midi_filename)
+        except Exception, e:
+            print "midi error:", e
+            if midi_filename in self.midi_filename_data:
+                self.midi_filename_data.remove(midi_filename)
+            return
 
-        self.all_midi_lines, self.notes_in_all_staff, self.enabled_tracks, self.tracks_order_idx = parse_midi.load_midi(self.midi_filename)
         self.piano.timestamp_range = TIMESTAMP_RANGE * parse_midi.g_ticks_per_quarter / parse_midi.g_mseconds_per_quarter
-        if self.midi_filename in self.midi_filename_data:
-            self.midi_filename_idx = self.midi_filename_data.index(self.midi_filename)
+        if midi_filename in self.midi_filename_data:
+            self.midi_filename_idx = self.midi_filename_data.index(midi_filename)
+            self.midi_filename = midi_filename
         else:
             print "impossible: file not in menu list"
+            return
 
         # draw track pick
         self.piano.screen.fill(self.piano.color_backgroud,
@@ -187,8 +195,7 @@ class PlayCenter():
 
                 if self.menu_bar.choice:
                     try:
-                        self.midi_filename = self.menu_bar.choice_label[-1]
-                        self.load_resource()
+                        self.load_resource(self.menu_bar.choice_label[-1])
                     except Exception, e:
                         print "menu error:", e
 
@@ -295,15 +302,15 @@ class PlayCenter():
                         need_reload = False
                         if ev.key == K_COMMA:
                             if self.midi_filename_idx > 0:
-                                self.midi_filename_idx -= 1
+                                midi_filename_idx = self.midi_filename_idx-1
                                 need_reload = True
                         elif ev.key == K_PERIOD:
                             if self.midi_filename_idx+1 < len(self.midi_filename_data):
-                                self.midi_filename_idx += 1
+                                midi_filename_idx = self.midi_filename_idx + 1
                                 need_reload = True
                         if need_reload:
-                            self.midi_filename = self.midi_filename_data[self.midi_filename_idx]
-                            self.load_resource()
+                            midi_filename = self.midi_filename_data[midi_filename_idx]
+                            self.load_resource(midi_filename)
                             self.menu_bar_info.set(self.get_menus_info_bar())
                             self.menu_bar_info.update(ev)
 
