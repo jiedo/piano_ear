@@ -321,7 +321,7 @@ def main():
                                    p_staff_offset_x, is_pause)
 
             # scroll page automatically
-            if not is_pause and is_beat_at_right_most and current_play_percent > 60:
+            if not is_pause and is_beat_at_right_most and (current_play_percent == 0 or current_play_percent > (100 - 50 / progress_multi_lines)):
                 p_staff_offset_x += WINSIZE[0] * progress_multi_lines
 
             utils.sync_play_time(pitch_timestamp, last_timestamp, old_time, sounds)

@@ -298,7 +298,7 @@ class Piano():
                          (current_pos-1, 0),
                          (current_pos+1, 0), 9)
 
-        if current_pos > offset_pos and current_pos < offset_pos + screen_width_pos:
+        if current_pos > offset_pos and current_pos <= offset_pos + screen_width_pos:
             return (current_pos - offset_pos) * 100 / screen_width_pos
         else:
             return 0
