@@ -307,17 +307,16 @@ class Piano():
 
     def show_notes_staff(self, p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
                          current_timestamp, p_staff_top, bar_duration, time_signature_n, offset_x, is_pause):
-        # return progress percent in current screen
-
         progress_offset_x = offset_x
         progress_multi_lines = 0
 
+        is_beat_at_right_most = False
         while True:
             if self.top - p_staff_top < 28 * self.piano_staff_width:
                 break
             middle = p_staff_top + 15 * self.piano_staff_width
-            self._show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
-                                   current_timestamp, middle, bar_duration, time_signature_n, offset_x, is_pause)
+            is_beat_at_right_most = self._show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
+                                                           current_timestamp, middle, bar_duration, time_signature_n, offset_x, is_pause)
 
             progress_multi_lines += 1
             offset_x += self.screen_rect[0]
@@ -325,7 +324,8 @@ class Piano():
 
         # show_progress_bar
         max_timestamp = p_notes_in_all_staff[-1][1] + p_notes_in_all_staff[-1][2]
-        return self.show_progress_bar(max_timestamp, current_timestamp, progress_offset_x, progress_multi_lines)
+        percent_current_page  = self.show_progress_bar(max_timestamp, current_timestamp, progress_offset_x, progress_multi_lines)
+        return is_beat_at_right_most, percent_current_page, progress_multi_lines
 
 
     def _show_notes_staff(self, p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
@@ -402,6 +402,13 @@ class Piano():
                     pygame.draw.rect(self.screen, note_color, note_rec, 1)
                 else:
                     self.screen.fill(note_color, note_rec)
+
+        # retrun is beat_right_most
+        beat_right_margin = self.screen_rect[0] - beat_pos
+        if beat_right_margin > 0 and beat_right_margin < beat_length:
+            return True
+        else:
+            return False
 
 
     def show_keys_press(self, cmd, pitch):
