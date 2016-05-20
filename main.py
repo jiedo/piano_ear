@@ -301,7 +301,7 @@ def main():
                 last_timestamp = pitch_timestamp - 1
 
         except Exception, e:
-            piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp,
+            current_play_percent = piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp,
                                    p_staff_top,
                                    parse_midi.g_bar_duration,
                                    parse_midi.g_time_signature_n,
@@ -319,11 +319,15 @@ def main():
             last_timestamp = pitch_timestamp
             time_pitchs = []
             last_cmd = ""
-            piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp,
+            current_play_percent = piano.show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff, pitch_timestamp,
                                    p_staff_top,
                                    parse_midi.g_bar_duration,
                                    parse_midi.g_time_signature_n,
                                    p_staff_offset_x, is_pause)
+
+            # scroll page automatically
+            if not is_pause and current_play_percent > 90:
+                p_staff_offset_x += WINSIZE[0]
 
         # playtrack
         if cmd == "NOTE_ON":

@@ -285,21 +285,30 @@ class Piano():
         offset_pos = offset_x * self.screen_rect[0] / max_pos
         screen_width_pos = multi_lines*self.screen_rect[0] * self.screen_rect[0] / max_pos
 
+        # backgroud
         pygame.draw.line(self.screen, self.color_backgroud,
                          (0, 0),
                          (self.screen_rect[0], 0), 9)
-
+        # bar
         pygame.draw.line(self.screen, self.white,
                          (offset_pos, 0),
                          (offset_pos + screen_width_pos, 0), 9)
-
+        # point
         pygame.draw.line(self.screen, self.color_key_down,
                          (current_pos-1, 0),
                          (current_pos+1, 0), 9)
 
+        if current_pos > offset_pos and current_pos < offset_pos + screen_width_pos:
+            return (current_pos - offset_pos) * 100 / screen_width_pos
+        else:
+            return 0
+
+
 
     def show_notes_staff(self, p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
                          current_timestamp, p_staff_top, bar_duration, time_signature_n, offset_x, is_pause):
+        # return progress percent in current screen
+
         progress_offset_x = offset_x
         progress_multi_lines = 0
 
@@ -316,7 +325,7 @@ class Piano():
 
         # show_progress_bar
         max_timestamp = p_notes_in_all_staff[-1][1] + p_notes_in_all_staff[-1][2]
-        self.show_progress_bar(max_timestamp, current_timestamp, progress_offset_x, progress_multi_lines)
+        return self.show_progress_bar(max_timestamp, current_timestamp, progress_offset_x, progress_multi_lines)
 
 
     def _show_notes_staff(self, p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
