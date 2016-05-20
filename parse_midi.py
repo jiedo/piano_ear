@@ -77,7 +77,7 @@ def parse_midi_track(track_cmds, all_enabled_tracks, track_idx, track):
             x,y,z = evt.data
             v = ord(x) * 256 * 256 + ord(y) * 256 + ord(z)
             g_mseconds_per_quarter = v / 1000
-            print "%d bps", 60000 / g_mseconds_per_quarter
+            print "%d bps" % (60000 / g_mseconds_per_quarter)
             #print track_idx, '%-s \t' % evt.type, evt.data
 
 
