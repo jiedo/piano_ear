@@ -389,7 +389,9 @@ class Piano():
             key_rec = self.whitekeys[pitch]
             note_top = middle - ((key_rec.left / self.piano_white_key_width) - 22.5) * self.piano_staff_width / 2
             note_length =  duration * self.screen_rect[0] / (self.timestamp_range) - 1
-
+            if note_pos < 0:
+                note_length = note_length + note_pos
+                note_pos = 0
             note_rec = pygame.Rect(note_pos, note_top, note_length, self.piano_staff_width/2+1)
 
             if timestamp <= current_timestamp and timestamp + duration > current_timestamp:
