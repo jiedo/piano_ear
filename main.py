@@ -22,7 +22,7 @@ import MenuSystem
 
 def get_menu_data():
     menu_data_dict = {}
-    for (dir_full_path, dirnames, filenames) in os.walk("data"):
+    for (dir_full_path, dirnames, filenames) in os.walk("midi"):
         dir_full_path = dir_full_path.decode("utf8")
 
         dirpath = dir_full_path.split(u"/")[-1]
@@ -46,7 +46,7 @@ def get_menu_data():
             menu_data += [u"."]
 
     menu_data = []
-    for data in menu_data_dict["data"]:
+    for data in menu_data_dict["midi"]:
         if not isinstance(data, list):
             continue
 
