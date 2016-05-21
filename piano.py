@@ -34,6 +34,8 @@ class Piano():
     piano_black_key_height = 74
     piano_black_key_width = 14
 
+    gap_keyboad_staff = 60
+
     def __init__(self, screen, screen_rect, top=None):
         self.screen = screen
         self.screen_rect = screen_rect
@@ -53,7 +55,7 @@ class Piano():
         self.staff_total_lines = 28
         self.staff_total_lines_up = 15
         # distance between lines
-        self.piano_staff_line_width = 8
+        self.piano_staff_line_width = 4
 
         # time range of window width
         self.timestamp_range = 8000
@@ -314,7 +316,10 @@ class Piano():
         progress_multi_lines = 0
         is_beat_at_right_most = False
         while True:
-            if self.top - p_staff_top < self.staff_total_lines * self.piano_staff_line_width:
+            if self.top - p_staff_top - self.gap_keyboad_staff < self.staff_total_lines * self.piano_staff_line_width:
+                self.screen.fill(self.color_backgroud, pygame.Rect(
+                    0, p_staff_top,
+                    self.screen_rect[0], self.top - p_staff_top - self.gap_keyboad_staff))
                 break
             middle = p_staff_top + self.staff_total_lines_up * self.piano_staff_line_width
             is_beat_at_right_most, last_bar_pos = self._show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,

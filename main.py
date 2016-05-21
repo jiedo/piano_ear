@@ -411,7 +411,7 @@ class PlayCenter():
 
                 # scroll page automatically
                 if not self.is_pause and is_beat_at_right_most and (current_play_percent == 0 or current_play_percent > (100 - 50 / progress_multi_lines)):
-                    self.staff_offset_x += page_end_offset_x
+                    self.staff_offset_x = page_end_offset_x
 
                 utils.sync_play_time(pitch_timestamp, self.last_timestamp, old_time, self.sounds)
                 old_time = time.time()
