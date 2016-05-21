@@ -185,9 +185,11 @@ class PlayCenter():
                                     K_RIGHTBRACKET, K_BACKSPACE,
                                     K_BACKSLASH, ]
 
+        need_update_display = True
         while not p_done:
             # events
             for ev in pygame.event.get():
+                need_update_display = True
                 menu_bar_screen = self.menu_bar.update(ev)
                 if self.menu_bar:
                     self.menu_bar_info.set(self.get_menus_info_bar())
@@ -236,10 +238,17 @@ class PlayCenter():
 
                     elif ev.button == 1:   # left
                         if ev.pos[1] > 60: # progress bar can not click
+                            clicked_staff_number = int((ev.pos[1] - self.staff_top) / (self.piano.staff_total_lines * self.piano.piano_staff_line_width))
+                            wraped_staff_offset = 0
+                            if clicked_staff_number > 0:
+                                wraped_staff_offset += self.piano.first_line_last_bar_pos
+                            if clicked_staff_number > 1:
+                                wraped_staff_offset += self.piano.second_line_last_bar_pos * (clicked_staff_number-1)
+
                             timestamp_offset_x = (
                                 self.staff_offset_x +
                                 ev.pos[0] +
-                                int((ev.pos[1] - self.staff_top) / (self.piano.staff_total_lines * self.piano.piano_staff_line_width)) * self.piano.screen_rect[0]
+                                wraped_staff_offset
                             ) * self.piano.timestamp_range / self.piano.screen_rect[0]
                             nearest_idx = 0
                             for idx, midi_line in enumerate(self.all_midi_lines):
@@ -291,9 +300,9 @@ class PlayCenter():
 
                     #Page_Up/Page_Down
                     elif ev.key == K_DOWN:
-                        self.staff_offset_x += WINSIZE[0]
+                        self.staff_offset_x += self.piano.first_line_last_bar_pos
                     elif ev.key == K_UP:
-                        self.staff_offset_x -= WINSIZE[0]
+                        self.staff_offset_x -= self.piano.first_line_last_bar_pos
                         if self.staff_offset_x < 0:
                             self.staff_offset_x = 0
 
@@ -331,11 +340,18 @@ class PlayCenter():
                     elif ev.key in [K_v, K_b, K_n]:
                         p_pitch_offset = {K_v: 36,  K_b: 60,  K_n: 84}[ev.key]
 
+
+                    elif ev.key in [K_z]:
+                        if self.piano.piano_staff_line_width > 2:
+                            self.piano.piano_staff_line_width /= 2
+                    elif ev.key in [K_x]:
+                        if self.piano.piano_staff_line_width < 16:
+                            self.piano.piano_staff_line_width *= 2
+
                     # Play Piano with keys
                     elif ev.key in p_pitch_of_key_on_keyboard:
                         pitch = p_pitch_offset + p_pitch_of_key_on_keyboard.index(ev.key)
                         player.stop(devices, pitch, 100, self.sounds)
-                        player.real_stop(self.sounds)
                         player.load_sounds([(pitch, 100)], self.sounds)
                         cmd = "NOTE_OFF"
                         self.piano.show_keys_press(cmd, pitch)
@@ -349,7 +365,7 @@ class PlayCenter():
                         self.piano.show_keys_press(cmd, pitch)
 
             # must out of events loop
-            if self.menu_bar:
+            if self.menu_bar or self.menu_bar.choice:
                 pygame.display.update()
                 clock.tick(10)
                 continue
@@ -375,15 +391,19 @@ class PlayCenter():
                                        parse_midi.g_bar_duration,
                                        parse_midi.g_time_signature_n,
                                        self.staff_offset_x, self.is_pause)
-                pygame.display.update()
-                clock.tick(20)
+
+                has_stoped = player.real_stop(self.sounds)
+                if need_update_display:
+                    pygame.display.update()
+                    need_update_display = False
+                clock.tick(60)
                 continue
 
             # a chord
             if pitch_timestamp != self.last_timestamp:
                 # print "bps:", utils.g_bps.get_bps_count()
                 # utils.show_chord_keys_by_ascii(self.time_pitchs)
-                is_beat_at_right_most, current_play_percent, progress_multi_lines = self.piano.show_notes_staff(self.enabled_tracks, self.tracks_order_idx, self.notes_in_all_staff, self.last_timestamp,
+                is_beat_at_right_most, current_play_percent, progress_multi_lines, page_end_offset_x = self.piano.show_notes_staff(self.enabled_tracks, self.tracks_order_idx, self.notes_in_all_staff, self.last_timestamp,
                                        self.staff_top,
                                        parse_midi.g_bar_duration,
                                        parse_midi.g_time_signature_n,
@@ -391,7 +411,7 @@ class PlayCenter():
 
                 # scroll page automatically
                 if not self.is_pause and is_beat_at_right_most and (current_play_percent == 0 or current_play_percent > (100 - 50 / progress_multi_lines)):
-                    self.staff_offset_x += WINSIZE[0] * progress_multi_lines
+                    self.staff_offset_x += page_end_offset_x
 
                 utils.sync_play_time(pitch_timestamp, self.last_timestamp, old_time, self.sounds)
                 old_time = time.time()

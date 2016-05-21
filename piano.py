@@ -77,7 +77,8 @@ class Piano():
             top = self.screen_rect[1] - self.piano_white_key_height
 
         self.top = top
-
+        self.first_line_last_bar_pos = None
+        self.second_line_last_bar_pos = None
 
     def add_piano_keys(self, key_type, key_pitch,
                        top=0, left=0, w=1, h=1):
@@ -280,12 +281,12 @@ class Piano():
         self.draw_dash_line(self.color_middle_c_line, (left, y), (rightx, y), deta_h=15, vertical=False)
 
 
-    def show_progress_bar(self, max_timestamp, current_timestamp, offset_x, multi_lines=1):
+    def show_progress_bar(self, max_timestamp, current_timestamp, offset_x, screen_staff_total_length):
         max_pos = (max_timestamp) * self.screen_rect[0] / (self.timestamp_range)
 
         current_pos = (current_timestamp) * self.screen_rect[0] / (self.timestamp_range) * self.screen_rect[0] / max_pos
         offset_pos = offset_x * self.screen_rect[0] / max_pos
-        screen_width_pos = multi_lines*self.screen_rect[0] * self.screen_rect[0] / max_pos
+        screen_width_pos = screen_staff_total_length * self.screen_rect[0] / max_pos
 
         # backgroud
         pygame.draw.line(self.screen, self.color_backgroud,
@@ -311,23 +312,26 @@ class Piano():
                          current_timestamp, p_staff_top, bar_duration, time_signature_n, offset_x, is_pause):
         progress_offset_x = offset_x
         progress_multi_lines = 0
-
         is_beat_at_right_most = False
         while True:
             if self.top - p_staff_top < self.staff_total_lines * self.piano_staff_line_width:
                 break
             middle = p_staff_top + self.staff_total_lines_up * self.piano_staff_line_width
-            is_beat_at_right_most = self._show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
+            is_beat_at_right_most, last_bar_pos = self._show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
                                                            current_timestamp, middle, bar_duration, time_signature_n, offset_x, is_pause)
-
             progress_multi_lines += 1
-            offset_x += self.screen_rect[0]
+            if progress_multi_lines == 1:
+                self.first_line_last_bar_pos = last_bar_pos
+            elif progress_multi_lines == 2:
+                self.second_line_last_bar_pos = last_bar_pos
+
+            offset_x += last_bar_pos
             p_staff_top += self.staff_total_lines * self.piano_staff_line_width
 
         # show_progress_bar
         max_timestamp = p_notes_in_all_staff[-1][1] + p_notes_in_all_staff[-1][2]
-        percent_current_page  = self.show_progress_bar(max_timestamp, current_timestamp, progress_offset_x, progress_multi_lines)
-        return is_beat_at_right_most, percent_current_page, progress_multi_lines
+        percent_current_page  = self.show_progress_bar(max_timestamp, current_timestamp, progress_offset_x, offset_x - progress_offset_x)
+        return is_beat_at_right_most, percent_current_page, progress_multi_lines, offset_x
 
 
     def _show_notes_staff(self, p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
@@ -344,7 +348,10 @@ class Piano():
 
         # draw bars
         _bar_pos = offset_bar
+        bar_pos = 0
+        last_bar_pos = 0
         while True:
+            last_bar_pos = bar_pos
             bar_pos = _bar_pos * self.screen_rect[0] / (self.timestamp_range) - offset_x
             pygame.draw.line(self.screen, self.color_lines,
                              (bar_pos, middle - 5 * self.piano_staff_line_width),
@@ -358,6 +365,11 @@ class Piano():
                 continue
             if bar_pos >= self.screen_rect[0]:
                 break
+
+        pygame.draw.line(self.screen, self.color_key_down,
+                         (last_bar_pos+1, middle - 14 * self.piano_staff_line_width),
+                         (last_bar_pos+1, middle + 12 * self.piano_staff_line_width), 2)
+
 
         # draw visual metronome
         interval = bar_duration / time_signature_n
@@ -410,9 +422,10 @@ class Piano():
         # retrun is beat_right_most
         beat_right_margin = self.screen_rect[0] - beat_pos
         if beat_right_margin >= 0 and beat_right_margin < beat_length:
-            return True
+            is_beat_at_right_most = True
         else:
-            return False
+            is_beat_at_right_most = False
+        return is_beat_at_right_most, last_bar_pos
 
 
     def show_keys_press(self, cmd, pitch):

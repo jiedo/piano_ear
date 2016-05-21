@@ -11,6 +11,7 @@ import pygame
 from pygame.locals import *
 from sys import platform as _platform
 import sys
+import time
 from collections import deque
 
 __create_time__ = "May 16 2016"
@@ -22,7 +23,7 @@ IS_FREE = 0
 IS_SET_STOP = 1
 IS_PLAYING = 2
 SOUND_BUFFER_REPEAT = 5
-NON_FREE_LIMIT = SOUND_BUFFER_REPEAT - 1
+NON_FREE_LIMIT = 0.03
 
 if "pygame" in sys.argv:
     _platform = "pygame"
@@ -70,29 +71,47 @@ def init():
     return devices
 
 
-def real_stop(sounds):
+def real_stop(sounds, time_dead_line=None):
+    count_stop = 0
     if _platform == "darwin":
-        for s_datas in sounds.values():
-            non_free_count = 0
+        now_time = time.time()
+        s_datas_list = sounds.values()
+        s_datas_list_count = []
+        for s_datas in s_datas_list:
+            count_stop_inner = 0
             for s_data in s_datas:
-                _sound_status, _ = s_data
+                _sound_status, mute_time, _sound = s_data
                 if _sound_status == IS_FREE:
                     break
-                non_free_count += 1
+                if now_time - mute_time < NON_FREE_LIMIT:
+                    break
+                count_stop_inner += 1
+            s_datas_list_count += [(s_datas, count_stop_inner)]
 
-            if non_free_count < NON_FREE_LIMIT:
-                continue
-
-            s_data = s_datas[0]
-            _sound_status, _sound = s_data
-            if _sound_status == IS_SET_STOP:
-                _sound.stop()
-                s_data[0] = IS_FREE
-            elif _sound_status == IS_PLAYING:
-                if not _sound.isPlaying():
+        s_datas_list_count.sort(key=lambda x:x[1])
+        s_datas_list_count.reverse()
+        for s_datas, count_stop_inner in s_datas_list_count:
+            if time_dead_line is not None and time_dead_line < time.time() - now_time:
+                break
+            if count_stop_inner == 0:
+                break
+            count_stop += count_stop_inner
+            for idx, s_data in enumerate(s_datas):
+                if idx == count_stop_inner:
+                    break
+                _sound_status, mute_time, _sound = s_data
+                if _sound_status == IS_SET_STOP:
                     _sound.stop()
                     s_data[0] = IS_FREE
-            s_datas.rotate(-1)
+                elif _sound_status == IS_PLAYING:
+                    if not _sound.isPlaying():
+                        _sound.stop()
+                        s_data[0] = IS_FREE
+            s_datas.rotate(-count_stop_inner)
+
+        # if count_stop:
+        #     print count_stop, "avg stop time is:", (1000 * (time.time() - now_time)/count_stop)
+    return count_stop
 
 
 def stop(devices, pitch, volecity, sounds):
@@ -101,10 +120,11 @@ def stop(devices, pitch, volecity, sounds):
             if (pitch, volecity) not in sounds:
                 continue
             for s_data in sounds[(pitch, volecity)]:
-                _sound_status, _sound = s_data
+                _sound_status, _, _sound = s_data
                 if _sound_status == IS_PLAYING:
                     _sound.setVolume_(0.0)
                     s_data[0] = IS_SET_STOP
+                    s_data[1] = time.time()
 
     elif _platform == "pygame":
         for volecity in g_volecity_list:
@@ -130,13 +150,11 @@ def play(devices, pitch, volecity, sounds):
     if _platform == "darwin":
         found_free = False
         for s_data in sounds[(pitch, volecity)]:
-            _sound_status, _sound = s_data
+            _sound_status, _, _sound = s_data
             if _sound_status != IS_FREE:
                 continue
             found_free = True
             s_data[0] = IS_PLAYING
-
-            #_sound = sounds[(pitch, volecity)]
             if _sound.isPlaying():
                 _sound.stop()
 
@@ -221,11 +239,11 @@ def load_sounds(sound_keys, sounds):
     if _platform_file == "darwin":
         sound_file = "data/beat.wav"
         if (0, 48) not in sounds:
-            sounds[(0, 48)] = deque([[IS_FREE, AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)] for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
+            sounds[(0, 48)] = deque([[IS_FREE, 0, AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)] for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
 
         sound_file = "data/accent.wav"
         if (1, 48) not in sounds:
-            sounds[(1, 48)] = deque([[IS_FREE, AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)] for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
+            sounds[(1, 48)] = deque([[IS_FREE, 0, AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)] for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
 
     for pitch, volecity_data in sound_keys:
         volecity = get_volecity(volecity_data)
@@ -234,7 +252,7 @@ def load_sounds(sound_keys, sounds):
         sound_file = "data/Piano_Sounds/Grand-%03d-%03d.wav" % (pitch, volecity)
 
         if _platform == "darwin":
-            sounds[(pitch, volecity)] = deque([[IS_FREE, AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)] for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
+            sounds[(pitch, volecity)] = deque([[IS_FREE, 0, AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)] for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
 
         elif _platform == "pygame":
             sounds[(pitch, volecity)] = pygame.mixer.Sound(sound_file)

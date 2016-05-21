@@ -36,8 +36,9 @@ def sync_play_time(pitch_timestamp, last_timestamp, old_time, sounds):
     deta_timestamp = pitch_timestamp - last_timestamp
     wait_time = int(deta_timestamp * parse_midi.g_mseconds_per_quarter / parse_midi.g_ticks_per_quarter )
     # print "midi need wait:", wait_time
+    deta_time = time.time() - old_time
+    player.real_stop(sounds, wait_time/1000.0 - deta_time)
 
-    player.real_stop(sounds)
     deta_time = time.time() - old_time
     # print "after stop:", int(deta_time*1000)
 
