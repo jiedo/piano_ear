@@ -5,7 +5,7 @@
 """
 
 
-from piano import Piano, TRACK_COLORS, TIMESTAMP_RANGE
+from piano import Piano, TIMESTAMP_RANGE
 from pygame.locals import *
 
 import os
@@ -126,6 +126,8 @@ class PlayCenter():
             return
 
         self.piano.timestamp_range = TIMESTAMP_RANGE * parse_midi.g_ticks_per_quarter / parse_midi.g_mseconds_per_quarter
+        self.piano.timestamp_range = self.piano.timestamp_range * self.piano.piano_staff_line_width_base / self.piano.piano_staff_line_width
+
         if midi_filename in self.midi_filename_data:
             self.midi_filename_idx = self.midi_filename_data.index(midi_filename)
             self.midi_filename = midi_filename
@@ -145,7 +147,7 @@ class PlayCenter():
                 sw = pygame.Rect(idx * 30, self.menu_bar.top + self.menu_bar.lineheigth, 29, 20)
                 self.enabled_tracks_switch[track_idx] = sw
 
-            note_color = TRACK_COLORS[idx % len(TRACK_COLORS)]
+            note_color = self.piano.TRACK_COLORS[idx % len(self.piano.TRACK_COLORS)]
             self.piano.screen.fill(note_color, sw)
 
         # finish missing sounds
@@ -218,7 +220,7 @@ class PlayCenter():
                                 self.enabled_tracks[track_idx] = not self.enabled_tracks[track_idx]
 
                                 idx = self.tracks_order_idx[track_idx]
-                                note_color = TRACK_COLORS[idx % len(TRACK_COLORS)]
+                                note_color = self.piano.TRACK_COLORS[idx % len(self.piano.TRACK_COLORS)]
                                 if self.enabled_tracks[track_idx]:
                                     self.piano.screen.fill(note_color, sw)
                                 else:
@@ -291,12 +293,16 @@ class PlayCenter():
                             60000 / parse_midi.g_mseconds_per_quarter - 10))
                         if parse_midi.g_mseconds_per_quarter > 2000:
                             parse_midi.g_mseconds_per_quarter = 2000
+                        self.menu_bar_info.set(self.get_menus_info_bar())
+                        self.menu_bar_info.update(ev)
                     elif ev.key == K_RIGHT:
                         # Faster
                         parse_midi.g_mseconds_per_quarter = int(60000 / (
                             60000 / parse_midi.g_mseconds_per_quarter + 10))
                         if parse_midi.g_mseconds_per_quarter <= 200:
                             parse_midi.g_mseconds_per_quarter = 200
+                        self.menu_bar_info.set(self.get_menus_info_bar())
+                        self.menu_bar_info.update(ev)
 
                     #Page_Up/Page_Down
                     elif ev.key == K_DOWN:
@@ -344,9 +350,13 @@ class PlayCenter():
                     elif ev.key in [K_z]:
                         if self.piano.piano_staff_line_width > 2:
                             self.piano.piano_staff_line_width /= 2
+                        self.piano.timestamp_range = TIMESTAMP_RANGE * parse_midi.g_ticks_per_quarter / parse_midi.g_mseconds_per_quarter
+                        self.piano.timestamp_range = self.piano.timestamp_range * self.piano.piano_staff_line_width_base / self.piano.piano_staff_line_width
                     elif ev.key in [K_x]:
                         if self.piano.piano_staff_line_width < 16:
                             self.piano.piano_staff_line_width *= 2
+                        self.piano.timestamp_range = TIMESTAMP_RANGE * parse_midi.g_ticks_per_quarter / parse_midi.g_mseconds_per_quarter
+                        self.piano.timestamp_range = self.piano.timestamp_range * self.piano.piano_staff_line_width_base / self.piano.piano_staff_line_width
 
                     # Play Piano with keys
                     elif ev.key in p_pitch_of_key_on_keyboard:

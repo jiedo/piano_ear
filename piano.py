@@ -12,21 +12,7 @@ from pygame.locals import *
 
 __create_time__ = "Feb 26 2012"
 
-TIMESTAMP_RANGE = 10000
-TRACK_COLORS = [(250, 230, 200),
-                (240,240,240),
-	        (200,200,0),
-	        (0,200,0),
-	        (200,0,200),
-	        (200,0,0),
-	        (0,0,200),
-	        (128,128,0),
-	        (128,0,128),
-	        (128,0,0),
-	        (0,128,0),
-	        (0,0,128),
-]
-
+TIMESTAMP_RANGE = 8000
 class Piano():
     piano_white_key_height = 140
     piano_white_key_width = 24
@@ -35,6 +21,7 @@ class Piano():
     piano_black_key_width = 14
 
     gap_keyboad_staff = 60
+
 
     def __init__(self, screen, screen_rect, top=None):
         self.screen = screen
@@ -56,24 +43,10 @@ class Piano():
         self.staff_total_lines_up = 15
         # distance between lines
         self.piano_staff_line_width = 4
+        self.piano_staff_line_width_base = 8
 
         # time range of window width
         self.timestamp_range = 8000
-
-        self.color_red_line = 130, 0, 0
-        self.color_blackkey_edge = 90, 90, 90
-        self.color_lines = 180, 180, 180
-        self.color_add_lines = 100, 100, 100
-        self.color_middle_c_line = self.color_add_lines
-
-        self.white = 250, 230, 200
-        self.black = 0, 0, 0
-
-        self.color_backgroud = self.black
-        self.color_black_key_down = 100, 100, 200
-        self.color_white_key_down = 100, 100, 200
-        self.color_key_down = 0, 170, 200
-        self.color_key_note = 140, 155, 100
 
         if top is None:
             top = self.screen_rect[1] - self.piano_white_key_height
@@ -81,6 +54,71 @@ class Piano():
         self.top = top
         self.first_line_last_bar_pos = None
         self.second_line_last_bar_pos = None
+
+        #self.dark_night_theme()
+        self.day_light_theme()
+
+    def day_light_theme(self):
+        self.TRACK_COLORS = [(20, 10, 10),
+                             (130,130,130),
+	                     (128,128,0),
+	                     (128,0,128),
+	                     (128,0,0),
+	                     (0,128,0),
+	                     (0,0,128),
+	                     (200,200,0),
+	                     (0,200,0),
+	                     (200,0,200),
+	                     (200,0,0),
+	                     (0,0,200),        ]
+
+        self.white = 250, 230, 200
+        self.black = 0, 0, 0
+
+        self.color_backgroud = 250, 250, 250
+
+        self.color_red_line = 130, 0, 0
+
+        self.color_lines = 50, 50, 50
+        self.color_add_lines = 220, 220, 220
+        self.color_middle_c_line = self.color_add_lines
+
+        self.color_blackkey_edge = 90, 90, 90
+        self.color_black_key_down = 100, 100, 200
+        self.color_white_key_down = 100, 100, 200
+        self.color_key_down = 0, 170, 200
+        self.color_key_note = 140, 155, 100
+
+
+    def dark_night_theme(self):
+        self.TRACK_COLORS = [(250, 230, 200),
+                             (240,240,240),
+	                     (200,200,0),
+	                     (0,200,0),
+	                     (200,0,200),
+	                     (200,0,0),
+	                     (0,0,200),
+	                     (128,128,0),
+	                     (128,0,128),
+	                     (128,0,0),
+	                     (0,128,0),
+	                     (0,0,128),]
+
+        self.white = 250, 230, 200
+        self.black = 0, 0, 0
+        self.color_backgroud = self.black
+
+        self.color_red_line = 130, 0, 0
+        self.color_blackkey_edge = 90, 90, 90
+        self.color_lines = 180, 180, 180
+        self.color_add_lines = 100, 100, 100
+        self.color_middle_c_line = self.color_add_lines
+
+        self.color_black_key_down = 100, 100, 200
+        self.color_white_key_down = 100, 100, 200
+        self.color_key_down = 0, 170, 200
+        self.color_key_note = 140, 155, 100
+
 
     def add_piano_keys(self, key_type, key_pitch,
                        top=0, left=0, w=1, h=1):
@@ -360,20 +398,17 @@ class Piano():
             bar_pos = _bar_pos * self.screen_rect[0] / (self.timestamp_range) - offset_x
             pygame.draw.line(self.screen, self.color_lines,
                              (bar_pos, middle - 5 * self.piano_staff_line_width),
-                             (bar_pos, middle - self.piano_staff_line_width))
-            pygame.draw.line(self.screen, self.color_lines,
-                             (bar_pos, middle + self.piano_staff_line_width),
                              (bar_pos, middle + 5 * self.piano_staff_line_width))
-
             _bar_pos += bar_duration
             if bar_pos < 0:
                 continue
             if bar_pos >= self.screen_rect[0]:
                 break
 
+        # draw last bar
         pygame.draw.line(self.screen, self.color_key_down,
-                         (last_bar_pos+1, middle - 14 * self.piano_staff_line_width),
-                         (last_bar_pos+1, middle + 12 * self.piano_staff_line_width), 2)
+                         (last_bar_pos-1, middle - 14 * self.piano_staff_line_width),
+                         (last_bar_pos-1, middle + 12 * self.piano_staff_line_width), 2)
 
 
         # draw visual metronome
@@ -396,7 +431,7 @@ class Piano():
             note_tail_pos = (timestamp + duration) * self.screen_rect[0] / (self.timestamp_range) - offset_x
             if note_tail_pos < 0:
                 continue
-            note_pos = (timestamp) * self.screen_rect[0] / (self.timestamp_range) - offset_x
+            note_pos = (timestamp) * self.screen_rect[0] / (self.timestamp_range) - offset_x + self.piano_staff_line_width * 1.618 # slight right
             if note_pos > self.screen_rect[0]:
                 break
 
@@ -406,23 +441,60 @@ class Piano():
                 pitch = pitch - 1
 
             key_rec = self.whitekeys[pitch]
-            note_top = middle - ((key_rec.left / self.piano_white_key_width) - 22.5) * self.piano_staff_line_width / 2
-            note_length =  duration * self.screen_rect[0] / (self.timestamp_range) - 1
+
+            note_height = self.piano_staff_line_width # /2 + 1
+
+            key_index = (key_rec.left / self.piano_white_key_width) - 23
+            note_center_y = middle - key_index * self.piano_staff_line_width / 2
+
+            note_top = note_center_y - note_height / 2
+
+            #note_length =  duration * self.screen_rect[0] / (self.timestamp_range) - 1
+            note_length = note_height
+
             if note_pos < 0:
                 note_length = note_length + note_pos
                 note_pos = 0
-            note_rec = pygame.Rect(note_pos, note_top, note_length, self.piano_staff_line_width/2+1)
+
+            note_rec = pygame.Rect(note_pos, note_top, note_length, note_height)
+
+            note_color = self.TRACK_COLORS[0]
+            if is_pause:
+                note_color = self.TRACK_COLORS[p_tracks_order_idx[track_idx] % len(self.TRACK_COLORS)]
 
             if timestamp <= current_timestamp and timestamp + duration > current_timestamp:
-                self.screen.fill(self.color_key_down, note_rec)
+                note_color = self.color_key_down
+                self.screen.fill(note_color, note_rec)
             else:
-                note_color = TRACK_COLORS[0]
-                if is_pause:
-                    note_color = TRACK_COLORS[p_tracks_order_idx[track_idx] % len(TRACK_COLORS)]
                 if is_black:
                     pygame.draw.rect(self.screen, note_color, note_rec, 1)
                 else:
                     self.screen.fill(note_color, note_rec)
+
+            # draw flag
+            if key_index >= 0:
+                note_tail_pos = note_pos
+                if key_index >= 14:
+                    note_tail = note_center_y + (1 + key_index - 7) * self.piano_staff_line_width / 2
+                elif key_index >= 6:
+                    note_tail = note_center_y + 7 * self.piano_staff_line_width / 2
+                elif key_index < 6:
+                    note_tail = note_center_y - 7 * self.piano_staff_line_width / 2
+                    note_tail_pos = note_pos + note_length - 1
+            else:
+                note_tail_pos = note_pos + note_length - 1
+                if key_index >= -6:
+                    note_tail = note_center_y + 7 * self.piano_staff_line_width / 2
+                    note_tail_pos = note_pos
+                elif key_index > -14:
+                    note_tail = note_center_y - 7 * self.piano_staff_line_width / 2
+                elif key_index <= -14:
+                    note_tail = note_center_y - (1 - (key_index + 7)) * self.piano_staff_line_width / 2
+
+            pygame.draw.line(self.screen, note_color,
+                             (note_tail_pos, note_center_y),
+                             (note_tail_pos, note_tail))
+
 
         # retrun is beat_right_most
         beat_right_margin = self.screen_rect[0] - beat_pos
