@@ -420,7 +420,6 @@ class PlayCenter():
 
             # a chord
             if pitch_timestamp != self.last_timestamp:
-                self.play_one_timestamp_while_paused = False
                 # print "bps:", utils.g_bps.get_bps_count()
                 # utils.show_chord_keys_by_ascii(self.time_pitchs)
                 is_beat_at_right_most, current_play_percent, progress_multi_lines, page_end_offset_x = self.piano.show_notes_staff(self.enabled_tracks, self.tracks_order_idx, self.notes_in_all_staff, self.last_timestamp,
@@ -437,6 +436,9 @@ class PlayCenter():
                 old_time = time.time()
                 self.last_timestamp = pitch_timestamp
                 self.time_pitchs = []
+                if self.is_pause and self.play_one_timestamp_while_paused:
+                    self.play_one_timestamp_while_paused = False
+                    continue
 
             # playtrack
             if cmd == "NOTE_ON":
