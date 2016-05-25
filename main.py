@@ -158,6 +158,7 @@ class PlayCenter():
         self.staff_offset_x = 0
         self.last_timestamp = 0
         self.is_pause = True
+        self.play_one_timestamp_while_paused = False
 
 
     def main(self):
@@ -210,58 +211,62 @@ class PlayCenter():
                     p_done = True
                     break
                 elif ev.type == MOUSEBUTTONUP:
-                    if ev.pos[1] < 60:
-                        # progress bar can not click
-                        for track_idx in self.enabled_tracks:
-                            sw = self.enabled_tracks_switch[track_idx]
-                            if sw.collidepoint(ev.pos):
-                                self.enabled_tracks[track_idx] = not self.enabled_tracks[track_idx]
+                    if ev.pos[1] > 60:
+                        continue
+                    # enable/disable tracks
+                    for track_idx in self.enabled_tracks:
+                        sw = self.enabled_tracks_switch[track_idx]
+                        if sw.collidepoint(ev.pos):
+                            self.enabled_tracks[track_idx] = not self.enabled_tracks[track_idx]
 
-                                idx = self.tracks_order_idx[track_idx]
-                                note_color = TRACK_COLORS[idx % len(TRACK_COLORS)]
-                                if self.enabled_tracks[track_idx]:
-                                    self.piano.screen.fill(note_color, sw)
-                                else:
-                                    self.piano.screen.fill(self.piano.color_lines, sw)
+                            idx = self.tracks_order_idx[track_idx]
+                            note_color = TRACK_COLORS[idx % len(TRACK_COLORS)]
+                            if self.enabled_tracks[track_idx]:
+                                self.piano.screen.fill(note_color, sw)
+                            else:
+                                self.piano.screen.fill(self.piano.color_lines, sw)
 
                 elif ev.type == MOUSEBUTTONDOWN:
-                    if ev.button == 5:
+                    if ev.button == 5: # scroll down
                         self.staff_offset_x += 40
 
-                    elif ev.button == 4:
+                    elif ev.button == 4: # scroll up
                         self.staff_offset_x -= 40
                         if self.staff_offset_x < 0:
                             self.staff_offset_x = 0
 
-                    elif ev.button == 3: # right
+                    elif ev.button == 3: # right button
                         self.is_pause = not self.is_pause
 
-                    elif ev.button == 1:   # left
-                        if ev.pos[1] > 60: # progress bar can not click
-                            clicked_staff_number = int((ev.pos[1] - self.staff_top) / (self.piano.staff_total_lines * self.piano.piano_staff_line_width))
-                            wraped_staff_offset = 0
-                            if clicked_staff_number > 0:
-                                wraped_staff_offset += self.piano.first_line_last_bar_pos
-                            if clicked_staff_number > 1:
-                                wraped_staff_offset += self.piano.second_line_last_bar_pos * (clicked_staff_number-1)
+                    elif ev.button == 1:   # left button
+                        if ev.pos[1] < 60: # progress bar can not click
+                            continue
+                        clicked_staff_number = int((ev.pos[1] - self.staff_top) / (self.piano.staff_total_lines * self.piano.piano_staff_line_width))
+                        wraped_staff_offset = 0
+                        if clicked_staff_number > 0:
+                            wraped_staff_offset += self.piano.first_line_last_bar_pos
+                        if clicked_staff_number > 1:
+                            wraped_staff_offset += self.piano.second_line_last_bar_pos * (clicked_staff_number-1)
 
-                            timestamp_offset_x = (
-                                self.staff_offset_x +
-                                ev.pos[0] +
-                                wraped_staff_offset
-                            ) * self.piano.timestamp_range / self.piano.screen_rect[0]
-                            nearest_idx = 0
-                            for idx, midi_line in enumerate(self.all_midi_lines):
-                                cmd, pitch, volecity_data, track_idx, pitch_timestamp = midi_line[:5]
-                                if timestamp_offset_x > pitch_timestamp:
-                                    nearest_idx = idx
-                                    continue
-                                if timestamp_offset_x < pitch_timestamp:
-                                    break
+                        timestamp_offset_x = (
+                            self.staff_offset_x +
+                            ev.pos[0] +
+                            wraped_staff_offset
+                        ) * self.piano.timestamp_range / self.piano.screen_rect[0]
 
-                            self.piano.draw_piano()
-                            self.midi_cmd_idx = nearest_idx
-                            self.last_timestamp = -1
+                        for idx, midi_line in enumerate(self.all_midi_lines):
+                            cmd, pitch, volecity_data, track_idx, pitch_timestamp = midi_line[:5]
+                            if timestamp_offset_x > pitch_timestamp:
+                                # start play from next note
+                                self.midi_cmd_idx = idx + 1
+                                self.last_timestamp = pitch_timestamp
+                                continue
+                            if timestamp_offset_x < pitch_timestamp:
+                                break
+
+                        self.play_one_timestamp_while_paused = True
+                        self.piano.draw_piano()
+
 
                 elif ev.type == KEYUP:
                     if ev.key == K_ESCAPE:
@@ -372,7 +377,7 @@ class PlayCenter():
 
             # get cmd
             try:
-                if self.is_pause or self.midi_cmd_idx >= len(self.all_midi_lines):
+                if (self.is_pause and not self.play_one_timestamp_while_paused) or self.midi_cmd_idx >= len(self.all_midi_lines):
                     raise Exception("paused")
                 midi_line = self.all_midi_lines[self.midi_cmd_idx]
                 self.midi_cmd_idx += 1
@@ -401,6 +406,7 @@ class PlayCenter():
 
             # a chord
             if pitch_timestamp != self.last_timestamp:
+                self.play_one_timestamp_while_paused = False
                 # print "bps:", utils.g_bps.get_bps_count()
                 # utils.show_chord_keys_by_ascii(self.time_pitchs)
                 is_beat_at_right_most, current_play_percent, progress_multi_lines, page_end_offset_x = self.piano.show_notes_staff(self.enabled_tracks, self.tracks_order_idx, self.notes_in_all_staff, self.last_timestamp,
