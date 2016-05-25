@@ -256,14 +256,14 @@ class PlayCenter():
                             wraped_staff_offset
                         ) * self.piano.timestamp_range / self.piano.screen_rect[0]
 
+                        self.last_timestamp = -1
                         for idx, midi_line in enumerate(self.all_midi_lines):
                             cmd, pitch, volecity_data, track_idx, pitch_timestamp = midi_line[:5]
                             if timestamp_offset_x > pitch_timestamp:
-                                # start play from next note
-                                self.midi_cmd_idx = idx + 1
-                                self.last_timestamp = pitch_timestamp
-                                continue
-                            if timestamp_offset_x < pitch_timestamp:
+                                if self.last_timestamp != pitch_timestamp:
+                                    self.midi_cmd_idx = idx
+                                    self.last_timestamp = pitch_timestamp
+                            elif timestamp_offset_x < pitch_timestamp:
                                 break
 
                         self.play_one_timestamp_while_paused = True
@@ -291,6 +291,10 @@ class PlayCenter():
                     # Pause/Play
                     elif ev.key == K_SPACE:
                         self.is_pause = not self.is_pause
+
+                    # is_show_longbar_in_staff
+                    elif ev.key == K_c:
+                        self.piano.is_show_longbar_in_staff = not self.piano.is_show_longbar_in_staff
 
                     elif ev.key == K_LEFT:
                         # Slower

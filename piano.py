@@ -55,6 +55,8 @@ class Piano():
         self.first_line_last_bar_pos = None
         self.second_line_last_bar_pos = None
 
+        self.is_show_longbar_in_staff = True
+
         #self.dark_night_theme()
         self.day_light_theme()
 
@@ -425,39 +427,40 @@ class Piano():
         for note_data in p_notes_in_all_staff:
             pitch, timestamp, duration, track_idx = note_data
             if not p_enabled_tracks.get(track_idx, False):
-                #raise Exception("track not enabled")
                 continue
 
             note_tail_pos = (timestamp + duration) * self.screen_rect[0] / (self.timestamp_range) - offset_x
             if note_tail_pos < 0:
                 continue
-            note_pos = (timestamp) * self.screen_rect[0] / (self.timestamp_range) - offset_x + self.piano_staff_line_width * 1.618 # slight right
+            note_pos = (timestamp) * self.screen_rect[0] / (self.timestamp_range) - offset_x
+
+            # length/height
+            if self.is_show_longbar_in_staff:
+                note_length =  duration * self.screen_rect[0] / (self.timestamp_range) - 1
+                note_height = self.piano_staff_line_width /2 + 1
+            else:
+                note_height = self.piano_staff_line_width # /2 + 1
+                note_length = note_height
+                note_pos += self.piano_staff_line_width * 1.618 # slight right
+
             if note_pos > self.screen_rect[0]:
                 break
-
-            is_black = False
-            if pitch in self.blackkeys:
-                is_black = True
-                pitch = pitch - 1
-
-            key_rec = self.whitekeys[pitch]
-
-            note_height = self.piano_staff_line_width # /2 + 1
-
-            key_index = (key_rec.left / self.piano_white_key_width) - 23
-            note_center_y = middle - key_index * self.piano_staff_line_width / 2
-
-            note_top = note_center_y - note_height / 2
-
-            #note_length =  duration * self.screen_rect[0] / (self.timestamp_range) - 1
-            note_length = note_height
-
             if note_pos < 0:
                 note_length = note_length + note_pos
                 note_pos = 0
 
+            # top
+            is_black = False
+            if pitch in self.blackkeys:
+                is_black = True
+                pitch = pitch - 1
+            key_rec = self.whitekeys[pitch]
+            key_index = (key_rec.left / self.piano_white_key_width) - 23
+            note_center_y = middle - key_index * self.piano_staff_line_width / 2
+            note_top = note_center_y - note_height / 2
             note_rec = pygame.Rect(note_pos, note_top, note_length, note_height)
 
+            # color
             note_color = self.TRACK_COLORS[0]
             if is_pause:
                 note_color = self.TRACK_COLORS[p_tracks_order_idx[track_idx] % len(self.TRACK_COLORS)]
