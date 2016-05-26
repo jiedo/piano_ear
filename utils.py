@@ -31,7 +31,7 @@ class Bps():
 g_bps = Bps()
 
 
-def sync_play_time(pitch_timestamp, last_timestamp, old_time, sounds):
+def sync_play_time(pitch_timestamp, last_timestamp, old_time, center_keys_recs, sounds):
     # sleep
     deta_timestamp = pitch_timestamp - last_timestamp
     wait_time = int(deta_timestamp * parse_midi.g_mseconds_per_quarter / parse_midi.g_ticks_per_quarter )
@@ -44,7 +44,12 @@ def sync_play_time(pitch_timestamp, last_timestamp, old_time, sounds):
 
     if wait_time - deta_time*1000 > 80:
         pygame.display.update()
-    # print "after pygame:", int(deta_time*1000)
+    elif wait_time - deta_time*1000 > -100:
+        before_time = time.time()
+        pygame.display.update(center_keys_recs)
+        print "rect update time:", int((time.time() - before_time)*1000)
+
+    #print "after pygame:", int(deta_time*1000)
     deta_time = time.time() - old_time
 
     if wait_time/1000.0 - deta_time > 0:

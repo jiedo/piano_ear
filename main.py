@@ -156,6 +156,7 @@ class PlayCenter():
         self.piano.draw_piano()
 
         self.time_pitchs = []
+        self.keys_recs = []
         self.midi_cmd_idx = 0
         self.staff_offset_x = 0
         self.last_timestamp = 0
@@ -432,10 +433,11 @@ class PlayCenter():
                 if not self.is_pause and is_beat_at_right_most and (current_play_percent == 0 or current_play_percent > (100 - 50 / progress_multi_lines)):
                     self.staff_offset_x = page_end_offset_x
 
-                utils.sync_play_time(pitch_timestamp, self.last_timestamp, old_time, self.sounds)
+                utils.sync_play_time(pitch_timestamp, self.last_timestamp, old_time, self.keys_recs, self.sounds)
                 old_time = time.time()
                 self.last_timestamp = pitch_timestamp
                 self.time_pitchs = []
+                self.keys_recs = []
                 if self.is_pause and self.play_one_timestamp_while_paused:
                     self.play_one_timestamp_while_paused = False
                     continue
@@ -455,10 +457,7 @@ class PlayCenter():
 
             # show keys
             if pitch > 1:
-                keys_recs = self.piano.show_keys_press(cmd, pitch)
-                before_time = time.time()
-                pygame.display.update(keys_recs)
-                print "update time:", int((time.time() - before_time)*1000)
+                self.keys_recs += self.piano.show_keys_press(cmd, pitch)
             #clock.tick(10)
 
 
