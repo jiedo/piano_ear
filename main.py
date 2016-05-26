@@ -75,7 +75,7 @@ WINSIZE = [1248, 740]
 class PlayCenter():
     def __init__(self):
         pygame.init()
-        screen = pygame.display.set_mode(WINSIZE)
+        screen = pygame.display.set_mode(WINSIZE, pygame.FULLSCREEN | pygame.DOUBLEBUF)
         pygame.display.set_caption('Piano Center')
 
         # menu
