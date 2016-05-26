@@ -42,12 +42,10 @@ def sync_play_time(pitch_timestamp, last_timestamp, old_time, center_keys_recs, 
     deta_time = time.time() - old_time
     # print "after stop:", int(deta_time*1000)
 
-    if wait_time - deta_time*1000 > 80:
+    if wait_time - deta_time*1000 > 20:
         pygame.display.update()
-    elif wait_time - deta_time*1000 > -100:
-        before_time = time.time()
+    elif wait_time - deta_time*1000 > 10:
         pygame.display.update(center_keys_recs)
-        print "rect update time:", int((time.time() - before_time)*1000)
 
     #print "after pygame:", int(deta_time*1000)
     deta_time = time.time() - old_time
