@@ -535,6 +535,7 @@ class Piano():
         # pygame.draw.rect(self.screen, self.color_backgroud, note_rec, False)
         self.draw_keys(pitch_key_rec, key_color)
         self.draw_keys(pitch_side_blackkeys_rec, self.black)
+        return pitch_key_rec + pitch_side_blackkeys_rec
 
 
 if __name__ == '__main__':

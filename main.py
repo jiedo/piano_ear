@@ -455,7 +455,10 @@ class PlayCenter():
 
             # show keys
             if pitch > 1:
-                self.piano.show_keys_press(cmd, pitch)
+                keys_recs = self.piano.show_keys_press(cmd, pitch)
+                before_time = time.time()
+                pygame.display.update(keys_recs)
+                print "update time:", int((time.time() - before_time)*1000)
             #clock.tick(10)
 
 
