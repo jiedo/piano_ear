@@ -3,11 +3,8 @@
 """
 """
 
-
-import pygame
 import time
 import parse_midi
-
 
 import player
 
@@ -43,13 +40,12 @@ def sync_play_time(pitch_timestamp, last_timestamp, old_time, center_keys_recs, 
     # print "after stop:", int(deta_time*1000)
 
     if wait_time - deta_time*1000 > 80:
-        pygame.display.update()
+        pass
     elif wait_time - deta_time*1000 > -100:
         before_time = time.time()
-        pygame.display.update(center_keys_recs)
         print "rect update time:", int((time.time() - before_time)*1000)
 
-    #print "after pygame:", int(deta_time*1000)
+    #print "after update..:", int(deta_time*1000)
     deta_time = time.time() - old_time
 
     if wait_time/1000.0 - deta_time > 0:

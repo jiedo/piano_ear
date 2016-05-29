@@ -164,11 +164,11 @@ class PlayCenter(pyglet.window.Window):
 
 
         ################################################################ main init
-        devices = player.init()
+        self.devices = player.init()
         #clock = pygame.time.Clock()
-        old_time = 0
-        p_pitch_offset = 60
-        p_pitch_of_key_on_keyboard = [key.TAB, key._1,
+        self.old_time = 0
+        self.p_pitch_offset = 60
+        self.p_pitch_of_key_on_keyboard = [key.TAB, key._1,
                                     key.Q, key._2,
                                     key.W,
                                     key.E, key._4,
@@ -183,7 +183,7 @@ class PlayCenter(pyglet.window.Window):
                                     key.BRACKETLEFT, key.EQUAL,
                                     key.BRACKETRIGHT, key.BACKSPACE,
                                     key.BACKSLASH, ]
-        need_update_display = True
+        self.need_update_display = True
 
 
     # 按下键盘事件
@@ -267,7 +267,7 @@ class PlayCenter(pyglet.window.Window):
 
         # Set Pitch Offset
         elif symbol in [key.V, key.B, key.N]:
-            p_pitch_offset = {key.V: 36,  key.B: 60,  key.N: 84}[symbol]
+            self.p_pitch_offset = {key.V: 36,  key.B: 60,  key.N: 84}[symbol]
 
         elif symbol in [key.Z]:
             if self.piano.piano_staff_line_width > 2:
@@ -281,9 +281,9 @@ class PlayCenter(pyglet.window.Window):
             self.piano.timestamp_range = self.piano.timestamp_range * self.piano.piano_staff_line_width_base / self.piano.piano_staff_line_width
 
         # Play Piano with keys
-        elif symbol in p_pitch_of_key_on_keyboard:
-            pitch = p_pitch_offset + p_pitch_of_key_on_keyboard.index(symbol)
-            player.stop(devices, pitch, 100, self.sounds)
+        elif symbol in self.p_pitch_of_key_on_keyboard:
+            pitch = self.p_pitch_offset + self.p_pitch_of_key_on_keyboard.index(symbol)
+            player.stop(self.devices, pitch, 100, self.sounds)
             player.load_sounds([(pitch, 100)], self.sounds)
             cmd = "NOTE_OFF"
             self.piano.show_keys_press(cmd, pitch)
@@ -292,10 +292,10 @@ class PlayCenter(pyglet.window.Window):
     # 释放按键
     def on_key_release(self, symbol, modifiers):
         print symbol, modifiers
-        if symbol in p_pitch_of_key_on_keyboard:
-            pitch = p_pitch_offset + p_pitch_of_key_on_keyboard.index(symbol)
+        if symbol in self.p_pitch_of_key_on_keyboard:
+            pitch = self.p_pitch_offset + self.p_pitch_of_key_on_keyboard.index(symbol)
             player.load_sounds([(pitch, 100)], self.sounds)
-            player.play(devices, pitch, 100, self.sounds)
+            player.play(self.devices, pitch, 100, self.sounds)
             cmd = "NOTE_ON"
             self.piano.show_keys_press(cmd, pitch)
 
@@ -401,9 +401,9 @@ class PlayCenter(pyglet.window.Window):
                                    self.staff_offset_x, self.is_pause)
 
             has_stoped = player.real_stop(self.sounds)
-            if need_update_display:
-                pygame.display.update()
-                need_update_display = False
+            if self.need_update_display:
+                # pygame.display.update()
+                self.need_update_display = False
             time.sleep(0.1)
             return
 
@@ -421,8 +421,8 @@ class PlayCenter(pyglet.window.Window):
             if not self.is_pause and is_beat_at_right_most and (current_play_percent == 0 or current_play_percent > (100 - 50 / progress_multi_lines)):
                 self.staff_offset_x = page_end_offset_x
 
-            utils.sync_play_time(pitch_timestamp, self.last_timestamp, old_time, self.keys_recs, self.sounds)
-            old_time = time.time()
+            utils.sync_play_time(pitch_timestamp, self.last_timestamp, self.old_time, self.keys_recs, self.sounds)
+            self.old_time = time.time()
             self.last_timestamp = pitch_timestamp
             self.time_pitchs = []
             self.keys_recs = []
@@ -433,16 +433,16 @@ class PlayCenter(pyglet.window.Window):
 
         # playtrack
         if cmd == "NOTE_ON":
-            player.play(devices, pitch, volecity, self.sounds)
+            player.play(self.devices, pitch, volecity, self.sounds)
             # build chord
             if pitch not in self.time_pitchs:
                 self.time_pitchs += [pitch]
 
         elif cmd == "NOTE_OFF":
-            player.stop(devices, pitch, volecity, self.sounds)
+            player.stop(self.devices, pitch, volecity, self.sounds)
 
         elif cmd == "METRO_ON" and player.g_metronome_volume > 0:
-            player.play(devices, pitch, volecity, self.sounds)
+            player.play(self.devices, pitch, volecity, self.sounds)
 
         # show keys
         if pitch > 1:
