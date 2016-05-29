@@ -2,6 +2,7 @@
 
 import math
 import pyglet
+import time
 from pyglet.gl import *
 from pyglet.window import key # 键盘常量，事件
 
@@ -29,20 +30,23 @@ class Window(pyglet.window.Window):
 
         # GL_LINE_LOOP
         # GL_QUADS
-        vertex_data = (134, 153, 244, 122, 242, 264, 102, 204)
-        self.batch.add(4, GL_QUADS, None,
+        vertex_data = (134, 153, 204, 122, 202, 204, 102, 204, 234, 253, 304, 222, 302, 304, 202, 304)
+        self.batch.add(8, GL_TRIANGLE_FAN, None,
                        ('v2i/static', vertex_data),
-                       ('c4B', (0, 255, 255, 0) * 4))
+                       ('c4B', (0, 255, 255, 0) * 8))
 
 
+        self.n = 0
 
-
-        pyglet.clock.schedule_interval(self.update, 1.0 / 200)# 每秒刷新60次
+        pyglet.clock.schedule_interval(self.update, 1.0 / 100)# 每秒刷新60次
 
 
     # 每1/60秒调用一次进行更新
     def update(self, dt):
-        #print "update", dt
+        print "update", dt
+        self.n = 0
+        time.sleep(0.1)
+        print "n is", self.n
         pass
 
     # 重写Window的on_draw函数
@@ -72,7 +76,7 @@ class Window(pyglet.window.Window):
         # glVertex2i(75, 100)
         # glVertex2i(200, 200)
         # glEnd()
-
+        print "drawing"
         self.clear()
         # self.set_3d() # 进入3d模式
         # glColor3d(0, 1, 0)
@@ -115,6 +119,16 @@ class Window(pyglet.window.Window):
 
     # 按下键盘事件，长按W，S，A，D键将不断改变坐标
     def on_key_press(self, symbol, modifiers):
+        self.n += 3
+
+        # Draw some stuff
+        glBegin(GL_TRIANGLES)
+        glVertex2i(10+self.n, 20)
+        glVertex2i(15+self.n, 30)
+        glVertex2i(10+self.n, 40)
+        glEnd()
+
+        time.sleep(0.1)
         print symbol, modifiers
         if symbol == key.W: # opengl坐标系：z轴垂直平面向外，x轴向右，y轴向上
             pass
