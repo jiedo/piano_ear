@@ -28,7 +28,7 @@ class Bps():
 g_bps = Bps()
 
 
-def sync_play_time(pitch_timestamp, last_timestamp, old_time, center_keys_recs, sounds):
+def sync_play_time(pitch_timestamp, last_timestamp, old_time, sounds):
     # sleep
     deta_timestamp = pitch_timestamp - last_timestamp
     wait_time = int(deta_timestamp * parse_midi.g_mseconds_per_quarter / parse_midi.g_ticks_per_quarter )
@@ -43,7 +43,7 @@ def sync_play_time(pitch_timestamp, last_timestamp, old_time, center_keys_recs, 
         pass
     elif wait_time - deta_time*1000 > -100:
         before_time = time.time()
-        print "rect update time:", int((time.time() - before_time)*1000)
+        #print "rect update time:", int((time.time() - before_time)*1000)
 
     #print "after update..:", int(deta_time*1000)
     deta_time = time.time() - old_time

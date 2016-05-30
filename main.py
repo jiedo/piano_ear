@@ -148,7 +148,7 @@ class PlayCenter(pyglet.window.Window):
 
         self.menu_bar_info = MenuSystem.MenuBar(top=WINSIZE[1] - self.menu_bar.lineheigth)
         self.piano = Piano(self.batch, WINSIZE, top=self.menu_bar_info.top - Piano.piano_white_key_height - 2)
-        self.piano.draw_piano()
+        self.piano.init_piano()
         self.piano.draw_vertical_staff_lines(WINSIZE[1] * 0.618)
 
         self.staff_top = self.menu_bar.top + self.menu_bar.lineheigth + 30
@@ -194,9 +194,13 @@ class PlayCenter(pyglet.window.Window):
             menus_in_bar, self.midi_filename_data = get_menu_data()
             # self.menu_bar.set(menus_in_bar)
 
+        # QUIT
+        elif symbol == key.ESCAPE:
+            pyglet.app.exit()
+
         # Stop
         elif symbol == key.S:
-            self.piano.draw_piano()
+            self.piano.reset_piano()
             self.staff_offset_x = 0
             self.midi_cmd_idx = 0
             self.last_timestamp = 0
@@ -261,7 +265,7 @@ class PlayCenter(pyglet.window.Window):
 
         # # Set Progress Percent
         # elif symbol in [key._0, key._1, key._2, key._3, key._4, key._5, key._6, key._7, key._8, key._9]:
-        #     self.piano.draw_piano()
+        #     self.piano.reset_piano()
         #     self.midi_cmd_idx = len(self.all_midi_lines) * (symbol - 48) / 10
         #     self.last_timestamp = -1
 
@@ -359,7 +363,7 @@ class PlayCenter(pyglet.window.Window):
                     break
 
             self.play_one_timestamp_while_paused = True
-            self.piano.draw_piano()
+            self.piano.reset_piano()
 
 
     # 鼠标移动事件，处理视角的变化
@@ -421,11 +425,14 @@ class PlayCenter(pyglet.window.Window):
             if not self.is_pause and is_beat_at_right_most and (current_play_percent == 0 or current_play_percent > (100 - 50 / progress_multi_lines)):
                 self.staff_offset_x = page_end_offset_x
 
-            utils.sync_play_time(pitch_timestamp, self.last_timestamp, self.old_time, self.keys_recs, self.sounds)
+            self.clear()
+            self.batch.draw()       # 将batch中保存的顶点列表绘制出来
+            self.draw_label()       # 绘制label
+
+            utils.sync_play_time(pitch_timestamp, self.last_timestamp, self.old_time, self.sounds)
             self.old_time = time.time()
             self.last_timestamp = pitch_timestamp
             self.time_pitchs = []
-            self.keys_recs = []
             if self.is_pause and self.play_one_timestamp_while_paused:
                 self.play_one_timestamp_while_paused = False
                 time.sleep(0.1)
@@ -446,11 +453,13 @@ class PlayCenter(pyglet.window.Window):
 
         # show keys
         if pitch > 1:
-            self.keys_recs += self.piano.show_keys_press(cmd, pitch)
+            self.piano.show_keys_press(cmd, pitch)
         #clock.tick(10)
 
 
     def on_draw(self):
+        return
+
         self.clear()
         # self.set_3d() # 进入3d模式
         # glColor3d(0, 1, 0)
@@ -565,10 +574,9 @@ class PlayCenter(pyglet.window.Window):
         # finish missing sounds
         player.load_sounds([(midi_data[1], midi_data[2]) for midi_data in self.all_midi_lines],
                            self.sounds)
-        self.piano.draw_piano()
+        self.piano.reset_piano()
 
         self.time_pitchs = []
-        self.keys_recs = []
         self.midi_cmd_idx = 0
         self.staff_offset_x = 0
         self.last_timestamp = 0
