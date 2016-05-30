@@ -71,6 +71,21 @@ class Piano():
             self.group_box: {},
         }
 
+        self.sprite_pool = {
+            self.group_staff_bg: [],
+            self.group_staff: [],
+            self.group_note: [],
+            self.group_box: [],
+        }
+
+        self.idx_group_staff = {
+            self.group_staff_bg: 0,
+            self.group_staff: 0,
+            self.group_note: 0,
+            self.group_box: 0,
+        }
+        self.sprite_image_pool = {}
+
         self.progress_bar_vertex_list_bg = None
         self.progress_bar_vertex_list_vision = None
         self.progress_bar_vertex_list_cursor = None
@@ -443,14 +458,22 @@ class Piano():
 
     def show_notes_staff(self, p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
                          current_timestamp, p_staff_top, bar_duration, time_signature_n, offset_x, is_pause):
-        # clear vl
-        for group in [self.group_staff_bg,
-                      self.group_staff,
-                      self.group_note,
-                      self.group_box,]:
-            for vl in self.batch_vertex_list[group].values():
-                vl.delete()
-            self.batch_vertex_list[group] = {}
+
+        self.idx_group_staff = {
+            self.group_staff_bg: 0,
+            self.group_staff: 0,
+            self.group_note: 0,
+            self.group_box: 0,
+        }
+
+        # # clear vl
+        # for group in [self.group_staff_bg,
+        #               self.group_staff,
+        #               self.group_note,
+        #               self.group_box,]:
+        #     for vl in self.batch_vertex_list[group].values():
+        #         vl.delete()
+        #     self.batch_vertex_list[group] = {}
 
         # now start draw staff
         progress_offset_x = offset_x
@@ -645,20 +668,55 @@ class Piano():
                        rect.left, self.screen_height - (rect.top + rect.height),)
 
         color = color + (255,)
-        if vertex_data not in self.batch_vertex_list[self.group_now]:
-            vl = self.batch.add(4, GL_QUADS, self.group_now,
-                                  ('v2f', vertex_data),
-                                  ('c4B', color * 4))
-            self.batch_vertex_list[self.group_now][vertex_data] = vl
 
-        return self.batch_vertex_list[self.group_now][vertex_data]
-        # vl = pyglet.graphics.vertex_list(
-        #     4,
-        #     ('v2f', tuple(vertex_data)),
-        #     ('c4B', color * 4))
+        if self.group_now not in self.idx_group_staff:
+            if vertex_data not in self.batch_vertex_list[self.group_now]:
+                vl = self.batch.add(4, GL_QUADS, self.group_now,
+                                      ('v2f', vertex_data),
+                                      ('c4B', color * 4))
+                self.batch_vertex_list[self.group_now][vertex_data] = vl
 
-        # # glColor3d(0, 0, 1)
-        # vl.draw(GL_QUADS)
+            return self.batch_vertex_list[self.group_now][vertex_data]
+
+        self.fill_sprite_with_gl(color, rect.left, rect.top, rect.width, rect.height)
+
+
+    def fill_sprite_with_gl(self, color, x, y, width, height):
+        # draw sprite
+        self.idx_group_staff[self.group_now] += 1
+        if width <= 0:
+            print "width error"
+            width = 1
+
+        if height <= 0:
+            print "height error"
+            height = 1
+
+        # get sprite image
+        image_key = (width, height, color)
+        if image_key not in self.sprite_image_pool:
+            tmp_image = pyglet.image.create(width, height,
+                                            pyglet.image.SolidColorImagePattern(color))
+            self.sprite_image_pool[image_key] = tmp_image
+        else:
+            tmp_image = self.sprite_image_pool[image_key]
+
+        # get sprite
+        sprites = self.sprite_pool[self.group_now]
+        if len(sprites) < self.idx_group_staff[self.group_now]:
+            # get sprite
+            tmp_sprite = pyglet.sprite.Sprite(
+                tmp_image,
+                x=x,
+                y=self.screen_height - y - height,
+                batch=self.batch, group=self.group_now)
+            sprites += [tmp_sprite]
+        else:
+            tmp_sprite = sprites[self.idx_group_staff[self.group_now] - 1]
+            tmp_sprite.x = x
+            tmp_sprite.y = self.screen_height - y - height
+            tmp_sprite.image = tmp_image
+
 
 
     def draw_rect_with_gl(self, color, rect, width=1):
@@ -682,9 +740,20 @@ class Piano():
 
 
     def draw_line_with_gl(self, color, start_pos, end_pos, line_width=1, distinct=True):
+        color = color + (255,)
+        if self.group_now in self.idx_group_staff:
+            # draw sprite
+            if start_pos[0] == end_pos[0]:
+                line_height = abs(start_pos[1] - end_pos[1])
+                self.fill_sprite_with_gl(color, start_pos[0], start_pos[1], line_width, line_height)
+            elif start_pos[1] == end_pos[1]:
+                line_height = abs(start_pos[0] - end_pos[0])
+                self.fill_sprite_with_gl(color, start_pos[0], start_pos[1], line_height, line_width)
+            return
+
+
         start_pos = (start_pos[0], self.screen_height - start_pos[1])
         end_pos = (end_pos[0], self.screen_height - end_pos[1])
-        color = color + (255,)
 
         if line_width > 1:
             if start_pos[0] == end_pos[0]:
@@ -707,13 +776,6 @@ class Piano():
                                     ('c4B', color * 4))
                 return vl
 
-            # vl = pyglet.graphics.vertex_list(
-            #     4,
-            #     ('v2f', tuple(vertex_data)),
-            #     ('c4B', color * 4))
-            # # glColor3d(0, 0, 1)
-            # vl.draw(GL_QUADS)
-
         else:
             vertex_data = start_pos + end_pos
             if distinct:
@@ -727,13 +789,6 @@ class Piano():
                                     ('v2f', vertex_data),
                                     ('c4B', color * 2))
                 return vl
-
-            # vl = pyglet.graphics.vertex_list(
-            #     2,
-            #     ('v2f', tuple(vertex_data)),
-            #     ('c4B', color * 2))
-            # # glColor3d(0, 0, 1)
-            # vl.draw(GL_LINES)
 
         return self.batch_vertex_list[self.group_now][vertex_data]
 
