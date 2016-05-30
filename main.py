@@ -130,7 +130,7 @@ class PlayCenter(pyglet.window.Window):
         #                ('v2i/static', vertex_data),
         #                ('c4B', (0, 255, 255, 0) * 4))
 
-        pyglet.clock.schedule_interval(self.main_loop, 1.0 / 1000)
+        pyglet.clock.schedule(self.main_loop)
 
         self.set_2d()           # 进入2d模式
 
