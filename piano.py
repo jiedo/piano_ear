@@ -684,7 +684,7 @@ class Piano():
 
             return self.batch_vertex_list[self.group_now][vertex_data]
 
-        self.fill_sprite_with_gl(color, rect.left, rect.top, rect.width, rect.height)
+        self.fill_sprite_with_gl(color, rect.left, self.screen_height - (rect.top + rect.height), rect.width, rect.height)
 
 
     def fill_sprite_with_gl(self, color, x, y, width, height):
@@ -715,17 +715,17 @@ class Piano():
             # get sprite
             tmp_sprite = pyglet.sprite.Sprite(
                 tmp_image,
-                x=int(x),
-                y=int(self.screen_height - y - height),
+                x=x,
+                y=y,
                 batch=self.batch, group=self.group_now)
             sprites += [(tmp_sprite, image_key)]
         else:
             tmp_sprite, tmp_image_key = sprites[self.idx_group_staff[self.group_now] - 1]
             tmp_sprite.visible = True
-            if tmp_sprite.x != int(x):
-                tmp_sprite.x = int(x)
-            if tmp_sprite.y != int(self.screen_height - y - height):
-                tmp_sprite.y = int(self.screen_height - y - height)
+            if tmp_sprite.x != x:
+                tmp_sprite.x = x
+            if tmp_sprite.y != y:
+                tmp_sprite.y = y
             if image_key != tmp_image_key:
                 tmp_sprite.image = tmp_image
 
@@ -751,20 +751,18 @@ class Piano():
 
 
     def draw_line_with_gl(self, color, start_pos, end_pos, line_width=1, distinct=True):
+        start_pos = (start_pos[0], self.screen_height - start_pos[1])
+        end_pos = (end_pos[0], self.screen_height - end_pos[1])
         color = color + (255,)
         if self.group_now in self.idx_group_staff:
             # draw sprite
             if start_pos[0] == end_pos[0]:
-                line_height = abs(start_pos[1] - end_pos[1])
-                self.fill_sprite_with_gl(color, start_pos[0], start_pos[1], line_width, line_height)
+                line_height =  abs(end_pos[1] - start_pos[1])
+                self.fill_sprite_with_gl(color, start_pos[0], min(end_pos[1], start_pos[1]), line_width, line_height)
             elif start_pos[1] == end_pos[1]:
-                line_height = abs(start_pos[0] - end_pos[0])
-                self.fill_sprite_with_gl(color, start_pos[0], start_pos[1], line_height, line_width)
+                line_height = abs(end_pos[0] - start_pos[0])
+                self.fill_sprite_with_gl(color, min(end_pos[0], start_pos[0]), start_pos[1] , line_height, line_width)
             return
-
-
-        start_pos = (start_pos[0], self.screen_height - start_pos[1])
-        end_pos = (end_pos[0], self.screen_height - end_pos[1])
 
         if line_width > 1:
             if start_pos[0] == end_pos[0]:
