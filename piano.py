@@ -7,6 +7,7 @@ event management"""
 
 
 import math
+import pyglet
 from pyglet.gl import *
 
 __create_time__ = "Feb 26 2012"
@@ -46,7 +47,10 @@ class Piano():
 
     def __init__(self, batch, screen_rect, top=None):
         self.batch = batch
-        self.screen_rect = screen_rect
+        self.batch_vertex_list = {}
+
+        self.screen_width, self.screen_height = screen_rect
+
         self.notes = """A2 #A2 B2
     C1 #C1 D1 #D1 E1 F1 #F1 G1 #G1 A1 #A1 B1
     C #C D #D E F #F G #G A #A B
@@ -70,7 +74,7 @@ class Piano():
         self.timestamp_range = 8000
 
         if top is None:
-            top = self.screen_rect[1] - self.piano_white_key_height
+            top = self.screen_height - self.piano_white_key_height
 
         self.top = top
         self.first_line_last_bar_pos = None
@@ -248,44 +252,6 @@ class Piano():
         self.draw_dash_line(self.color_middle_c_line, (x, top), (x, bottom))
 
 
-    def fill_rect_with_gl(self, color, rect):
-        vertex_data = [rect.left, rect.top,
-                       rect.left + rect.width, rect.top,
-                       rect.left + rect.width, rect.top + rect.height,
-                       rect.left, rect.top + rect.height,
-        ]
-        color = color + (255,)
-        self.batch.add(4, GL_QUADS, None,
-                   ('v2f', tuple(vertex_data)),
-                   ('c4B', color * 4))
-
-
-    def draw_rect_with_gl(self, color, rect, width=1):
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
-        self.fill_rect_with_gl(color, rect)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
-
-
-    def draw_line_with_gl(self, color, start_pos, end_pos, line_width=1):
-        color = color + (255,)
-        if line_width > 1:
-            if start_pos[0] == end_pos[0]:
-                start_pos_add = (end_pos[0] + line_width, end_pos[1])
-                end_pos_add = (start_pos[0] + line_width, start_pos[1])
-            elif start_pos[1] == end_pos[1]:
-                start_pos_add = (end_pos[0], end_pos[1] + line_width)
-                end_pos_add = (start_pos[0], start_pos[1] + line_width)
-            vertex_data = list(start_pos) + list(end_pos) + list(end_pos_add) + list(start_pos_add)
-            self.batch.add(4, GL_QUADS, None,
-                       ('v2f', tuple(vertex_data)),
-                       ('c4B', color * 4))
-        else:
-            vertex_data = list(start_pos) + list(end_pos)
-            self.batch.add(2, GL_LINES, None,
-                       ('v2f', tuple(vertex_data)),
-                       ('c4B', color * 2))
-
-
     # def draw_note(self, key_note_idx, top=340):
     #     note = self.notes[key_note_idx-21]
     #     print note
@@ -359,13 +325,13 @@ class Piano():
         # red line
         self.draw_line_with_gl(self.color_red_line,
                          (0, self.top - 3),
-                         (self.screen_rect[0], self.top - 3), 4)
+                         (self.screen_width, self.top - 3), 4)
 
         #pygame.display.update()
 
 
     def draw_staff_lines(self, middle=0, n=6, left=0):
-        rightx = self.screen_rect[0]
+        rightx = self.screen_width
         middle_c_white_offset_y = middle
 
         for i in range(1, int(n*2)-1):
@@ -383,16 +349,16 @@ class Piano():
 
 
     def show_progress_bar(self, max_timestamp, current_timestamp, offset_x, screen_staff_total_length):
-        max_pos = (max_timestamp) * self.screen_rect[0] / (self.timestamp_range)
+        max_pos = (max_timestamp) * self.screen_width / (self.timestamp_range)
 
-        current_pos = (current_timestamp) * self.screen_rect[0] / (self.timestamp_range) * self.screen_rect[0] / max_pos
-        offset_pos = offset_x * self.screen_rect[0] / max_pos
-        screen_width_pos = screen_staff_total_length * self.screen_rect[0] / max_pos
+        current_pos = (current_timestamp) * self.screen_width / (self.timestamp_range) * self.screen_width / max_pos
+        offset_pos = offset_x * self.screen_width / max_pos
+        screen_width_pos = screen_staff_total_length * self.screen_width / max_pos
 
         # backgroud
         self.draw_line_with_gl(self.color_backgroud,
                          (0, 0),
-                         (self.screen_rect[0], 0), 9)
+                         (self.screen_width, 0), 9)
         # bar
         self.draw_line_with_gl(self.white,
                          (offset_pos, 0),
@@ -418,7 +384,7 @@ class Piano():
             if self.top - p_staff_top - self.gap_keyboad_staff < self.staff_total_lines * self.piano_staff_line_width:
                 self.fill_rect_with_gl(self.color_backgroud, Rect(
                     0, p_staff_top,
-                    self.screen_rect[0], self.top - p_staff_top - self.gap_keyboad_staff))
+                    self.screen_width, self.top - p_staff_top - self.gap_keyboad_staff))
                 break
             middle = p_staff_top + self.staff_total_lines_up * self.piano_staff_line_width
             is_beat_at_right_most, last_bar_pos = self._show_notes_staff(p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
@@ -442,7 +408,7 @@ class Piano():
                           current_timestamp, middle, bar_duration, time_signature_n, offset_x, is_pause):
         self.fill_rect_with_gl(self.color_backgroud, Rect(
             0, middle - self.staff_total_lines_up * self.piano_staff_line_width,
-            self.screen_rect[0], self.staff_total_lines * self.piano_staff_line_width))
+            self.screen_width, self.staff_total_lines * self.piano_staff_line_width))
 
         # draw_staff_lines
         self.draw_staff_lines(middle=middle)
@@ -456,14 +422,14 @@ class Piano():
         last_bar_pos = 0
         while True:
             last_bar_pos = bar_pos
-            bar_pos = _bar_pos * self.screen_rect[0] / (self.timestamp_range) - offset_x
+            bar_pos = _bar_pos * self.screen_width / (self.timestamp_range) - offset_x
             self.draw_line_with_gl(self.color_lines,
                              (bar_pos, middle - 5 * self.piano_staff_line_width),
                              (bar_pos, middle + 5 * self.piano_staff_line_width))
             _bar_pos += bar_duration
             if bar_pos < 0:
                 continue
-            if bar_pos >= self.screen_rect[0]:
+            if bar_pos >= self.screen_width:
                 break
 
         # draw last bar
@@ -475,10 +441,10 @@ class Piano():
         # draw visual metronome
         interval = bar_duration / time_signature_n
         _beat_pos = (current_timestamp + bar_duration - offset_bar) / interval * interval - bar_duration + offset_bar
-        beat_pos = _beat_pos * self.screen_rect[0] / (self.timestamp_range) - offset_x
-        beat_length =  interval * self.screen_rect[0] / (self.timestamp_range)
+        beat_pos = _beat_pos * self.screen_width / (self.timestamp_range) - offset_x
+        beat_length =  interval * self.screen_width / (self.timestamp_range)
         beat_top = middle - 10 * self.piano_staff_line_width
-        if beat_pos + beat_length > 0 and beat_pos < self.screen_rect[0]:
+        if beat_pos + beat_length > 0 and beat_pos < self.screen_width:
             beat_rec = Rect(beat_pos, beat_top, beat_length, self.piano_staff_line_width*20)
             self.draw_rect_with_gl(self.color_key_down, beat_rec, 1)
 
@@ -488,21 +454,21 @@ class Piano():
             if not p_enabled_tracks.get(track_idx, False):
                 continue
 
-            note_tail_pos = (timestamp + duration) * self.screen_rect[0] / (self.timestamp_range) - offset_x
+            note_tail_pos = (timestamp + duration) * self.screen_width / (self.timestamp_range) - offset_x
             if note_tail_pos < 0:
                 continue
-            note_pos = (timestamp) * self.screen_rect[0] / (self.timestamp_range) - offset_x
+            note_pos = (timestamp) * self.screen_width / (self.timestamp_range) - offset_x
 
             # length/height
             if self.is_show_longbar_in_staff:
-                note_length =  duration * self.screen_rect[0] / (self.timestamp_range) - 1
+                note_length =  duration * self.screen_width / (self.timestamp_range) - 1
                 note_height = self.piano_staff_line_width /2 + 1
             else:
                 note_height = self.piano_staff_line_width # /2 + 1
                 note_length = note_height
                 note_pos += self.piano_staff_line_width * 1.618 # slight right
 
-            if note_pos > self.screen_rect[0]:
+            if note_pos > self.screen_width:
                 break
             if note_pos < 0:
                 note_length = note_length + note_pos
@@ -559,7 +525,7 @@ class Piano():
 
 
         # retrun is beat_right_most
-        beat_right_margin = self.screen_rect[0] - beat_pos
+        beat_right_margin = self.screen_width - beat_pos
         if beat_right_margin >= 0 and beat_right_margin < beat_length:
             is_beat_at_right_most = True
         else:
@@ -595,6 +561,79 @@ class Piano():
         self.draw_keys(pitch_key_rec, key_color)
         self.draw_keys(pitch_side_blackkeys_rec, self.black)
         return pitch_key_rec + pitch_side_blackkeys_rec
+
+
+    def fill_rect_with_gl(self, color, rect):
+        vertex_data = (rect.left, self.screen_height - rect.top,
+                       rect.left + rect.width, self.screen_height - rect.top,
+                       rect.left + rect.width, self.screen_height - (rect.top + rect.height),
+                       rect.left, self.screen_height - (rect.top + rect.height),)
+
+        color = color + (255,)
+        if vertex_data not in self.batch_vertex_list:
+            vl = self.batch.add(4, GL_QUADS, None,
+                                  ('v2f', vertex_data),
+                                  ('c4B', color * 4))
+            self.batch_vertex_list[vertex_data] = vl
+
+        # vl = pyglet.graphics.vertex_list(
+        #     4,
+        #     ('v2f', tuple(vertex_data)),
+        #     ('c4B', color * 4))
+
+        # # glColor3d(0, 0, 1)
+        # vl.draw(GL_QUADS)
+
+
+    def draw_rect_with_gl(self, color, rect, width=1):
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+        vl = self.fill_rect_with_gl(color, rect)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+        return vl
+
+
+    def draw_line_with_gl(self, color, start_pos, end_pos, line_width=1):
+        start_pos = (start_pos[0], self.screen_height - start_pos[1])
+        end_pos = (end_pos[0], self.screen_height - end_pos[1])
+        color = color + (255,)
+
+        if line_width > 1:
+            if start_pos[0] == end_pos[0]:
+                start_pos_add = (end_pos[0] + line_width, end_pos[1])
+                end_pos_add = (start_pos[0] + line_width, start_pos[1])
+            elif start_pos[1] == end_pos[1]:
+                start_pos_add = (end_pos[0], end_pos[1] + line_width)
+                end_pos_add = (start_pos[0], start_pos[1] + line_width)
+            vertex_data = start_pos + end_pos + end_pos_add + start_pos_add
+
+            if vertex_data not in self.batch_vertex_list:
+                vl = self.batch.add(4, GL_QUADS, None,
+                       ('v2f', vertex_data),
+                       ('c4B', color * 4))
+                self.batch_vertex_list[vertex_data] = vl
+
+            # vl = pyglet.graphics.vertex_list(
+            #     4,
+            #     ('v2f', tuple(vertex_data)),
+            #     ('c4B', color * 4))
+            # # glColor3d(0, 0, 1)
+            # vl.draw(GL_QUADS)
+
+        else:
+            vertex_data = start_pos + end_pos
+
+            if vertex_data not in self.batch_vertex_list:
+                vl = self.batch.add(2, GL_LINES, None,
+                       ('v2f', vertex_data),
+                       ('c4B', color * 2))
+                self.batch_vertex_list[vertex_data] = vl
+            # vl = pyglet.graphics.vertex_list(
+            #     2,
+            #     ('v2f', tuple(vertex_data)),
+            #     ('c4B', color * 2))
+            # # glColor3d(0, 0, 1)
+            # vl.draw(GL_LINES)
+
 
 
 if __name__ == '__main__':

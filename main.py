@@ -130,7 +130,9 @@ class PlayCenter(pyglet.window.Window):
         #                ('v2i/static', vertex_data),
         #                ('c4B', (0, 255, 255, 0) * 4))
 
-        pyglet.clock.schedule_interval(self.main_loop, 1.0 / 10)
+        pyglet.clock.schedule_interval(self.main_loop, 1.0 / 1000)
+
+        self.set_2d()           # 进入2d模式
 
         ################################################################ init
         # # menu
@@ -165,8 +167,8 @@ class PlayCenter(pyglet.window.Window):
         self.devices = player.init()
         #clock = pygame.time.Clock()
         self.old_time = 0
-        self.p_pitch_offset = 60
-        self.p_pitch_of_key_on_keyboard = [key.TAB, key._1,
+        self.pitch_offset = 60
+        self.pitch_of_key_on_keyboard = [key.TAB, key._1,
                                     key.Q, key._2,
                                     key.W,
                                     key.E, key._4,
@@ -265,7 +267,7 @@ class PlayCenter(pyglet.window.Window):
 
         # Set Pitch Offset
         elif symbol in [key.V, key.B, key.N]:
-            self.p_pitch_offset = {key.V: 36,  key.B: 60,  key.N: 84}[symbol]
+            self.pitch_offset = {key.V: 36,  key.B: 60,  key.N: 84}[symbol]
 
         elif symbol in [key.Z]:
             if self.piano.piano_staff_line_width > 2:
@@ -279,8 +281,8 @@ class PlayCenter(pyglet.window.Window):
             self.piano.timestamp_range = self.piano.timestamp_range * self.piano.piano_staff_line_width_base / self.piano.piano_staff_line_width
 
         # Play Piano with keys
-        elif symbol in self.p_pitch_of_key_on_keyboard:
-            pitch = self.p_pitch_offset + self.p_pitch_of_key_on_keyboard.index(symbol)
+        elif symbol in self.pitch_of_key_on_keyboard:
+            pitch = self.pitch_offset + self.pitch_of_key_on_keyboard.index(symbol)
             player.stop(self.devices, pitch, 100, self.sounds)
             player.load_sounds([(pitch, 100)], self.sounds)
             cmd = "NOTE_OFF"
@@ -290,8 +292,8 @@ class PlayCenter(pyglet.window.Window):
     # 释放按键
     def on_key_release(self, symbol, modifiers):
         print symbol, modifiers
-        if symbol in self.p_pitch_of_key_on_keyboard:
-            pitch = self.p_pitch_offset + self.p_pitch_of_key_on_keyboard.index(symbol)
+        if symbol in self.pitch_of_key_on_keyboard:
+            pitch = self.pitch_offset + self.pitch_of_key_on_keyboard.index(symbol)
             player.load_sounds([(pitch, 100)], self.sounds)
             player.play(self.devices, pitch, 100, self.sounds)
             cmd = "NOTE_ON"
@@ -344,7 +346,7 @@ class PlayCenter(pyglet.window.Window):
                 self.staff_offset_x +
                 pos_x +
                 wraped_staff_offset
-            ) * self.piano.timestamp_range / self.piano.screen_rect[0]
+            ) * self.piano.timestamp_range / self.piano.screen_width
 
             self.last_timestamp = -1
             for idx, midi_line in enumerate(self.all_midi_lines):
@@ -453,7 +455,7 @@ class PlayCenter(pyglet.window.Window):
         # self.set_3d() # 进入3d模式
         # glColor3d(0, 1, 0)
 
-        self.set_2d()           # 进入2d模式
+        #self.set_2d()           # 进入2d模式
         self.batch.draw()       # 将batch中保存的顶点列表绘制出来
         self.draw_label()       # 绘制label
         #self.draw_reticle()
@@ -548,7 +550,7 @@ class PlayCenter(pyglet.window.Window):
         # draw track pick
         self.piano.fill_rect_with_gl(self.piano.color_backgroud,
                                Rect(0, self.menu_bar.top + self.menu_bar.lineheigth,
-                                           self.piano.screen_rect[0], 20))
+                                           self.piano.screen_width, 20))
         for track_idx, idx in self.tracks_order_idx.items():
             if track_idx in self.enabled_tracks_switch:
                 sw = self.enabled_tracks_switch[track_idx]
