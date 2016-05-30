@@ -498,6 +498,12 @@ class Piano():
             offset_x += last_bar_pos
             p_staff_top += self.staff_total_lines * self.piano_staff_line_width
 
+        for group, idx in self.idx_group_staff.items():
+            if idx >= len(self.sprite_pool[group]):
+                continue
+            for sp, _ in self.sprite_pool[group][idx:]:
+                sp.visible = False
+
         # show_progress_bar
         max_timestamp = p_notes_in_all_staff[-1][1] + p_notes_in_all_staff[-1][2]
         percent_current_page  = self.show_progress_bar(max_timestamp, current_timestamp, progress_offset_x, offset_x - progress_offset_x)
@@ -684,6 +690,8 @@ class Piano():
     def fill_sprite_with_gl(self, color, x, y, width, height):
         # draw sprite
         self.idx_group_staff[self.group_now] += 1
+        x, y, width, height = int(x), int(y), int(width), int(height)
+
         if width <= 0:
             print "width error"
             width = 1
@@ -707,16 +715,19 @@ class Piano():
             # get sprite
             tmp_sprite = pyglet.sprite.Sprite(
                 tmp_image,
-                x=x,
-                y=self.screen_height - y - height,
+                x=int(x),
+                y=int(self.screen_height - y - height),
                 batch=self.batch, group=self.group_now)
-            sprites += [tmp_sprite]
+            sprites += [(tmp_sprite, image_key)]
         else:
-            tmp_sprite = sprites[self.idx_group_staff[self.group_now] - 1]
-            tmp_sprite.x = x
-            tmp_sprite.y = self.screen_height - y - height
-            tmp_sprite.image = tmp_image
-
+            tmp_sprite, tmp_image_key = sprites[self.idx_group_staff[self.group_now] - 1]
+            tmp_sprite.visible = True
+            if tmp_sprite.x != int(x):
+                tmp_sprite.x = int(x)
+            if tmp_sprite.y != int(self.screen_height - y - height):
+                tmp_sprite.y = int(self.screen_height - y - height)
+            if image_key != tmp_image_key:
+                tmp_sprite.image = tmp_image
 
 
     def draw_rect_with_gl(self, color, rect, width=1):
