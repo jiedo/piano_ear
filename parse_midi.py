@@ -1,22 +1,9 @@
 #!/usr/bin/env python
 
-"""extremely simple demonstration playing a soundfile
-and waiting for it to finish. you'll need the pygame.mixer
-module for this to work. Note how in this simple example we
-don't even bother loading all of the pygame package. Just
-pick the mixer for sound and time for the delay function.
-
-Optional command line argument:
-  the name of an audio file.
-
-
-"""
 
 import threading
 import os
 import os.path, sys
-import pygame.mixer
-import pygame.time
 
 import midi
 from player import g_grand_pitch_range
@@ -70,8 +57,6 @@ def parse_midi_track(track_cmds, all_enabled_tracks, track_idx, track):
         elif evt.type == 'DeltaTime':
             if evt.time > 0:
                 pass
-                #print track_idx, '%-s \t' % evt.type, evt.time
-                #pygamevt.time.wait(int(evt.time * g_mseconds_per_quarter / self.tpq ))
 
         elif evt.type == 'SET_TEMPO': # a 4,time
             x,y,z = evt.data

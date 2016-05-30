@@ -7,11 +7,9 @@ event management"""
 
 
 import math
-import pygame
-from pygame.locals import *
-from sys import platform as _platform
 import sys
 import time
+from sys import platform as _platform
 from collections import deque
 
 __create_time__ = "May 16 2016"
@@ -53,7 +51,7 @@ def get_volecity(v):
 
 
 def init():
-    if _platform != "darwin":
+    if _platform == "pygame":
         pygame.mixer.set_num_channels(88 * 8)
 
     devices = {}
@@ -234,16 +232,39 @@ def test_sounds(sounds_keys, sounds):
             print sounds[key].stop()
 
 
+def linux_get_sound_data(sound_file):
+    import wave
+    sound = wave.open(sound_file, 'rb')
+    sounddata = []
+    data = sound.readframes(1024)
+    while data:
+        sounddata += [data]
+        data = sound.readframes(1024)
+    sound.close()
+    sound = ''.join(sounddata)
+    soundlen = len(sounddata)/44100
+    return sound, soundlen
+
+
 def load_sounds(sound_keys, sounds):
     # load sounds needed
-    if _platform_file == "darwin":
-        sound_file = "data/beat.wav"
-        if (0, 48) not in sounds:
-            sounds[(0, 48)] = deque([[IS_FREE, 0, AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)] for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
+    sound_file = "data/beat.wav"
+    if (0, 48) not in sounds:
+        if _platform_file == "darwin":
+            sounds[(0, 48)] = deque([[IS_FREE, 0,
+                                      AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)]
+                                     for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
+        elif _platform_file in ["linux", "linux2"]:
+            sounds[(0, 48)] = linux_get_sound_data(sound_file)
 
-        sound_file = "data/accent.wav"
-        if (1, 48) not in sounds:
-            sounds[(1, 48)] = deque([[IS_FREE, 0, AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)] for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
+    sound_file = "data/accent.wav"
+    if (1, 48) not in sounds:
+        if _platform_file == "darwin":
+            sounds[(1, 48)] = deque([[IS_FREE, 0,
+                                      AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)]
+                                     for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
+        elif _platform_file in ["linux", "linux2"]:
+            sounds[(1, 48)] = linux_get_sound_data(sound_file)
 
     for pitch, volecity_data in sound_keys:
         volecity = get_volecity(volecity_data)
@@ -258,14 +279,4 @@ def load_sounds(sound_keys, sounds):
             sounds[(pitch, volecity)] = pygame.mixer.Sound(sound_file)
 
         elif _platform in ["linux", "linux2"]:
-            import wave
-            sound = wave.open(sound_file, 'rb')
-            sounddata = []
-            data = sound.readframes(1024)
-            while data:
-                sounddata += [data]
-                data = sound.readframes(1024)
-            sound.close()
-            sound = ''.join(sounddata)
-            soundlen = len(sounddata)/44100
-            sounds[(pitch, volecity)] = sound, soundlen
+            sounds[(pitch, volecity)] = linux_get_sound_data(sound_file)

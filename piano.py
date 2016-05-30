@@ -7,8 +7,6 @@ event management"""
 
 
 import math
-# import pygame
-# from pygame.locals import *
 from pyglet.gl import *
 
 __create_time__ = "Feb 26 2012"
@@ -601,22 +599,3 @@ class Piano():
 
 if __name__ == '__main__':
     pass
-    # pygame.init()
-    # WINSIZE = [1270, 700]
-    # screen = pygame.display.set_mode(WINSIZE)
-    # pygame.display.set_caption('Piano Keyboard')
-
-    # piano = Piano(screen, WINSIZE)
-    # piano.draw_piano()
-
-    # clock = pygame.time.Clock()
-    # done = 0
-    # while not done:
-    #     pygame.display.update()
-    #     for e in pygame.event.get():
-    #         if e.type == QUIT or (e.type == KEYUP and e.key == K_ESCAPE):
-    #             done = 1
-    #             break
-    #         elif e.type == MOUSEBUTTONDOWN and e.button == 1:
-    #             pass
-    #     clock.tick(30)

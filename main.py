@@ -11,8 +11,6 @@ from pyglet.window import key # 键盘常量，事件
 
 
 from piano import Piano, TIMESTAMP_RANGE, Rect
-#from pygame.locals import *
-#import pygame.time
 
 import os
 import os.path, sys, random
@@ -111,7 +109,7 @@ class PlayCenter(pyglet.window.Window):
     def __init__(self, *args, **kwargs):
         # *args,化序列为位置参数：(1,2) -> func(1,2)
         # **kwargs,化字典为关键字参数：{'a':1,'b':2} -> func(a=1,b=2)
-        super(pyglet.window.Window, self).__init__(*args, **kwargs)
+        super(PlayCenter, self).__init__(*args, **kwargs)
         self.batch = pyglet.graphics.Batch()
 
         # 游戏窗口左上角的label参数设置
