@@ -48,6 +48,11 @@ class Piano():
     def __init__(self, batch, screen_rect, top=None):
         self.batch = batch
         self.batch_vertex_list = {}
+        self.group_bg = pyglet.graphics.OrderedGroup(0)
+        self.group_staff = pyglet.graphics.OrderedGroup(1)
+        self.group_note = pyglet.graphics.OrderedGroup(2)
+        self.group_box = pyglet.graphics.OrderedGroup(3)
+        self.group_now = self.group_bg
 
         self.screen_width, self.screen_height = screen_rect
 
@@ -311,6 +316,9 @@ class Piano():
         if top is None:
             top = self.top
 
+        # set group
+        self.group_now = self.group_bg
+
         # self.fill_rect_with_gl(self.color_backgroud)
 
         w, h = self.add_piano_keys('l', 0, top, left)
@@ -324,8 +332,8 @@ class Piano():
         self.draw_keys(self.blackkeys.values(), self.black)
         # red line
         self.draw_line_with_gl(self.color_red_line,
-                         (0, self.top - 3),
-                         (self.screen_width, self.top - 3), 4)
+                               (0, self.top - 4),
+                               (self.screen_width, self.top - 4), 4)
 
         #pygame.display.update()
 
@@ -333,6 +341,9 @@ class Piano():
     def draw_staff_lines(self, middle=0, n=6, left=0):
         rightx = self.screen_width
         middle_c_white_offset_y = middle
+
+        # set group
+        self.group_now = self.group_staff
 
         for i in range(1, int(n*2)-1):
             downy = left + middle_c_white_offset_y + i * self.piano_staff_line_width
@@ -355,18 +366,24 @@ class Piano():
         offset_pos = offset_x * self.screen_width / max_pos
         screen_width_pos = screen_staff_total_length * self.screen_width / max_pos
 
+        # set group
+        self.group_now = self.group_bg
         # backgroud
         self.draw_line_with_gl(self.color_backgroud,
-                         (0, 0),
-                         (self.screen_width, 0), 9)
+                               (0, 0),
+                               (self.screen_width, 0), 8)
+        # set group
+        self.group_now = self.group_staff
         # bar
         self.draw_line_with_gl(self.white,
-                         (offset_pos, 0),
-                         (offset_pos + screen_width_pos, 0), 9)
+                               (offset_pos, 0),
+                               (offset_pos + screen_width_pos, 0), 8)
+        # set group
+        self.group_now = self.group_note
         # point
         self.draw_line_with_gl(self.color_key_down,
-                         (current_pos-1, 0),
-                         (current_pos+1, 0), 9)
+                               (current_pos-1, 0),
+                               (current_pos+1, 0), 8)
 
         if current_pos > offset_pos and current_pos <= offset_pos + screen_width_pos:
             return (current_pos - offset_pos) * 100 / screen_width_pos
@@ -406,6 +423,9 @@ class Piano():
 
     def _show_notes_staff(self, p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
                           current_timestamp, middle, bar_duration, time_signature_n, offset_x, is_pause):
+
+        # set group
+        self.group_now = self.group_bg
         self.fill_rect_with_gl(self.color_backgroud, Rect(
             0, middle - self.staff_total_lines_up * self.piano_staff_line_width,
             self.screen_width, self.staff_total_lines * self.piano_staff_line_width))
@@ -416,6 +436,8 @@ class Piano():
         max_timestamp = p_notes_in_all_staff[-1][1] + p_notes_in_all_staff[-1][2]
         offset_bar = max_timestamp - (max_timestamp / bar_duration * bar_duration)
 
+        # set group
+        self.group_now = self.group_staff
         # draw bars
         _bar_pos = offset_bar
         bar_pos = 0
@@ -432,12 +454,15 @@ class Piano():
             if bar_pos >= self.screen_width:
                 break
 
+        # set group
+        self.group_now = self.group_note
         # draw last bar
         self.draw_line_with_gl(self.color_key_down,
                          (last_bar_pos-1, middle - 14 * self.piano_staff_line_width),
                          (last_bar_pos-1, middle + 12 * self.piano_staff_line_width), 2)
 
-
+        # set group
+        self.group_now = self.group_bg
         # draw visual metronome
         interval = bar_duration / time_signature_n
         _beat_pos = (current_timestamp + bar_duration - offset_bar) / interval * interval - bar_duration + offset_bar
@@ -448,6 +473,8 @@ class Piano():
             beat_rec = Rect(beat_pos, beat_top, beat_length, self.piano_staff_line_width*20)
             self.draw_rect_with_gl(self.color_key_down, beat_rec, 1)
 
+        # set group
+        self.group_now = self.group_note
         # draw notes
         for note_data in p_notes_in_all_staff:
             pitch, timestamp, duration, track_idx = note_data
@@ -557,6 +584,9 @@ class Piano():
         # note_rec, note_pos = self.draw_note(pitch, top=WINSIZE[1] * 0.7)
         # self.draw_vertical_staff_lines(WINSIZE[1] * 0.618)
 
+        # set group
+        self.group_now = self.group_staff
+
         # self.draw_rect_with_gl(self.color_backgroud, note_rec, 1)
         self.draw_keys(pitch_key_rec, key_color)
         self.draw_keys(pitch_side_blackkeys_rec, self.black)
@@ -571,7 +601,7 @@ class Piano():
 
         color = color + (255,)
         if vertex_data not in self.batch_vertex_list:
-            vl = self.batch.add(4, GL_QUADS, None,
+            vl = self.batch.add(4, GL_QUADS, self.group_now,
                                   ('v2f', vertex_data),
                                   ('c4B', color * 4))
             self.batch_vertex_list[vertex_data] = vl
@@ -602,12 +632,12 @@ class Piano():
                 start_pos_add = (end_pos[0] + line_width, end_pos[1])
                 end_pos_add = (start_pos[0] + line_width, start_pos[1])
             elif start_pos[1] == end_pos[1]:
-                start_pos_add = (end_pos[0], end_pos[1] + line_width)
-                end_pos_add = (start_pos[0], start_pos[1] + line_width)
-            vertex_data = start_pos + end_pos + end_pos_add + start_pos_add
+                start_pos_add = (end_pos[0], end_pos[1] - line_width)
+                end_pos_add = (start_pos[0], start_pos[1] - line_width)
+            vertex_data = start_pos + end_pos + start_pos_add + end_pos_add
 
             if vertex_data not in self.batch_vertex_list:
-                vl = self.batch.add(4, GL_QUADS, None,
+                vl = self.batch.add(4, GL_QUADS, self.group_now,
                        ('v2f', vertex_data),
                        ('c4B', color * 4))
                 self.batch_vertex_list[vertex_data] = vl
@@ -623,7 +653,7 @@ class Piano():
             vertex_data = start_pos + end_pos
 
             if vertex_data not in self.batch_vertex_list:
-                vl = self.batch.add(2, GL_LINES, None,
+                vl = self.batch.add(2, GL_LINES, self.group_now,
                        ('v2f', vertex_data),
                        ('c4B', color * 2))
                 self.batch_vertex_list[vertex_data] = vl

@@ -142,7 +142,7 @@ class PlayCenter(pyglet.window.Window):
         # MenuSystem.BGHIGHTLIGHT = Color(40,40,40,40)
         # MenuSystem.BORDER_HL = Color(200,200,200,200)
 
-        self.menu_bar = MenuSystem.MenuBar(top=5)
+        self.menu_bar = MenuSystem.MenuBar(top=9)
         menus_in_bar, self.midi_filename_data = get_menu_data()
         # self.menu_bar.set(menus_in_bar)
 
