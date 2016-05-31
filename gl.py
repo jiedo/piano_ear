@@ -1,5 +1,6 @@
 #encoding: utf8
 
+import random
 import math
 import pyglet
 import time
@@ -9,8 +10,6 @@ from pyglet.window import key # 键盘常量，事件
 
 class Window(pyglet.window.Window):
     def __init__(self, *args, **kwargs):
-        # *args,化序列为位置参数：(1,2) -> func(1,2)
-        # **kwargs,化字典为关键字参数：{'a':1,'b':2} -> func(a=1,b=2)
         super(Window, self).__init__(*args, **kwargs)
         self.batch = pyglet.graphics.Batch()
         self.rotation = (0, 0)
@@ -22,32 +21,24 @@ class Window(pyglet.window.Window):
             x=10, y=self.height - 10, anchor_x='left', anchor_y='top',
             color=(255, 0, 0, 255))
 
-        vertex_data = (34, 53, 44, 22, 422, 64, 42, 44)
-        self.batch.add(4, GL_LINES, None,
-                       ('v2i/static', vertex_data),
-                       ('c4B', (0, 255, 255, 255) * 4))
-
-
-        # GL_LINE_LOOP
-        # GL_QUADS
-        vertex_data = (134, 153, 204, 122, 202, 204, 102, 204, 234, 253, 304, 222, 302, 304, 202, 304)
-        self.batch.add(8, GL_TRIANGLE_FAN, None,
-                       ('v2i/static', vertex_data),
-                       ('c4B', (0, 255, 255, 0) * 8))
-
-
+        self.all_sprites = []
         self.n = 0
-
-        pyglet.clock.schedule_interval(self.update, 1.0 / 100)# 每秒刷新60次
+        self.group_bg = pyglet.graphics.OrderedGroup(0)
+        pyglet.clock.schedule(self.update)
+        for i in range(1000):
+            img = pyglet.image.create(random.randint(10, 50),
+                                      random.randint(10, 50),
+                                      pyglet.image.SolidColorImagePattern((100, 100, 100, 255,)))
+            sp = pyglet.sprite.Sprite(img, x = random.randint(100, 600), y=random.randint(100, 600),
+                                      batch=self.batch, group=self.group_bg)
+            self.all_sprites += [sp]
 
 
     # 每1/60秒调用一次进行更新
     def update(self, dt):
-        print "update", dt
-        self.n = 0
-        time.sleep(0.1)
-        print "n is", self.n
-        pass
+        self.n += 1
+        print "n is", self.n, int(dt * 1000)
+
 
     # 重写Window的on_draw函数
     # 当窗口需要被重绘时，事件循环(EventLoop)就会调度该事件
@@ -76,7 +67,6 @@ class Window(pyglet.window.Window):
         # glVertex2i(75, 100)
         # glVertex2i(200, 200)
         # glEnd()
-        print "drawing"
         self.clear()
         # self.set_3d() # 进入3d模式
         # glColor3d(0, 1, 0)
@@ -120,13 +110,6 @@ class Window(pyglet.window.Window):
     # 按下键盘事件，长按W，S，A，D键将不断改变坐标
     def on_key_press(self, symbol, modifiers):
         self.n += 3
-
-        # Draw some stuff
-        glBegin(GL_TRIANGLES)
-        glVertex2i(10+self.n, 20)
-        glVertex2i(15+self.n, 30)
-        glVertex2i(10+self.n, 40)
-        glEnd()
 
         time.sleep(0.1)
         print symbol, modifiers
