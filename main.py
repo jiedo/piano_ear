@@ -6,7 +6,7 @@
 
 
 from pyglet.gl import *
-from pyglet.window import key # 键盘常量，事件
+from pyglet.window import key
 import pyglet
 
 import os
@@ -98,21 +98,21 @@ class PlayCenter(pyglet.window.Window):
             color=(255, 0, 0, 255))
 
         ################################################################ init
-        # # menu
-        # MenuSystem.init()
-        # MenuSystem.BGCOLOR = Color(200,200,200, 255)
-        # MenuSystem.FGCOLOR = Color(0, 0, 0, 0)
-        # MenuSystem.BGHIGHTLIGHT = Color(40,40,40,40)
-        # MenuSystem.BORDER_HL = Color(200,200,200,200)
-
         self.menu_bar = MenuSystem.MenuBar(top=9)
         menus_in_bar, self.midi_filename_data = get_menu_data()
         # self.menu_bar.set(menus_in_bar)
 
         self.piano = Piano(self.batch, WINSIZE,
                            top=WINSIZE[1] - self.menu_bar.lineheigth - Piano.piano_white_key_height - 2)
+
         self.piano.init_piano()
         self.piano.draw_vertical_staff_lines(WINSIZE[1] * 0.618)
+
+        pyglet.window.Window.flip(self)
+        self.piano.reset_piano()
+        self.piano.draw_vertical_staff_lines(WINSIZE[1] * 0.618)
+
+        pyglet.window.Window.flip(self)
 
         self.staff_top = self.menu_bar.top + self.menu_bar.lineheigth + 30
 
@@ -313,11 +313,6 @@ class PlayCenter(pyglet.window.Window):
 
     ################################################################ main loop
     def main_loop(self, dt):
-        # must out of events loop
-        # if self.menu_bar or self.menu_bar.choice:
-        #     time.sleep(0.1)
-        #     return
-
         # get cmd
         try:
             if (self.is_pause and not self.play_one_timestamp_while_paused) or self.midi_cmd_idx >= len(self.all_midi_lines):
@@ -363,7 +358,7 @@ class PlayCenter(pyglet.window.Window):
             if not self.is_pause and is_beat_at_right_most and (current_play_percent == 0 or current_play_percent > (100 - 50 / progress_multi_lines)):
                 self.staff_offset_x = page_end_offset_x
 
-            #pyglet.window.Window.flip(self)
+            pyglet.window.Window.flip(self)
             utils.sync_play_time(pitch_timestamp, self.last_timestamp, self.old_time, self.sounds)
             self.old_time = time.time()
             self.last_timestamp = pitch_timestamp
@@ -494,26 +489,7 @@ class PlayCenter(pyglet.window.Window):
         glTranslatef(-x, -y, -z)
 
 
-    def event_loop(self):
-        """ menu at first
-        """
-        return
-
-        # need_update_display = True
-        # menu_bar_screen = self.menu_bar.update(ev)
-        # if self.menu_bar:
-        #     self.menu_bar_info = self.get_menus_info_bar()
-        # if self.menu_bar.choice:
-        #     try:
-        #         self.load_resource(self.menu_bar.choice_label[-1])
-        #     except Exception, e:
-        #         print "menu error:", e
-        #     self.menu_bar_info = self.get_menus_info_bar()
-        #     # if have choice, continue event
-        #     return
-
 
 if __name__ == '__main__':
     window = PlayCenter(width=WINSIZE[0], height=WINSIZE[1], caption='Piano Center', resizable=False) # 创建游戏窗口
-    #window.set_exclusive_mouse(True) # 隐藏鼠标光标，将所有的鼠标事件都绑定到此窗口
     pyglet.app.run()

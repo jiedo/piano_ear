@@ -361,10 +361,12 @@ class Piano():
 
 
     def reset_piano(self):
-        for sp in self.whitekeys.values():
-            sp.image = self.white_key_image
-        for sp in self.blackkeys.values():
-            sp.image = self.black_key_image
+        self.draw_keys(self.whitekeys.values(), self.white)
+        self.draw_keys(self.blackkeys.values(), self.black)
+        # red line
+        self.draw_line_with_gl(self.color_red_line,
+                               (0, self.top - 4),
+                               (self.screen_width, self.top - 4), 4)
 
 
     def init_piano(self, top=None, left=0):
@@ -380,10 +382,7 @@ class Piano():
             left += w
         w, h = self.add_piano_keys('r', 0, top, left)
 
-        # red line
-        self.draw_line_with_gl(self.color_red_line,
-                               (0, self.top - 4),
-                               (self.screen_width, self.top - 4), 4)
+        self.reset_piano()
 
 
     def draw_staff_lines(self, middle=0, n=6, left=0):
