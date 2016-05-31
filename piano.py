@@ -68,45 +68,17 @@ class Piano():
         self.day_light_theme()
 
         self.batch = batch
-        self.group_bg = pyglet.graphics.OrderedGroup(0)
-        self.group_fg = pyglet.graphics.OrderedGroup(1)
-        self.group_top = pyglet.graphics.OrderedGroup(2)
 
-        self.group_staff_bg = pyglet.graphics.OrderedGroup(3)
-        self.group_staff = pyglet.graphics.OrderedGroup(4)
-        self.group_note = pyglet.graphics.OrderedGroup(5)
-        self.group_box = pyglet.graphics.OrderedGroup(6)
+        # self.group_bg = pyglet.graphics.OrderedGroup(0)
+        # self.group_fg = pyglet.graphics.OrderedGroup(1)
+        # self.group_top = pyglet.graphics.OrderedGroup(2)
 
-        self.group_now = self.group_bg
-        self.batch_vertex_list = {
-            self.group_bg: {},
-            self.group_fg: {},
-            self.group_top: {},
+        # self.group_staff_bg = pyglet.graphics.OrderedGroup(3)
+        # self.group_staff = pyglet.graphics.OrderedGroup(4)
+        # self.group_note = pyglet.graphics.OrderedGroup(5)
+        # self.group_box = pyglet.graphics.OrderedGroup(6)
 
-            self.group_staff_bg: {},
-            self.group_staff: {},
-            self.group_note: {},
-            self.group_box: {},
-        }
-
-        self.sprite_pool = {
-            self.group_staff_bg: [],
-            self.group_staff: [],
-            self.group_note: [],
-            self.group_box: [],
-        }
-
-        self.idx_group_staff = {
-            self.group_staff_bg: 0,
-            self.group_staff: 0,
-            self.group_note: 0,
-            self.group_box: 0,
-        }
-        self.sprite_image_pool = {}
-
-        self.progress_bar_vertex_list_bg = None
-        self.progress_bar_vertex_list_vision = None
-        self.progress_bar_vertex_list_cursor = None
+        # self.group_now = self.group_bg
 
         self.white_key_image = pyglet.image.create(self.piano_white_key_width - 1,
                                                    self.piano_white_key_height,
@@ -277,23 +249,23 @@ class Piano():
 
         for offset in range(piano_white_key_n):
             pitch = whitekey_index2pitch[offset] + key_pitch
-            # self.whitekeys[pitch] = Rect(left + offset * (self.piano_white_key_width), top,
-            #                                     self.piano_white_key_width - 1,
-            #                                     self.piano_white_key_height)
-            self.whitekeys[pitch] = pyglet.sprite.Sprite(
-                self.white_key_image, x=left + offset * (self.piano_white_key_width),
-                y=self.screen_height - top - self.piano_white_key_height,
-                batch=self.batch, group=self.group_bg)
+            self.whitekeys[pitch] = Rect(left + offset * (self.piano_white_key_width), top,
+                                         self.piano_white_key_width - 1,
+                                         self.piano_white_key_height)
+            # self.whitekeys[pitch] = pyglet.sprite.Sprite(
+            #     self.white_key_image, x=left + offset * (self.piano_white_key_width),
+            #     y=self.screen_height - top - self.piano_white_key_height,
+            #     batch=self.batch, group=self.group_bg)
 
         for offset,piano_offset in enumerate(piano_black_key_offset):
             pitch = blackkey_index2pitch[offset] + key_pitch
-            # self.blackkeys[pitch] = Rect(left + piano_offset, top,
-            #                                     self.piano_black_key_width,
-            #                                     self.piano_black_key_height)
-            self.blackkeys[pitch] = pyglet.sprite.Sprite(
-                self.black_key_image, x=left + piano_offset,
-                y=self.screen_height - top - self.piano_black_key_height,
-                batch=self.batch, group=self.group_fg)
+            self.blackkeys[pitch] = Rect(left + piano_offset, top,
+                                         self.piano_black_key_width,
+                                         self.piano_black_key_height)
+            # self.blackkeys[pitch] = pyglet.sprite.Sprite(
+            #     self.black_key_image, x=left + piano_offset,
+            #     y=self.screen_height - top - self.piano_black_key_height,
+            #     batch=self.batch, group=self.group_fg)
 
         return (piano_white_key_n * self.piano_white_key_width,
                 self.piano_white_key_height)
@@ -439,34 +411,20 @@ class Piano():
         offset_pos = offset_x * self.screen_width / max_pos
         screen_width_pos = screen_staff_total_length * self.screen_width / max_pos
 
-        # # set group
-        # self.group_now = self.group_bg
-        # # backgroud
-        # self.draw_line_with_gl(self.color_backgroud,
-        #                        (0, 0),
-        #                        (self.screen_width, 0), 8, distinct=False)
+        # backgroud
+        self.draw_line_with_gl(self.color_backgroud,
+                               (0, 0),
+                               (self.screen_width, 0), 8)
 
-        # set group
-        self.group_now = self.group_fg
         # vision
         vl = self.draw_line_with_gl(self.white,
                                     (offset_pos, 0),
-                                    (offset_pos + screen_width_pos, 0), 8, distinct=False)
-        if self.progress_bar_vertex_list_vision != vl:
-            if self.progress_bar_vertex_list_vision:
-                self.progress_bar_vertex_list_vision.delete()
-            self.progress_bar_vertex_list_vision = vl
+                                    (offset_pos + screen_width_pos, 0), 8)
 
-        # set group
-        self.group_now = self.group_top
         # cursor
         vl = self.draw_line_with_gl(self.color_key_down,
                                     (current_pos-1, 0),
-                                    (current_pos+1, 0), 8, distinct=False)
-        if self.progress_bar_vertex_list_cursor != vl:
-            if self.progress_bar_vertex_list_cursor:
-                self.progress_bar_vertex_list_cursor.delete()
-            self.progress_bar_vertex_list_cursor = vl
+                                    (current_pos+1, 0), 8)
 
         if current_pos > offset_pos and current_pos <= offset_pos + screen_width_pos:
             return (current_pos - offset_pos) * 100 / screen_width_pos
@@ -477,29 +435,13 @@ class Piano():
     def show_notes_staff(self, p_enabled_tracks, p_tracks_order_idx, p_notes_in_all_staff,
                          current_timestamp, p_staff_top, bar_duration, time_signature_n, offset_x, is_pause):
 
-        self.idx_group_staff = {
-            self.group_staff_bg: 0,
-            self.group_staff: 0,
-            self.group_note: 0,
-            self.group_box: 0,
-        }
-
-        # # clear vl
-        # for group in [self.group_staff_bg,
-        #               self.group_staff,
-        #               self.group_note,
-        #               self.group_box,]:
-        #     for vl in self.batch_vertex_list[group].values():
-        #         vl.delete()
-        #     self.batch_vertex_list[group] = {}
-
         # now start draw staff
         progress_offset_x = offset_x
         progress_multi_lines = 0
         is_beat_at_right_most = False
         while True:
             if self.top - p_staff_top - self.gap_keyboad_staff < self.staff_total_lines * self.piano_staff_line_width:
-                self.group_now = self.group_staff_bg
+                # self.group_now = self.group_staff_bg
                 self.fill_rect_with_gl(self.color_backgroud, Rect(
                     0, p_staff_top,
                     self.screen_width, self.top - p_staff_top - self.gap_keyboad_staff))
@@ -516,11 +458,6 @@ class Piano():
             offset_x += last_bar_pos
             p_staff_top += self.staff_total_lines * self.piano_staff_line_width
 
-        for group, idx in self.idx_group_staff.items():
-            if idx >= len(self.sprite_pool[group]):
-                continue
-            for sp, _ in self.sprite_pool[group][idx:]:
-                sp.visible = False
 
         # show_progress_bar
         max_timestamp = p_notes_in_all_staff[-1][1] + p_notes_in_all_staff[-1][2]
@@ -532,13 +469,13 @@ class Piano():
                           current_timestamp, middle, bar_duration, time_signature_n, offset_x, is_pause):
 
         # set group
-        self.group_now = self.group_staff_bg
+        # self.group_now = self.group_staff_bg
         self.fill_rect_with_gl(self.color_backgroud, Rect(
             0, middle - self.staff_total_lines_up * self.piano_staff_line_width,
             self.screen_width, self.staff_total_lines * self.piano_staff_line_width))
 
         # set group
-        self.group_now = self.group_staff
+        # self.group_now = self.group_staff
         # draw_staff_lines
         self.draw_staff_lines(middle=middle)
 
@@ -546,7 +483,7 @@ class Piano():
         offset_bar = max_timestamp - (max_timestamp / bar_duration * bar_duration)
 
         # set group
-        self.group_now = self.group_staff
+        # self.group_now = self.group_staff
         # draw bars
         _bar_pos = offset_bar
         bar_pos = 0
@@ -564,14 +501,14 @@ class Piano():
                 break
 
         # set group
-        self.group_now = self.group_note
+        # self.group_now = self.group_note
         # draw last bar
         self.draw_line_with_gl(self.color_key_down,
                          (last_bar_pos-1, middle - 14 * self.piano_staff_line_width),
                          (last_bar_pos-1, middle + 12 * self.piano_staff_line_width), 2)
 
         # set group
-        self.group_now = self.group_note
+        # self.group_now = self.group_note
         # draw visual metronome
         interval = bar_duration / time_signature_n
         _beat_pos = (current_timestamp + bar_duration - offset_bar) / interval * interval - bar_duration + offset_bar
@@ -583,7 +520,7 @@ class Piano():
             self.draw_rect_with_gl(self.color_key_down, beat_rec, 1)
 
         # set group
-        self.group_now = self.group_note
+        # self.group_now = self.group_note
         # draw notes
         for note_data in p_notes_in_all_staff:
             pitch, timestamp, duration, track_idx = note_data
@@ -616,7 +553,7 @@ class Piano():
                 is_black = True
                 pitch = pitch - 1
             key_rec = self.whitekeys[pitch]
-            key_index = (key_rec.x / self.piano_white_key_width) - 23
+            key_index = (key_rec.left / self.piano_white_key_width) - 23
             note_center_y = middle - key_index * self.piano_staff_line_width / 2
             note_top = note_center_y - note_height / 2
             note_rec = Rect(note_pos, note_top, note_length, note_height)
@@ -670,6 +607,39 @@ class Piano():
 
 
     def show_keys_press(self, cmd, pitch):
+        pitch_side_blackkeys_rec = []
+        if pitch in self.whitekeys.keys():
+            pitch_key_rec = [self.whitekeys[pitch]]
+            key_color = self.white
+            if pitch + 1 in self.blackkeys.keys():
+                pitch_side_blackkeys_rec += [self.blackkeys[pitch+1]]
+            if pitch - 1 in self.blackkeys.keys():
+                pitch_side_blackkeys_rec += [self.blackkeys[pitch-1]]
+
+        elif pitch in self.blackkeys.keys():
+            pitch_key_rec = [self.blackkeys[pitch]]
+            key_color = self.black
+
+        key_color_down = self.color_key_down
+        if key_color != self.black:
+            key_color_down = self.color_key_down
+
+        if cmd == "NOTE_ON":
+            key_color = key_color_down
+
+        # note_rec, note_pos = self.draw_note(pitch, top=WINSIZE[1] * 0.7)
+        # self.draw_vertical_staff_lines(WINSIZE[1] * 0.618)
+
+        # set group
+        # self.group_now = self.group_staff
+
+        # self.draw_rect_with_gl(self.color_backgroud, note_rec, 1)
+        self.draw_keys(pitch_key_rec, key_color)
+        self.draw_keys(pitch_side_blackkeys_rec, self.black)
+        return pitch_key_rec + pitch_side_blackkeys_rec
+
+
+    def show_keys_press_sp(self, cmd, pitch):
         if pitch in self.whitekeys.keys():
             sp = self.whitekeys[pitch]
             if cmd == "NOTE_ON":
@@ -692,60 +662,9 @@ class Piano():
                        rect.left, self.screen_height - (rect.top + rect.height),)
 
         color = color + (255,)
-
-        if self.group_now not in self.idx_group_staff:
-            if vertex_data not in self.batch_vertex_list[self.group_now]:
-                vl = self.batch.add(4, GL_QUADS, self.group_now,
-                                      ('v2f', vertex_data),
-                                      ('c4B', color * 4))
-                self.batch_vertex_list[self.group_now][vertex_data] = vl
-
-            return self.batch_vertex_list[self.group_now][vertex_data]
-
-        self.fill_sprite_with_gl(color, rect.left, self.screen_height - (rect.top + rect.height), rect.width, rect.height)
-
-
-    def fill_sprite_with_gl(self, color, x, y, width, height):
-        # draw sprite
-        self.idx_group_staff[self.group_now] += 1
-        x, y, width, height = int(x), int(y), int(width), int(height)
-
-        if width <= 0:
-            print "width error"
-            width = 1
-
-        if height <= 0:
-            print "height error"
-            height = 1
-
-        # get sprite image
-        image_key = (width, height, color)
-        if image_key not in self.sprite_image_pool:
-            tmp_image = pyglet.image.create(width, height,
-                                            pyglet.image.SolidColorImagePattern(color))
-            self.sprite_image_pool[image_key] = tmp_image
-        else:
-            tmp_image = self.sprite_image_pool[image_key]
-
-        # get sprite
-        sprites = self.sprite_pool[self.group_now]
-        if len(sprites) < self.idx_group_staff[self.group_now]:
-            # get sprite
-            tmp_sprite = pyglet.sprite.Sprite(
-                tmp_image,
-                x=x,
-                y=y,
-                batch=self.batch, group=self.group_now)
-            sprites += [(tmp_sprite, image_key)]
-        else:
-            tmp_sprite, tmp_image_key = sprites[self.idx_group_staff[self.group_now] - 1]
-            tmp_sprite.visible = True
-            if tmp_sprite.x != x:
-                tmp_sprite.x = x
-            if tmp_sprite.y != y:
-                tmp_sprite.y = y
-            if image_key != tmp_image_key:
-                tmp_sprite.image = tmp_image
+        vl = pyglet.graphics.vertex_list(4, ('v2f', vertex_data),
+                                         ('c4B', color * 4))
+        vl.draw(GL_QUADS)
 
 
     def draw_rect_with_gl(self, color, rect, width=1):
@@ -768,19 +687,10 @@ class Piano():
         return None
 
 
-    def draw_line_with_gl(self, color, start_pos, end_pos, line_width=1, distinct=True):
+    def draw_line_with_gl(self, color, start_pos, end_pos, line_width=1):
         start_pos = (start_pos[0], self.screen_height - start_pos[1])
         end_pos = (end_pos[0], self.screen_height - end_pos[1])
         color = color + (255,)
-        if self.group_now in self.idx_group_staff:
-            # draw sprite
-            if start_pos[0] == end_pos[0]:
-                line_height =  abs(end_pos[1] - start_pos[1])
-                self.fill_sprite_with_gl(color, start_pos[0], min(end_pos[1], start_pos[1]), line_width, line_height)
-            elif start_pos[1] == end_pos[1]:
-                line_height = abs(end_pos[0] - start_pos[0])
-                self.fill_sprite_with_gl(color, min(end_pos[0], start_pos[0]), start_pos[1] , line_height, line_width)
-            return
 
         if line_width > 1:
             if start_pos[0] == end_pos[0]:
@@ -791,33 +701,16 @@ class Piano():
                 end_pos_add = (end_pos[0], end_pos[1] - line_width)
             vertex_data = start_pos + end_pos + end_pos_add + start_pos_add
 
-            if distinct:
-                if vertex_data not in self.batch_vertex_list[self.group_now]:
-                    vl = self.batch.add(4, GL_QUADS, self.group_now,
-                                        ('v2f', vertex_data),
-                                        ('c4B', color * 4))
-                    self.batch_vertex_list[self.group_now][vertex_data] = vl
-            else:
-                vl = self.batch.add(4, GL_QUADS, self.group_now,
-                                    ('v2f', vertex_data),
-                                    ('c4B', color * 4))
-                return vl
+            vl = pyglet.graphics.vertex_list(4, ('v2f', vertex_data),
+                                             ('c4B', color * 4))
+            vl.draw(GL_QUADS)
 
         else:
             vertex_data = start_pos + end_pos
-            if distinct:
-                if vertex_data not in self.batch_vertex_list[self.group_now]:
-                    vl = self.batch.add(2, GL_LINES, self.group_now,
-                                        ('v2f', vertex_data),
-                                        ('c4B', color * 2))
-                    self.batch_vertex_list[self.group_now][vertex_data] = vl
-            else:
-                vl = self.batch.add(2, GL_LINES, self.group_now,
-                                    ('v2f', vertex_data),
-                                    ('c4B', color * 2))
-                return vl
+            vl = pyglet.graphics.vertex_list(2, ('v2f', vertex_data),
+                                             ('c4B', color * 2))
+            vl.draw(GL_LINES)
 
-        return self.batch_vertex_list[self.group_now][vertex_data]
 
 
 if __name__ == '__main__':

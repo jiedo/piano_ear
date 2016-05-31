@@ -363,6 +363,7 @@ class PlayCenter(pyglet.window.Window):
             if not self.is_pause and is_beat_at_right_most and (current_play_percent == 0 or current_play_percent > (100 - 50 / progress_multi_lines)):
                 self.staff_offset_x = page_end_offset_x
 
+            #pyglet.window.Window.flip(self)
             utils.sync_play_time(pitch_timestamp, self.last_timestamp, self.old_time, self.sounds)
             self.old_time = time.time()
             self.last_timestamp = pitch_timestamp
@@ -449,13 +450,14 @@ class PlayCenter(pyglet.window.Window):
 
 
     def on_draw(self):
-        self.clear()
+        return
+        #self.clear()
         # self.set_3d() # 进入3d模式
         # glColor3d(0, 1, 0)
 
         # self.set_2d()           # 进入2d模式
-        self.batch.draw()       # 将batch中保存的顶点列表绘制出来
-        self.draw_label()       # 绘制label
+        # self.batch.draw()       # 将batch中保存的顶点列表绘制出来
+        #self.draw_label()       # 绘制label
 
 
     def draw_label(self):
