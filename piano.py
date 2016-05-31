@@ -346,7 +346,7 @@ class Piano():
                     bdcolor = self.white
 
             self.fill_rect_with_gl(dcolor, r)
-            self.draw_rect_with_gl(bdcolor, r, 1)
+            # self.draw_rect_with_gl(bdcolor, r, 1)
             if bdcolor == self.black:
                 self.draw_line_with_gl(self.color_blackkey_edge,
                                  (r.left + 2, r.top),

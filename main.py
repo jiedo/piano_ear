@@ -111,7 +111,6 @@ class PlayCenter(pyglet.window.Window):
         pyglet.window.Window.flip(self)
         self.piano.reset_piano()
         self.piano.draw_vertical_staff_lines(WINSIZE[1] * 0.618)
-
         pyglet.window.Window.flip(self)
 
         self.staff_top = self.menu_bar.top + self.menu_bar.lineheigth + 30
@@ -491,5 +490,9 @@ class PlayCenter(pyglet.window.Window):
 
 
 if __name__ == '__main__':
-    window = PlayCenter(width=WINSIZE[0], height=WINSIZE[1], caption='Piano Center', resizable=False) # 创建游戏窗口
+    # wincfg = pyglet.gl.Config(double_buffer=False)
+    window = PlayCenter(width=WINSIZE[0], height=WINSIZE[1],
+                        caption='Piano Center',
+                        # config=wincfg,
+                        resizable=False)
     pyglet.app.run()
