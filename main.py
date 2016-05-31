@@ -4,21 +4,19 @@
 """ piano play center
 """
 
-import math
-import pyglet
+
 from pyglet.gl import *
 from pyglet.window import key # 键盘常量，事件
-
-
-from piano import Piano, TIMESTAMP_RANGE, Rect
+import pyglet
 
 import os
-import os.path, sys, random
-import parse_midi
-
 import time
+import math
+
+import parse_midi
 import player
 import utils
+from piano import Piano, TIMESTAMP_RANGE, Rect, PITCH_OF_KEY_ON_KEYBOARD
 
 
 class MenuSystem():
@@ -37,7 +35,6 @@ class MenuSystem():
 
     def init(self):
         pass
-
 
 
 WINSIZE = [1248, 740]
@@ -64,8 +61,6 @@ def get_menu_data():
                           if (filename.endswith(".mid") or filename.endswith(".midi"))]
         if midi_filenames:
             menu_data += midi_filenames
-        # elif not dirnames:
-        #     menu_data += [u"."]
 
     midi_filename_data = []
     menu_data = []
@@ -92,47 +87,15 @@ def get_menu_data():
     return menu_data, midi_filename_data
 
 
-# def new_line(batch, ):
-#     self.batch.add(4, GL_QUADS, None,
-#                    ('v2i/static', vertex_data),
-#                    ('c4B', (0, 255, 255, 0) * 4))
-
-#     self.batch.add(4, GL_LINES, None,
-#                    ('v2i/static', vertex_data),
-#                    ('c4B', (0, 255, 255, 0) * 4))
-
-#     blank_image = pyglet.image.create(cw, ch, pyglet.image.SolidColorImagePattern((200,)*4))
-#     sprites = [pyglet.sprite.Sprite(blank_image, batch=batch) for i in range(100)]
-
-
 class PlayCenter(pyglet.window.Window):
     def __init__(self, *args, **kwargs):
-        # *args,化序列为位置参数：(1,2) -> func(1,2)
-        # **kwargs,化字典为关键字参数：{'a':1,'b':2} -> func(a=1,b=2)
         super(PlayCenter, self).__init__(*args, **kwargs)
         self.batch = pyglet.graphics.Batch()
+        self.set_2d()
 
-        # 游戏窗口左上角的label参数设置
         self.label = pyglet.text.Label('', font_name='Arial', font_size=18,
             x=10, y=self.height - 10, anchor_x='left', anchor_y='top',
             color=(255, 0, 0, 255))
-
-        # vertex_data = (34, 53, 44, 22, 422, 64, 42, 44)
-        # self.batch.add(4, GL_LINES, None,
-        #                ('v2i/static', vertex_data),
-        #                ('c4B', (0, 255, 255, 255) * 4))
-
-        # GL_LINE_LOOP
-        # GL_QUADS
-
-        # vertex_data = (134, 153, 244, 122, 242, 264, 102, 204)
-        # self.batch.add(4, GL_QUADS, None,
-        #                ('v2i/static', vertex_data),
-        #                ('c4B', (0, 255, 255, 0) * 4))
-
-        pyglet.clock.schedule(self.main_loop)
-
-        self.set_2d()           # 进入2d模式
 
         ################################################################ init
         # # menu
@@ -146,8 +109,8 @@ class PlayCenter(pyglet.window.Window):
         menus_in_bar, self.midi_filename_data = get_menu_data()
         # self.menu_bar.set(menus_in_bar)
 
-        self.menu_bar_info = MenuSystem.MenuBar(top=WINSIZE[1] - self.menu_bar.lineheigth)
-        self.piano = Piano(self.batch, WINSIZE, top=self.menu_bar_info.top - Piano.piano_white_key_height - 2)
+        self.piano = Piano(self.batch, WINSIZE,
+                           top=WINSIZE[1] - self.menu_bar.lineheigth - Piano.piano_white_key_height - 2)
         self.piano.init_piano()
         self.piano.draw_vertical_staff_lines(WINSIZE[1] * 0.618)
 
@@ -162,33 +125,17 @@ class PlayCenter(pyglet.window.Window):
 
         self.load_resource(self.midi_filename)
 
-
         ################################################################ main init
         self.devices = player.init()
-        #clock = pygame.time.Clock()
         self.old_time = 0
         self.pitch_offset = 60
-        self.pitch_of_key_on_keyboard = [key.TAB, key._1,
-                                    key.Q, key._2,
-                                    key.W,
-                                    key.E, key._4,
-                                    key.R, key._5,
-                                    key.T, key._6,
-                                    key.Y,
-
-                                    key.U, key._8,
-                                    key.I, key._9,
-                                    key.O,
-                                    key.P, key.MINUS,
-                                    key.BRACKETLEFT, key.EQUAL,
-                                    key.BRACKETRIGHT, key.BACKSPACE,
-                                    key.BACKSLASH, ]
         self.need_update_display = True
 
+        ################################################################ schedule loop
+        pyglet.clock.schedule(self.main_loop)
 
-    # 按下键盘事件
-    def on_key_press(self, symbol, modifiers):
-        print symbol, modifiers
+
+    def on_key_release(self, symbol, modifiers):
         # MENU Reload
         if symbol == key.RETURN:
             menus_in_bar, self.midi_filename_data = get_menu_data()
@@ -220,16 +167,15 @@ class PlayCenter(pyglet.window.Window):
                 60000 / parse_midi.g_mseconds_per_quarter - 10))
             if parse_midi.g_mseconds_per_quarter > 2000:
                 parse_midi.g_mseconds_per_quarter = 2000
-            # self.menu_bar_info.set(self.get_menus_info_bar())
-            # self.menu_bar_info.update(ev)
+            self.menu_bar_info = self.get_menus_info_bar()
+
         elif symbol == key.RIGHT:
             # Faster
             parse_midi.g_mseconds_per_quarter = int(60000 / (
                 60000 / parse_midi.g_mseconds_per_quarter + 10))
             if parse_midi.g_mseconds_per_quarter <= 200:
                 parse_midi.g_mseconds_per_quarter = 200
-            # self.menu_bar_info.set(self.get_menus_info_bar())
-            # self.menu_bar_info.update(ev)
+            self.menu_bar_info = self.get_menus_info_bar()
 
         #Page_Up/Page_Down
         elif symbol == key.DOWN:
@@ -253,8 +199,6 @@ class PlayCenter(pyglet.window.Window):
             if need_reload:
                 midi_filename = self.midi_filename_data[midi_filename_idx]
                 self.load_resource(midi_filename)
-                # self.menu_bar_info.set(self.get_menus_info_bar())
-                # self.menu_bar_info.update(ev)
 
         # Metronome
         elif symbol == key.M:
@@ -285,19 +229,17 @@ class PlayCenter(pyglet.window.Window):
             self.piano.timestamp_range = self.piano.timestamp_range * self.piano.piano_staff_line_width_base / self.piano.piano_staff_line_width
 
         # Play Piano with keys
-        elif symbol in self.pitch_of_key_on_keyboard:
-            pitch = self.pitch_offset + self.pitch_of_key_on_keyboard.index(symbol)
+        elif symbol in PITCH_OF_KEY_ON_KEYBOARD:
+            pitch = self.pitch_offset + PITCH_OF_KEY_ON_KEYBOARD.index(symbol)
             player.stop(self.devices, pitch, 100, self.sounds)
             player.load_sounds([(pitch, 100)], self.sounds)
             cmd = "NOTE_OFF"
             self.piano.show_keys_press(cmd, pitch)
 
 
-    # 释放按键
-    def on_key_release(self, symbol, modifiers):
-        print symbol, modifiers
-        if symbol in self.pitch_of_key_on_keyboard:
-            pitch = self.pitch_offset + self.pitch_of_key_on_keyboard.index(symbol)
+    def on_key_press(self, symbol, modifiers):
+        if symbol in PITCH_OF_KEY_ON_KEYBOARD:
+            pitch = self.pitch_offset + PITCH_OF_KEY_ON_KEYBOARD.index(symbol)
             player.load_sounds([(pitch, 100)], self.sounds)
             player.play(self.devices, pitch, 100, self.sounds)
             cmd = "NOTE_ON"
@@ -314,7 +256,6 @@ class PlayCenter(pyglet.window.Window):
             self.staff_offset_x = 0
 
 
-    # 鼠标释放
     def on_mouse_release(self, pos_x, pos_y, button, modifiers):
         if pos_y > 60:
             return
@@ -366,14 +307,11 @@ class PlayCenter(pyglet.window.Window):
             self.piano.reset_piano()
 
 
-    # 鼠标移动事件，处理视角的变化
-    # dx,dy表示鼠标从上一位置移动到当前位置x，y轴上的位移
-    # 该函数将这个位移转换成了水平角x和俯仰角y的变化
-    # 变化幅度由参数m控制
     def on_mouse_motion(self, x, y, dx, dy):
         pass
 
 
+    ################################################################ main loop
     def main_loop(self, dt):
         # must out of events loop
         # if self.menu_bar or self.menu_bar.choice:
@@ -425,10 +363,6 @@ class PlayCenter(pyglet.window.Window):
             if not self.is_pause and is_beat_at_right_most and (current_play_percent == 0 or current_play_percent > (100 - 50 / progress_multi_lines)):
                 self.staff_offset_x = page_end_offset_x
 
-            # self.clear()
-            # self.batch.draw()       # 将batch中保存的顶点列表绘制出来
-            # self.draw_label()       # 绘制label
-
             utils.sync_play_time(pitch_timestamp, self.last_timestamp, self.old_time, self.sounds)
             self.old_time = time.time()
             self.last_timestamp = pitch_timestamp
@@ -456,84 +390,7 @@ class PlayCenter(pyglet.window.Window):
             self.piano.show_keys_press(cmd, pitch)
         #clock.tick(10)
 
-
-    def on_draw(self):
-        self.clear()
-        # self.set_3d() # 进入3d模式
-        # glColor3d(0, 1, 0)
-
-        #self.set_2d()           # 进入2d模式
-        self.batch.draw()       # 将batch中保存的顶点列表绘制出来
-        self.draw_label()       # 绘制label
-        #self.draw_reticle()
-
-
-    # 窗口大小变化响应事件
-    def on_resize(self, width, height):
-        # label的纵坐标
-        self.label.y = height - 10
-        # #reticle更新，包含四个点，绘制成两条直线
-
-        # if self.reticle:
-        #     self.reticle.delete()
-        # x, y = self.width / 2, self.height / 2
-        # n = 10
-        # self.reticle = pyglet.graphics.vertex_list(4,
-        #     ('v2i', (x - n, y, x + n, y, x, y - n, x, y + n))
-        # )
-
-
-    # # 绘制游戏窗口中间的十字，一条横线加一条竖线
-    # def draw_reticle(self):
-    #     glColor3d(0, 0, 1)
-    #     self.reticle.draw(GL_LINES)
-
-
-    def draw_label(self):
-        text = '%02d ' % (
-            pyglet.clock.get_fps())
-        self.label.text = text
-        self.label.draw() # 绘制label的text
-
-
-    def set_2d(self):
-        width, height = self.get_size()
-        glDisable(GL_DEPTH_TEST)
-        glViewport(0, 0, width, height)
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
-        glOrtho(0, width, 0, height, -1, 1)
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-
-
-    def set_3d(self):
-        width, height = self.get_size()
-        glEnable(GL_DEPTH_TEST)
-        glViewport(0, 0, width, height)
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
-        gluPerspective(65.0, width / float(height), 0.1, 60.0)
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-        x, y = (0, 0)           # self.rotation
-        glRotatef(x, 0, 1, 0)
-        glRotatef(-y, math.cos(math.radians(x)), 0, math.sin(math.radians(x)))
-        x, y, z = (0, 0, 0)     # self.position
-        glTranslatef(-x, -y, -z)
-
-
-    ################################################################
-    def get_menus_info_bar(self):
-        gen_menu_data = []
-        # gen_menu_data += ["Metro: %.1f" % player.g_metronome_volume]
-        gen_menu_data += ["Time: %d/%d" % (parse_midi.g_time_signature_n, parse_midi.g_time_signature_note)]
-        gen_menu_data += ["Temp: %d" % (60000 / parse_midi.g_mseconds_per_quarter)]
-        gen_menu_data += ["Playing: %s" % self.midi_filename.split("/")[-1].replace(".midi", "").replace(".mid", "")]
-
-        return [MenuSystem.Menu(m, ()) for m in gen_menu_data]
-
-
+    ################################################################ load
     def load_resource(self, midi_filename):
         print midi_filename
         try:
@@ -573,7 +430,7 @@ class PlayCenter(pyglet.window.Window):
         player.load_sounds([(midi_data[1], midi_data[2]) for midi_data in self.all_midi_lines],
                            self.sounds)
         self.piano.reset_piano()
-
+        self.menu_bar_info = self.get_menus_info_bar()
         self.time_pitchs = []
         self.midi_cmd_idx = 0
         self.staff_offset_x = 0
@@ -582,30 +439,76 @@ class PlayCenter(pyglet.window.Window):
         self.play_one_timestamp_while_paused = False
 
 
-    def main(self):
-        """Play a midi file with sound samples
+    def get_menus_info_bar(self):
+        gen_menu_data = []
+        # gen_menu_data += ["Metro: %.1f" % player.g_metronome_volume]
+        gen_menu_data += ["Time: %d/%d" % (parse_midi.g_time_signature_n, parse_midi.g_time_signature_note)]
+        gen_menu_data += ["Temp: %d" % (60000 / parse_midi.g_mseconds_per_quarter)]
+        gen_menu_data += ["Playing: %s" % self.midi_filename.split("/")[-1].replace(".midi", "").replace(".mid", "")]
+        return "    ".join(gen_menu_data)
+
+
+    def on_draw(self):
+        self.clear()
+        # self.set_3d() # 进入3d模式
+        # glColor3d(0, 1, 0)
+
+        # self.set_2d()           # 进入2d模式
+        self.batch.draw()       # 将batch中保存的顶点列表绘制出来
+        self.draw_label()       # 绘制label
+
+
+    def draw_label(self):
+        text = '%02d  %s' % (pyglet.clock.get_fps(), self.menu_bar_info)
+        self.label.text = text
+        self.label.draw()
+
+
+    ################################################################ display
+    def set_2d(self):
+        width, height = self.get_size()
+        glDisable(GL_DEPTH_TEST)
+        glViewport(0, 0, width, height)
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glOrtho(0, width, 0, height, -1, 1)
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+
+
+    def set_3d(self):
+        width, height = self.get_size()
+        glEnable(GL_DEPTH_TEST)
+        glViewport(0, 0, width, height)
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        gluPerspective(65.0, width / float(height), 0.1, 60.0)
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+        x, y = (0, 0)           # self.rotation
+        glRotatef(x, 0, 1, 0)
+        glRotatef(-y, math.cos(math.radians(x)), 0, math.sin(math.radians(x)))
+        x, y, z = (0, 0, 0)     # self.position
+        glTranslatef(-x, -y, -z)
+
+
+    def event_loop(self):
+        """ menu at first
         """
-        pass
+        return
 
-        # while not p_done:
-        #     # events
-        #     for ev in pygame.event.get():
-        #         need_update_display = True
-        #         menu_bar_screen = self.menu_bar.update(ev)
-        #         if self.menu_bar:
-        #             self.menu_bar_info.set(self.get_menus_info_bar())
-        #             self.menu_bar_info.update(ev)
-
-        #         if self.menu_bar.choice:
-        #             try:
-        #                 self.load_resource(self.menu_bar.choice_label[-1])
-        #             except Exception, e:
-        #                 print "menu error:", e
-
-        #             self.menu_bar_info.set(self.get_menus_info_bar())
-        #             self.menu_bar_info.update(ev)
-        #             # if have choice, continue event
-        #             continue
+        # need_update_display = True
+        # menu_bar_screen = self.menu_bar.update(ev)
+        # if self.menu_bar:
+        #     self.menu_bar_info = self.get_menus_info_bar()
+        # if self.menu_bar.choice:
+        #     try:
+        #         self.load_resource(self.menu_bar.choice_label[-1])
+        #     except Exception, e:
+        #         print "menu error:", e
+        #     self.menu_bar_info = self.get_menus_info_bar()
+        #     # if have choice, continue event
+        #     return
 
 
 if __name__ == '__main__':

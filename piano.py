@@ -9,10 +9,28 @@ event management"""
 import math
 import pyglet
 from pyglet.gl import *
+from pyglet.window import key
+
 
 __create_time__ = "Feb 26 2012"
 
 TIMESTAMP_RANGE = 8000
+
+PITCH_OF_KEY_ON_KEYBOARD = [key.TAB, key._1,
+                            key.Q, key._2,
+                            key.W,
+                            key.E, key._4,
+                            key.R, key._5,
+                            key.T, key._6,
+                            key.Y,
+                            #
+                            key.U, key._8,
+                            key.I, key._9,
+                            key.O,
+                            key.P, key.MINUS,
+                            key.BRACKETLEFT, key.EQUAL,
+                            key.BRACKETRIGHT, key.BACKSPACE,
+                            key.BACKSLASH, ]
 
 
 class Rect():
