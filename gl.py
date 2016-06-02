@@ -50,25 +50,45 @@ class Window(pyglet.window.Window):
         self.n += 1
         print "n is", self.n, int(dt * 1000)
 
-        time.sleep(0.5)
-        for i in range(2):
-            vertex_data = tuple([random.randint(100, 600) for i in range(8)])
-            vl = pyglet.graphics.vertex_list(4,
-                ('v2i', vertex_data)
-            )
-            glColor3d(0, 0, 1)
-            vl.draw(GL_QUADS)
+        for vl in self.all_vls:
+            vl.delete()
+        self.all_vls = []
 
-        pyglet.window.Window.flip(self)
-        print "finished draw"
-        time.sleep(0.5)
+        for i in range(1000):
+            img = pyglet.image.create(random.randint(10, 50),
+                                      random.randint(10, 50),
+                                      pyglet.image.SolidColorImagePattern((100, 100, 100, 255,)))
+            sp = pyglet.sprite.Sprite(img, x = random.randint(100, 600), y=random.randint(100, 600),
+                                      batch=self.batch, group=self.group_bg)
+            self.all_vls += [sp]
+
+            # vertex_data = tuple([random.randint(100, 600) for i in range(8)])
+            # vl = self.batch.add(4, GL_QUADS, None,
+            #                ('v2i/static', vertex_data), #
+            #                ('c4B', (100, 100, 100, 255) * 4))
+            # self.all_vls += [vl]
+
+            pass
+
+        # time.sleep(0.5)
+        # for i in range(500):
+        #     vertex_data = tuple([random.randint(100, 600) for i in range(8)])
+        #     vl = pyglet.graphics.vertex_list(4,
+        #         ('v2i', vertex_data)
+        #     )
+        #     glColor3d(0, 0, 1)
+        #     vl.draw(GL_QUADS)
+
+        # pyglet.window.Window.flip(self)
+        # print "finished draw"
+        # time.sleep(0.5)
 
 
     # 重写Window的on_draw函数
     # 当窗口需要被重绘时，事件循环(EventLoop)就会调度该事件
     def on_draw(self):
-        # # Clear buffers
-        # glClear(GL_COLOR_BUFFER_BIT)
+        # Clear buffers
+        glClear(GL_COLOR_BUFFER_BIT)
 
         # # Draw some stuff
         # #glBegin(GL_POINTS)
@@ -150,7 +170,7 @@ class Window(pyglet.window.Window):
         print symbol, modifiers
         if symbol == key.W: # opengl坐标系：z轴垂直平面向外，x轴向右，y轴向上
             pass
-
+        pyglet.app.exit()
 
     # 释放按键事件
     def on_key_release(self, symbol, modifiers):
@@ -189,7 +209,7 @@ class Window(pyglet.window.Window):
 
 
 def main():
-    window = Window(width=800, height=600, caption='Pyglet', resizable=False) # 创建游戏窗口
+    window = Window(width=800, height=600, caption='Pyglet', resizable=False, fullscreen=True) # 创建游戏窗口
     window.set_exclusive_mouse(True) # 隐藏鼠标光标，将所有的鼠标事件都绑定到此窗口
     pyglet.app.run()
 
