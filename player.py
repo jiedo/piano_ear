@@ -73,6 +73,7 @@ def init():
 
 def real_stop(sounds, time_dead_line=None):
     count_stop = 0
+    count_stop_total = 0
     if _platform == "darwin":
         now_time = time.time()
         s_datas_list = sounds.values()
@@ -86,6 +87,7 @@ def real_stop(sounds, time_dead_line=None):
                 if now_time - mute_time < NON_FREE_LIMIT:
                     break
                 count_stop_inner += 1
+                count_stop_total += 1
             s_datas_list_count += [(s_datas, count_stop_inner)]
 
         s_datas_list_count.sort(key=lambda x:x[1])
@@ -109,9 +111,9 @@ def real_stop(sounds, time_dead_line=None):
                         s_data[0] = IS_FREE
             s_datas.rotate(-count_stop_inner)
 
-        # if count_stop:
-        #     print count_stop, "avg stop time is:", (1000 * (time.time() - now_time)/count_stop)
-    return count_stop
+        if count_stop:
+            print count_stop,"/", count_stop_total, "avg stop time is:", (1000 * (time.time() - now_time)/count_stop)
+    return count_stop, count_stop_total
 
 
 def stop(devices, pitch, volecity, sounds):
