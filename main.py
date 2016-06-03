@@ -16,7 +16,7 @@ import threading
 import time
 import player
 import utils
-
+import glblit
 import MenuSystem
 
 
@@ -75,11 +75,16 @@ WINSIZE = [1248, 740]
 class PlayCenter():
     def __init__(self):
         pygame.init()
-        screen = pygame.display.set_mode(WINSIZE, pygame.HWSURFACE | pygame.FULLSCREEN | pygame.DOUBLEBUF)
+        self.screen = glblit.initializeDisplay(*WINSIZE)
+        self.screen_rect = self.screen.get_rect()
+
         pygame.display.set_caption('Piano Center')
+        #self.screen = pygame.display.set_mode(WINSIZE, pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.OPENGL ) # FULLSCREEN
+
+        screen = pygame.Surface(WINSIZE)
 
         # menu
-        MenuSystem.init()
+        MenuSystem.init(screen)
         MenuSystem.BGCOLOR = Color(200,200,200, 255)
         MenuSystem.FGCOLOR = Color(0, 0, 0, 0)
         MenuSystem.BGHIGHTLIGHT = Color(40,40,40,40)
@@ -88,10 +93,10 @@ class PlayCenter():
         self.menu_bar = MenuSystem.MenuBar(top=5)
         menus_in_bar, self.midi_filename_data = get_menu_data()
         self.menu_bar.set(menus_in_bar)
-        self.menu_bar_info = MenuSystem.MenuBar(top=WINSIZE[1] - self.menu_bar.lineheigth)
+        self.menu_bar_info = MenuSystem.MenuBar(top=self.screen_rect.height - self.menu_bar.lineheigth)
         self.piano = Piano(screen, WINSIZE, top=self.menu_bar_info.top - Piano.piano_white_key_height - 2)
         self.piano.draw_piano()
-        self.piano.draw_lines(WINSIZE[1] * 0.618)
+        self.piano.draw_lines(self.screen_rect.height * 0.618)
 
         self.staff_top = self.menu_bar.top + self.menu_bar.lineheigth + 30
 
@@ -138,7 +143,7 @@ class PlayCenter():
         # draw track pick
         self.piano.screen.fill(self.piano.color_backgroud,
                                pygame.Rect(0, self.menu_bar.top + self.menu_bar.lineheigth,
-                                           self.piano.screen_rect[0], 20))
+                                           self.screen_rect.width, 20))
         for track_idx, idx in self.tracks_order_idx.items():
             if track_idx in self.enabled_tracks_switch:
                 sw = self.enabled_tracks_switch[track_idx]
@@ -162,6 +167,13 @@ class PlayCenter():
         self.last_timestamp = 0
         self.is_pause = True
         self.play_one_timestamp_while_paused = False
+
+
+    def gl_screen_blit(self):
+        self.textureset = glblit.Textureset()
+        self.textureset.set('opengl', glblit.Surface_Texture(self.piano.screen, self.screen_rect))
+        sur_image = glblit.GL_Image(self.textureset, 'opengl')
+        sur_image.draw((0, 0), rotation=180)
 
 
     def main(self):
@@ -255,7 +267,7 @@ class PlayCenter():
                             self.staff_offset_x +
                             ev.pos[0] +
                             wraped_staff_offset
-                        ) * self.piano.timestamp_range / self.piano.screen_rect[0]
+                        ) * self.piano.timestamp_range / self.screen_rect.width
 
                         self.last_timestamp = -1
                         for idx, midi_line in enumerate(self.all_midi_lines):
@@ -386,7 +398,8 @@ class PlayCenter():
 
             # must out of events loop
             if self.menu_bar or self.menu_bar.choice:
-                pygame.display.update()
+                self.gl_screen_blit()
+                pygame.display.flip()
                 clock.tick(10)
                 continue
 
@@ -414,7 +427,8 @@ class PlayCenter():
 
                 has_stoped = player.real_stop(self.sounds)
                 if need_update_display:
-                    pygame.display.update()
+                    self.gl_screen_blit()
+                    pygame.display.flip()
                     need_update_display = False
                 clock.tick(60)
                 continue
@@ -433,7 +447,7 @@ class PlayCenter():
                 if not self.is_pause and is_beat_at_right_most and (current_play_percent == 0 or current_play_percent > (100 - 50 / progress_multi_lines)):
                     self.staff_offset_x = page_end_offset_x
 
-                utils.sync_play_time(pitch_timestamp, self.last_timestamp, old_time, self.keys_recs, self.sounds)
+                utils.sync_play_time(self, pitch_timestamp, self.last_timestamp, old_time, self.keys_recs, self.sounds)
                 old_time = time.time()
                 self.last_timestamp = pitch_timestamp
                 self.time_pitchs = []
@@ -458,7 +472,6 @@ class PlayCenter():
             # show keys
             if pitch > 1:
                 self.keys_recs += self.piano.show_keys_press(cmd, pitch)
-            #clock.tick(10)
 
 
 if __name__ == '__main__':

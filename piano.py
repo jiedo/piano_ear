@@ -302,8 +302,6 @@ class Piano():
                          (0, self.top - 3),
                          (self.screen_rect[0], self.top - 3), 4)
 
-        pygame.display.update()
-
 
     def draw_staff_lines(self, middle=0, n=6, left=0):
         rightx = self.screen_rect[0]

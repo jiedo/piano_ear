@@ -18,10 +18,14 @@ SWITCH       = 0
 FONT         = font.Font(font.match_font("SongTi TC") ,18)
 Arrow        = "..."
 
-
-def init():
+DISPLAY = 0
+DISPLAYRECT = 0
+def init(display_surface):
     global DISPLAY,DISPLAYRECT
-    DISPLAY      = display.get_surface()
+
+    DISPLAY = display_surface
+
+    # DISPLAY      = display.get_surface()
     if not DISPLAY: raise AttributeError('set video before init MenuSystem')
     DISPLAYRECT  = DISPLAY.get_rect()
 

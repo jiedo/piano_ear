@@ -193,9 +193,10 @@ class GL_Image:
                 if rotationCenter == None:
                     rotationCenter = (self.width / 2, self.height / 2)
                 # (w,h) = rotationCenter
-                glTranslate(rotationCenter[0],rotationCenter[1],0)
-                glRotate(rotation,0,0,-1)
-                glTranslate(-rotationCenter[0],-rotationCenter[1],0)
+                #glTranslate(rotationCenter[0],rotationCenter[1],0)
+                glTranslate(0,rotationCenter[1],0)
+                glRotate(rotation,-1,0,0)
+                glTranslate(0,-rotationCenter[1],0)
 
         if width or height:
             if not width:
@@ -209,9 +210,10 @@ class GL_Image:
         glCallList(self.texture.displaylist)
 
         if rotation != 0: # reverse
-            glTranslate(rotationCenter[0],rotationCenter[1],0)
-            glRotate(-rotation,0,0,-1)
-            glTranslate(-rotationCenter[0],-rotationCenter[1],0)
+            # glTranslate(rotationCenter[0],rotationCenter[1],0)
+            glTranslate(0,rotationCenter[1],0)
+            glRotate(-rotation,-1,0,0)
+            glTranslate(0,-rotationCenter[1],0)
 
 class CImage:
     """CImage is a "composed image" that refs multiple GLImages.
