@@ -264,9 +264,9 @@ class LDCImage:
 def main():
     render_init(640,480)
     tset = Textureset()
-    tset.load('data','.png')
-    fooimage = GL_Image(tset, 'data')
-    rawfootex = tset.get('data')
+    tset.load('opengl','.png')
+    fooimage = GL_Image(tset, 'opengl')
+    rawfootex = tset.get('opengl')
 
     compositelist = []
     examplegrid = []
