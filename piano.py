@@ -57,8 +57,8 @@ class Piano():
 
         self.is_show_longbar_in_staff = True
 
-        #self.dark_night_theme()
-        self.day_light_theme()
+        self.dark_night_theme()
+        # self.day_light_theme()
 
     def day_light_theme(self):
         self.TRACK_COLORS = [(20, 10, 10),
