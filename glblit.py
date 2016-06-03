@@ -5,7 +5,7 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 
 def initializeDisplay(w, h):
-    pygame.display.set_mode((w,h), pygame.OPENGL|pygame.DOUBLEBUF)
+    screen = pygame.display.set_mode((w,h), pygame.OPENGL|pygame.DOUBLEBUF)
 
     glClearColor(0.0, 0.0, 0.0, 1.0)
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
@@ -20,6 +20,8 @@ def initializeDisplay(w, h):
     glEnable(GL_TEXTURE_2D)
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+    return screen
 
 
 def render_init(w,h):
@@ -280,8 +282,10 @@ class LDCImage:
             glTranslate(-c[1][0], -c[1][1],0)
 
 def main():
-    render_init(640,480)
-    screen = pygame.Surface((640,480))
+    screen_size = (2*640, 2*480)
+
+    render_init(*screen_size)
+    screen = pygame.Surface(screen_size)
     screen.fill((223, 52, 250))
     #screen_gl, _, _ = SurfaceClip(screen, pygame.Rect(0, 0, 640,480))
 
@@ -289,10 +293,6 @@ def main():
     tset = Textureset()
     tset.load('opengl','.png')
     fooimage = GL_Image(tset, 'opengl')
-
-    tsset = Textureset()
-    tsset.set('opengl', Surface_Texture(screen, pygame.Rect(0, 0, 640,480)))
-    sur_image = GL_Image(tsset, 'opengl')
 
     rawfootex = tset.get('opengl')
 
@@ -319,7 +319,14 @@ def main():
             t=1
         else:
             t=0
+
+
+            tsset = Textureset()
+            tsset.set('opengl', Surface_Texture(screen, pygame.Rect(0, 0, screen_size[0],screen_size[1])))
+            sur_image = GL_Image(tsset, 'opengl')
             sur_image.draw((0, 0))
+
+
             #screen_gl.draw((320,200))
             #foocomposite.draw((320,200))
         clock.tick()
