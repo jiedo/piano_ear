@@ -31,7 +31,7 @@ class Bps():
 g_bps = Bps()
 
 
-def sync_play_time(self, pitch_timestamp, last_timestamp, old_time, center_keys_recs, sounds):
+def sync_play_time(self, pitch_timestamp, last_timestamp, old_time, sounds):
     # sleep
     deta_time = time.time() - old_time
     deta_timestamp = pitch_timestamp - last_timestamp

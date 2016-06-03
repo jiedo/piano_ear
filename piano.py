@@ -38,6 +38,7 @@ class Piano():
 
         self.whitekeys = {}
         self.blackkeys = {}
+        self.pitch_color = {}
 
         self.staff_total_lines = 28
         self.staff_total_lines_up = 15
@@ -507,17 +508,19 @@ class Piano():
 
 
     def show_keys_press(self, cmd, pitch):
+        pitch_left_blackkeys_rec = None
+        pitch_right_blackkeys_rec = None
         pitch_side_blackkeys_rec = []
         if pitch in self.whitekeys.keys():
-            pitch_key_rec = [self.whitekeys[pitch]]
+            pitch_key_rec = self.whitekeys[pitch]
             key_color = self.white
             if pitch + 1 in self.blackkeys.keys():
-                pitch_side_blackkeys_rec += [self.blackkeys[pitch+1]]
+                pitch_right_blackkeys_rec = self.blackkeys[pitch+1]
             if pitch - 1 in self.blackkeys.keys():
-                pitch_side_blackkeys_rec += [self.blackkeys[pitch-1]]
+                pitch_left_blackkeys_rec = self.blackkeys[pitch-1]
 
         elif pitch in self.blackkeys.keys():
-            pitch_key_rec = [self.blackkeys[pitch]]
+            pitch_key_rec = self.blackkeys[pitch]
             key_color = self.black
 
         key_color_down = self.color_key_down
@@ -527,13 +530,18 @@ class Piano():
         if cmd == "NOTE_ON":
             key_color = key_color_down
 
+        self.pitch_color[pitch] = key_color
+
         # note_rec, note_pos = self.draw_note(pitch, top=WINSIZE[1] * 0.7)
         # self.draw_lines(WINSIZE[1] * 0.618)
 
         # pygame.draw.rect(self.screen, self.color_backgroud, note_rec, False)
-        self.draw_keys(pitch_key_rec, key_color)
-        self.draw_keys(pitch_side_blackkeys_rec, self.black)
-        return pitch_key_rec + pitch_side_blackkeys_rec
+        self.draw_keys([pitch_key_rec], key_color)
+        if pitch_left_blackkeys_rec:
+            self.draw_keys([pitch_left_blackkeys_rec], self.pitch_color.get(pitch-1, self.black))
+
+        if pitch_right_blackkeys_rec:
+            self.draw_keys([pitch_right_blackkeys_rec], self.pitch_color.get(pitch+1, self.black))
 
 
 if __name__ == '__main__':
