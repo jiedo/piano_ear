@@ -125,6 +125,24 @@ class GL_Texture:
     def __repr__(s):
         return s.texture.__repr__()
 
+
+class Surface_Texture:
+    def __init__(s, surface, rect):
+        s.texture, s.width, s.height = SurfaceClip(surface, rect)
+        s.displaylist = createTexDL(s.texture, s.width, s.height)
+
+    def __del__(self):
+        if self.texture != None:
+            delTexture(self.texture)
+            self.texture = None
+        if self.displaylist != None:
+            delDL(self.displaylist)
+            self.displaylist = None
+
+    def __repr__(s):
+        return s.texture.__repr__()
+
+
 class Textureset:
     """Texturesets contain and name textures."""
 
@@ -263,9 +281,19 @@ class LDCImage:
 
 def main():
     render_init(640,480)
+    screen = pygame.Surface((640,480))
+    screen.fill((223, 52, 250))
+    #screen_gl, _, _ = SurfaceClip(screen, pygame.Rect(0, 0, 640,480))
+
+
     tset = Textureset()
     tset.load('opengl','.png')
     fooimage = GL_Image(tset, 'opengl')
+
+    tsset = Textureset()
+    tsset.set('opengl', Surface_Texture(screen, pygame.Rect(0, 0, 640,480)))
+    sur_image = GL_Image(tsset, 'opengl')
+
     rawfootex = tset.get('opengl')
 
     compositelist = []
@@ -278,7 +306,7 @@ def main():
                 None, (1,1,1,1), 1, None)))
 
     ldcimg = LDCImage(examplegrid)
-    foocomposite = CImage(compositelist)
+    #foocomposite = CImage(compositelist)
 
     clock = pygame.time.Clock()
     t = 0
@@ -291,7 +319,9 @@ def main():
             t=1
         else:
             t=0
-            foocomposite.draw((320,200))
+            sur_image.draw((0, 0))
+            #screen_gl.draw((320,200))
+            #foocomposite.draw((320,200))
         clock.tick()
         pygame.display.flip()
         pygame.event.pump()
