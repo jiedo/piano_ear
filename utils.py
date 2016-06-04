@@ -36,32 +36,32 @@ def sync_play_time(self, pitch_timestamp, old_time):
     deta_time = time.time() - old_time
     deta_timestamp = pitch_timestamp - self.last_timestamp
     wait_time = int(deta_timestamp * parse_midi.g_mseconds_per_quarter / parse_midi.g_ticks_per_quarter )
-    # print "midi need wait:", wait_time
+    # print "==== midi need wait:", wait_time
+
+    # show before play
+    deta_time = time.time() - old_time
+    if wait_time - deta_time*1000 > 10:
+        self.gl_screen_blit()
+        pygame.display.flip()
+    deta_time = time.time() - old_time
+    # print "after pygame:", int(deta_time*1000)
 
     for cmd, pitch, volecity in self.play_commands:
         if cmd == "NOTE_ON":
             player.play(pitch, volecity, self.sounds)
-
         elif cmd == "NOTE_OFF":
             player.stop(pitch, volecity, self.sounds)
-
         elif cmd == "METRO_ON" and player.g_metronome_volume > 0:
             player.play(pitch, volecity, self.sounds)
+    deta_time = time.time() - old_time
+    # print "after play:", int(deta_time*1000)
 
-    player.real_stop(self.sounds, wait_time/1000.0 - deta_time)
+    player.real_stop(self.sounds, wait_time/1000.0 - deta_time - 0.03)
     deta_time = time.time() - old_time
     # print "after stop:", int(deta_time*1000)
 
-    if wait_time - deta_time*1000 > 10:
-        self.gl_screen_blit()
-        pygame.display.flip()
-
-    deta_time = time.time() - old_time
-    # print "after pygame:", int(deta_time*1000)
-
     if wait_time/1000.0 - deta_time > 0:
         time.sleep((wait_time/1000.0 - deta_time))
-
     # deta_time = time.time() - old_time
     # print "after all:", int(deta_time*1000)
 
