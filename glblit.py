@@ -4,6 +4,7 @@ import os
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
+
 def initializeDisplay(w, h):
     screen = pygame.display.set_mode((w,h), pygame.OPENGL | pygame.DOUBLEBUF)
     # pygame.HWSURFACE | pygame.FULLSCREEN
@@ -25,21 +26,6 @@ def initializeDisplay(w, h):
     return screen
 
 
-def render_init(w,h):
-    """Finds the smallest available resolution that fits the desired
-    viewfield."""
-    pygame.init()
-    modelist = pygame.display.list_modes()
-    nextmode = [l for l in modelist if l[0]>=w and l[1]>=h]
-    bestx, besty = -1,-1
-    for l in nextmode:
-        if (bestx==-1 or bestx>=l[0]) and (besty==-1 or besty>=l[1]):
-            bestx, besty = l[0],l[1]
-
-    print "resolution: ",bestx, besty
-
-    initializeDisplay(bestx, besty)
-
 def loadImage(image):
     textureSurface = pygame.image.load(image)
 
@@ -56,6 +42,7 @@ def loadImage(image):
         GL_UNSIGNED_BYTE, textureData)
 
     return texture, width, height
+
 
 def SurfaceClip(surface, rect):
     textureSurface = surface.subsurface(rect)
@@ -105,9 +92,6 @@ def createTexDL(texture, width, height):
 def delDL(list):
     glDeleteLists(list, 1)
 
-def render(layers):
-    for l in layers:
-        l.render()
 
 class GL_Texture:
     def __init__(s, texname=None, texappend=".png"):
@@ -163,6 +147,7 @@ class Textureset:
     def get(s, name):
         return s.textures[name]
 
+
 class GL_Image:
     def __init__(self, texset, texname):
         self.texture = texset.get(texname)
@@ -216,127 +201,6 @@ class GL_Image:
             glRotate(-rotation,-1,0,0)
             glTranslate(0,-rotationCenter[1],0)
 
-class CImage:
-    """CImage is a "composed image" that refs multiple GLImages.
-    format is [(GLImage,argstoimage)...()..()]
-    Cimage is fast but immutable - it has to recreate
-    the display list to be changed."""
-
-    def __init__(s, ilist):
-        newlist = glGenLists(1)
-        glNewList(newlist,GL_COMPILE)
-
-        # see GL_Image.draw
-        for i in ilist:
-            if i[1][0] == None:
-                i[0].draw(i[1][0], i[1][1], i[1][2], i[1][3], i[1][4],
-                    i[1][5], i[1][6])
-            else: # absolute positioning normally resets the identity
-                i[0].draw(None,i[1][0], i[1][2], i[1][3], i[1][4], i[1][5],
-                    i[1][6])
-                glTranslate(-i[1][0][0], -i[1][0][1],0)
-
-        glEndList()
-        s.displaylist = newlist
-
-    def __del__(s):
-        if s.displaylist != None:
-            delDL(s.displaylist)
-            s.displaylist = None
-
-    def draw(s, abspos=None,relpos=None):
-        if abspos:
-            glLoadIdentity()
-            glTranslate(abspos[0],abspos[1],0)
-        elif relpos:
-            glTranslate(relpos[0],relpos[1],0)
-
-        glCallList(s.displaylist)
-
-class DCImage:
-    """Dynamic Composite Image - elements are mutable, at the caveat of
-    runtime performance."""
-    def __init__(s, ilist):
-        s.ilist = ilist
-    def draw(s, abspos):
-        glLoadIdentity()
-        glTranslate(abspos[0],abspos[1],0)
-
-        for i in s.ilist:
-            i[0].draw(i[1])
-
-class LDCImage:
-    """Limited Dynamic Composite Image. LDCImage uses only the
-    texture display lists for drawing, which makes it useful for simpler
-    applications like text and tiles that don't need the features of DCImage.
-
-    Remember not to mistake this for *LCD* Image!"""
-    def __init__(s, cache):
-        """cache format is: (texture ref, (absx, absy))"""
-        s.cache = cache
-    def draw(s, abspos):
-
-        glLoadIdentity()
-        glTranslate(abspos[0],abspos[1],0)
-
-        for c in s.cache:
-            glTranslate(c[1][0], c[1][1],0)
-            glCallList(c[0].displaylist)
-            glTranslate(-c[1][0], -c[1][1],0)
-
-def main():
-    screen_size = (2*640, 2*480)
-
-    render_init(*screen_size)
-    screen = pygame.Surface(screen_size)
-    screen.fill((223, 52, 250))
-    #screen_gl, _, _ = SurfaceClip(screen, pygame.Rect(0, 0, 640,480))
-
-
-    tset = Textureset()
-    tset.load('opengl','.png')
-    fooimage = GL_Image(tset, 'opengl')
-
-    rawfootex = tset.get('opengl')
-
-    compositelist = []
-    examplegrid = []
-
-    for x in xrange(4):
-        for y in xrange(4):
-            examplegrid.append((rawfootex,(x*32,y*32)))
-            compositelist.append((fooimage, ((x*32,y*32), None, None,
-                None, (1,1,1,1), 1, None)))
-
-    ldcimg = LDCImage(examplegrid)
-    #foocomposite = CImage(compositelist)
-
-    clock = pygame.time.Clock()
-    t = 0
-    glLoadIdentity()
-    for count in range(200):
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
-        if t==0:
-            ldcimg.draw((10,10))
-            fooimage.draw((0,0))
-            t=1
-        else:
-            t=0
-
-
-            tsset = Textureset()
-            tsset.set('opengl', Surface_Texture(screen, pygame.Rect(0, 0, screen_size[0],screen_size[1])))
-            sur_image = GL_Image(tsset, 'opengl')
-            sur_image.draw((0, 0))
-
-
-            #screen_gl.draw((320,200))
-            #foocomposite.draw((320,200))
-        clock.tick()
-        pygame.display.flip()
-        pygame.event.pump()
-    print "result: "+str(clock.get_fps())+" FPS"
-
 
 if __name__=="__main__":
-    main()
+    pass
