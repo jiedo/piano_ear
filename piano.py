@@ -32,11 +32,10 @@ PITCH_OF_KEY_ON_KEYBOARD = [K_TAB, K_1,
 class Piano():
     whitekey_width = 24
     whitekey_height = 140
-    blackkey_height = 74
     blackkey_width = 14
+    blackkey_height = 84
 
     gap_keyboad_staff = 60
-
 
     def __init__(self, screen, screen_size, top=None):
         self.screen = screen
@@ -91,9 +90,8 @@ class Piano():
 	                     (200,0,0),
 	                     (0,0,200),        ]
 
-        self.white = 250, 230, 200
+        self.white = 230, 210, 190
         self.black = 0, 0, 0
-
         self.color_backgroud = 250, 250, 250
 
         self.color_red_line = 130, 0, 0
@@ -103,9 +101,9 @@ class Piano():
         self.color_middle_c_line = self.color_add_lines
 
         self.color_blackkey_edge = 90, 90, 90
-        self.color_black_key_down = 100, 100, 200
-        self.color_white_key_down = 100, 100, 200
-        self.color_key_down = 0, 170, 200
+        self.color_black_key_down = 200, 200, 200
+        self.color_white_key_down = 50, 50, 50
+        self.color_current_highlight = 0, 170, 200
         self.color_key_note = 140, 155, 100
 
 
@@ -123,9 +121,9 @@ class Piano():
 	                     (0,128,0),
 	                     (0,0,128),]
 
-        self.white = 250, 230, 200
-        self.black = 0, 0, 0
-        self.color_backgroud = self.black
+        self.white = 140, 130, 110
+        self.black = 40, 40, 40
+        self.color_backgroud = 0, 0, 0
 
         self.color_red_line = 130, 0, 0
 
@@ -133,10 +131,10 @@ class Piano():
         self.color_add_lines = 50, 50, 50
         self.color_middle_c_line = self.color_add_lines
 
-        self.color_blackkey_edge = 90, 90, 90
-        self.color_black_key_down = 100, 100, 200
-        self.color_white_key_down = 100, 100, 200
-        self.color_key_down = 0, 170, 200
+        self.color_blackkey_edge = 100, 100, 100
+        self.color_black_key_down = 0, 0, 0
+        self.color_white_key_down = 0, 0, 0
+        self.color_current_highlight = 0, 170, 200
         self.color_key_note = 140, 155, 100
 
 
@@ -288,16 +286,21 @@ class Piano():
             self.screen.fill(dcolor, r)
             pygame.draw.rect(self.screen, bdcolor, r, 1)
             if bdcolor == self.black:
+                line_width = 2
+                # left vert
                 pygame.draw.line(self.screen, self.color_blackkey_edge,
                                  (r.left + 2, r.top),
-                                 (r.left + 2, r.top + r.height - 4), 1)
+                                 (r.left + 2, r.top + r.height - 3 - line_width), line_width)
+                # right vert
                 pygame.draw.line(self.screen, self.color_blackkey_edge,
-                                 (r.left + r.width - 2, r.top),
-                                 (r.left + r.width - 2, r.top + r.height - 4), 1)
-
+                                 (r.left + r.width - line_width - 1, r.top),
+                                 (r.left + r.width - line_width - 1, r.top + r.height - 3 - line_width), line_width)
+                # bottom
                 pygame.draw.line(self.screen, self.color_blackkey_edge,
-                                 (r.left + 2, r.top + r.height - 4),
-                                 (r.left + r.width - 2, r.top + r.height - 4), 1)
+                                 (r.left + 2,
+                                  r.top + r.height - 3 - line_width),
+                                 (r.left + r.width - 2,
+                                  r.top + r.height - 3 - line_width), line_width)
 
 
     def reset_piano(self):
@@ -326,21 +329,21 @@ class Piano():
 
 
     def draw_staff_lines(self, middle=0, n=6, left=0):
-        rightx = self.screen_width
-        middle_c_white_offset_y = middle
-
+        # middle: middle_c_white_offset_y
         for i in range(1, int(n*2)-1):
-            downy = left + middle_c_white_offset_y + i * self.staff_space_height
-            topy = left + middle_c_white_offset_y - i * self.staff_space_height
+            down = left + middle + i * self.staff_space_height
+            top = left + middle - i * self.staff_space_height
             if i < n:
-                pygame.draw.line(self.screen, self.color_lines, (left, topy), (rightx, topy))
-                pygame.draw.line(self.screen, self.color_lines, (left, downy), (rightx, downy))
+                pygame.draw.line(self.screen, self.color_lines, (left, top), (self.screen_width, top))
+                pygame.draw.line(self.screen, self.color_lines, (left, down), (self.screen_width, down))
             else:
-                self.draw_dash_line(self.color_add_lines, (left, topy), (rightx, topy), deta_h=15, vertical=False)
-                self.draw_dash_line(self.color_add_lines, (left, downy), (rightx, downy), deta_h=15, vertical=False)
+                self.draw_dash_line(self.color_add_lines, (left, top), (self.screen_width, top),
+                                    deta_h=15, vertical=False)
+                self.draw_dash_line(self.color_add_lines, (left, down), (self.screen_width, down),
+                                    deta_h=15, vertical=False)
 
-        y = left + middle_c_white_offset_y
-        self.draw_dash_line(self.color_middle_c_line, (left, y), (rightx, y), deta_h=15, vertical=False)
+        self.draw_dash_line(self.color_middle_c_line, (left, left + middle), (self.screen_width, left + middle),
+                            deta_h=15, vertical=False)
 
 
     def show_progress_bar(self, max_timestamp, current_timestamp, offset_x, screen_staff_total_length):
@@ -359,7 +362,7 @@ class Piano():
                          (offset_pos, 0),
                          (offset_pos + screen_width_pos, 0), 9)
         # point
-        pygame.draw.line(self.screen, self.color_key_down,
+        pygame.draw.line(self.screen, self.color_current_highlight,
                          (current_pos-1, 0),
                          (current_pos+1, 0), 9)
 
@@ -430,10 +433,9 @@ class Piano():
                 break
 
         # draw last bar
-        pygame.draw.line(self.screen, self.color_key_down,
+        pygame.draw.line(self.screen, self.color_current_highlight,
                          (last_bar_pos-1, middle - 14 * self.staff_space_height),
                          (last_bar_pos-1, middle + 12 * self.staff_space_height), 2)
-
 
         # draw visual metronome
         interval = bar_duration / time_signature_n
@@ -443,7 +445,7 @@ class Piano():
         beat_top = middle - 10 * self.staff_space_height
         if beat_pos + beat_length > 0 and beat_pos < self.screen_width:
             beat_rec = pygame.Rect(beat_pos, beat_top, beat_length, self.staff_space_height*20)
-            pygame.draw.rect(self.screen, self.color_key_down, beat_rec, 1)
+            pygame.draw.rect(self.screen, self.color_current_highlight, beat_rec, 1)
 
         # draw notes
         for note_data in notes_of_all_staff:
@@ -488,7 +490,7 @@ class Piano():
                 note_color = self.TRACK_COLORS[tracks_order_idx[track_idx] % len(self.TRACK_COLORS)]
 
             if timestamp <= current_timestamp and timestamp + duration > current_timestamp:
-                note_color = self.color_key_down
+                note_color = self.color_current_highlight
                 self.screen.fill(note_color, note_rec)
             else:
                 if is_black:
@@ -544,9 +546,9 @@ class Piano():
             pitch_key_rec = self.blackkeys[pitch]
             key_color = self.black
 
-        key_color_down = self.color_key_down
-        if key_color != self.black:
-            key_color_down = self.color_key_down
+        key_color_down = self.color_white_key_down
+        if key_color == self.black:
+            key_color_down = self.color_black_key_down
 
         if cmd == "NOTE_ON":
             key_color = key_color_down
