@@ -5,7 +5,7 @@
 """
 
 
-from piano import Piano, TIMESTAMP_RANGE
+from piano import Piano, TIMESTAMP_RANGE, PITCH_OF_KEY_ON_KEYBOARD
 from pygame.locals import *
 
 import os
@@ -42,8 +42,6 @@ def get_menu_data():
                           if (filename.endswith(".mid") or filename.endswith(".midi"))]
         if midi_filenames:
             menu_data += midi_filenames
-        # elif not dirnames:
-        #     menu_data += [u"."]
 
     midi_filename_data = []
     menu_data = []
@@ -77,12 +75,9 @@ class PlayCenter():
         pygame.init()
         self.screen = glblit.initializeDisplay(*WINSIZE)
         self.screen_rect = self.screen.get_rect()
-
         pygame.display.set_caption('Piano Center')
-        #self.screen = pygame.display.set_mode(WINSIZE, pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.OPENGL ) # FULLSCREEN
 
         screen = pygame.Surface(WINSIZE)
-
         # menu
         MenuSystem.init(screen)
         MenuSystem.BGCOLOR = Color(200,200,200, 255)
@@ -90,16 +85,21 @@ class PlayCenter():
         MenuSystem.BGHIGHTLIGHT = Color(40,40,40,40)
         MenuSystem.BORDER_HL = Color(200,200,200,200)
 
+        self.track_button_height = 20
+        self.track_button_width = 30
+        self.piano_info_bar_gap = 2
+
         self.menu_bar = MenuSystem.MenuBar(top=5)
         menus_in_bar, self.midi_filename_data = get_menu_data()
         self.menu_bar.set(menus_in_bar)
         self.menu_bar_info = MenuSystem.MenuBar(top=self.screen_rect.height - self.menu_bar.lineheigth)
-        self.piano = Piano(screen, WINSIZE, top=self.menu_bar_info.top - Piano.piano_white_key_height - 2)
-        self.piano.init_piano()
-        self.piano.reset_piano()
-        self.piano.draw_lines(self.screen_rect.height * 0.618)
+        self.piano = Piano(screen, WINSIZE,
+                           top=self.menu_bar_info.top - Piano.whitekey_height - self.piano_info_bar_gap)
 
-        self.staff_top = self.menu_bar.top + self.menu_bar.lineheigth + 30
+        self.piano.init_piano()
+        self.piano.draw_vertical_staff_lines(self.screen_rect.height * 0.618)
+
+        self.staff_top = self.menu_bar.top + self.menu_bar.lineheigth + self.track_button_height
 
         self.sounds = {}
         self.enabled_tracks_switch = {}
@@ -132,7 +132,7 @@ class PlayCenter():
             return
 
         self.piano.timestamp_range = TIMESTAMP_RANGE * parse_midi.g_ticks_per_quarter / parse_midi.g_mseconds_per_quarter
-        self.piano.timestamp_range = self.piano.timestamp_range * self.piano.piano_staff_line_width_base / self.piano.piano_staff_line_width
+        self.piano.timestamp_range = self.piano.timestamp_range * self.piano.staff_space_height_base / self.piano.staff_space_height
 
         if midi_filename in self.midi_filename_data:
             self.midi_filename_idx = self.midi_filename_data.index(midi_filename)
@@ -144,13 +144,14 @@ class PlayCenter():
         # draw track pick
         self.piano.screen.fill(self.piano.color_backgroud,
                                pygame.Rect(0, self.menu_bar.top + self.menu_bar.lineheigth,
-                                           self.screen_rect.width, 20))
+                                           self.screen_rect.width, self.track_button_height-1))
         for track_idx, idx in self.tracks_order_idx.items():
             if track_idx in self.enabled_tracks_switch:
                 sw = self.enabled_tracks_switch[track_idx]
-                sw.left = idx * 30
+                sw.left = idx * self.track_button_width
             else:
-                sw = pygame.Rect(idx * 30, self.menu_bar.top + self.menu_bar.lineheigth, 29, 20)
+                sw = pygame.Rect(idx * self.track_button_width, self.menu_bar.top + self.menu_bar.lineheigth,
+                                 self.track_button_width - 1, self.track_button_height-1)
                 self.enabled_tracks_switch[track_idx] = sw
 
             note_color = self.piano.TRACK_COLORS[idx % len(self.piano.TRACK_COLORS)]
@@ -160,13 +161,13 @@ class PlayCenter():
         player.load_sounds([(midi_data[1], midi_data[2]) for midi_data in self.all_midi_lines],
                            self.sounds)
         self.piano.reset_piano()
-
         self.time_pitchs = []
         self.midi_cmd_idx = 0
         self.staff_offset_x = 0
         self.last_timestamp = 0
         self.is_pause = True
         self.play_one_timestamp_while_paused = False
+        self.menu_bar_info.set(self.get_menus_info_bar())
 
 
     def gl_screen_blit(self):
@@ -184,23 +185,7 @@ class PlayCenter():
         old_time = 0
         p_done = False
 
-        p_pitch_offset = 60
-        p_pitch_of_key_on_keyboard = [K_TAB, K_1,
-                                    K_q, K_2,
-                                    K_w,
-                                    K_e, K_4,
-                                    K_r, K_5,
-                                    K_t, K_6,
-                                    K_y,
-
-                                    K_u, K_8,
-                                    K_i, K_9,
-                                    K_o,
-                                    K_p, K_MINUS,
-                                    K_LEFTBRACKET, K_EQUALS,
-                                    K_RIGHTBRACKET, K_BACKSPACE,
-                                    K_BACKSLASH, ]
-
+        pitch_offset = 60
         need_update_display = True
         while not p_done:
             # events
@@ -209,23 +194,17 @@ class PlayCenter():
                 menu_bar_screen = self.menu_bar.update(ev)
                 if self.menu_bar:
                     self.menu_bar_info.set(self.get_menus_info_bar())
-                    self.menu_bar_info.update(ev)
+                    # self.menu_bar_info.update(ev)
 
                 if self.menu_bar.choice:
                     try:
                         self.load_resource(self.menu_bar.choice_label[-1])
                     except Exception, e:
                         print "menu error:", e
-
-                    self.menu_bar_info.set(self.get_menus_info_bar())
-                    self.menu_bar_info.update(ev)
                     # if have choice, continue event
                     continue
 
-                if ev.type == QUIT:
-                    p_done = True
-                    break
-                elif ev.type == MOUSEBUTTONUP:
+                if ev.type == MOUSEBUTTONUP:
                     if ev.pos[1] > 60:
                         continue
                     # enable/disable tracks
@@ -256,12 +235,12 @@ class PlayCenter():
                     elif ev.button == 1:   # left button
                         if ev.pos[1] < 60: # progress bar can not click
                             continue
-                        clicked_staff_number = int((ev.pos[1] - self.staff_top) / (self.piano.staff_total_lines * self.piano.piano_staff_line_width))
+                        clicked_staff_number = int((ev.pos[1] - self.staff_top) / (self.piano.staff_total_lines * self.piano.staff_space_height))
                         wraped_staff_offset = 0
                         if clicked_staff_number > 0:
-                            wraped_staff_offset += self.piano.first_line_last_bar_pos
+                            wraped_staff_offset += self.piano.lastbar_pos_in_line1
                         if clicked_staff_number > 1:
-                            wraped_staff_offset += self.piano.second_line_last_bar_pos * (clicked_staff_number-1)
+                            wraped_staff_offset += self.piano.lastbar_pos_in_line2 * (clicked_staff_number-1)
 
                         timestamp_offset_x = (
                             self.staff_offset_x +
@@ -305,9 +284,9 @@ class PlayCenter():
                     elif ev.key == K_SPACE:
                         self.is_pause = not self.is_pause
 
-                    # is_show_longbar_in_staff
+                    # is_longbar_show
                     elif ev.key == K_c:
-                        self.piano.is_show_longbar_in_staff = not self.piano.is_show_longbar_in_staff
+                        self.piano.is_longbar_show = not self.piano.is_longbar_show
 
                     elif ev.key == K_LEFT:
                         # Slower
@@ -316,7 +295,6 @@ class PlayCenter():
                         if parse_midi.g_mseconds_per_quarter > 2000:
                             parse_midi.g_mseconds_per_quarter = 2000
                         self.menu_bar_info.set(self.get_menus_info_bar())
-                        self.menu_bar_info.update(ev)
                     elif ev.key == K_RIGHT:
                         # Faster
                         parse_midi.g_mseconds_per_quarter = int(60000 / (
@@ -324,13 +302,12 @@ class PlayCenter():
                         if parse_midi.g_mseconds_per_quarter <= 200:
                             parse_midi.g_mseconds_per_quarter = 200
                         self.menu_bar_info.set(self.get_menus_info_bar())
-                        self.menu_bar_info.update(ev)
 
                     #Page_Up/Page_Down
                     elif ev.key == K_DOWN:
-                        self.staff_offset_x += self.piano.first_line_last_bar_pos
+                        self.staff_offset_x += self.piano.lastbar_pos_in_line1
                     elif ev.key == K_UP:
-                        self.staff_offset_x -= self.piano.first_line_last_bar_pos
+                        self.staff_offset_x -= self.piano.lastbar_pos_in_line1
                         if self.staff_offset_x < 0:
                             self.staff_offset_x = 0
 
@@ -348,8 +325,6 @@ class PlayCenter():
                         if need_reload:
                             midi_filename = self.midi_filename_data[midi_filename_idx]
                             self.load_resource(midi_filename)
-                            self.menu_bar_info.set(self.get_menus_info_bar())
-                            self.menu_bar_info.update(ev)
 
                     # Metronome
                     elif ev.key == K_m:
@@ -366,31 +341,31 @@ class PlayCenter():
 
                     # Set Pitch Offset
                     elif ev.key in [K_v, K_b, K_n]:
-                        p_pitch_offset = {K_v: 36,  K_b: 60,  K_n: 84}[ev.key]
+                        pitch_offset = {K_v: 36,  K_b: 60,  K_n: 84}[ev.key]
 
 
                     elif ev.key in [K_z]:
-                        if self.piano.piano_staff_line_width > 2:
-                            self.piano.piano_staff_line_width /= 2
+                        if self.piano.staff_space_height > 2:
+                            self.piano.staff_space_height /= 2
                         self.piano.timestamp_range = TIMESTAMP_RANGE * parse_midi.g_ticks_per_quarter / parse_midi.g_mseconds_per_quarter
-                        self.piano.timestamp_range = self.piano.timestamp_range * self.piano.piano_staff_line_width_base / self.piano.piano_staff_line_width
+                        self.piano.timestamp_range = self.piano.timestamp_range * self.piano.staff_space_height_base / self.piano.staff_space_height
                     elif ev.key in [K_x]:
-                        if self.piano.piano_staff_line_width < 16:
-                            self.piano.piano_staff_line_width *= 2
+                        if self.piano.staff_space_height < 16:
+                            self.piano.staff_space_height *= 2
                         self.piano.timestamp_range = TIMESTAMP_RANGE * parse_midi.g_ticks_per_quarter / parse_midi.g_mseconds_per_quarter
-                        self.piano.timestamp_range = self.piano.timestamp_range * self.piano.piano_staff_line_width_base / self.piano.piano_staff_line_width
+                        self.piano.timestamp_range = self.piano.timestamp_range * self.piano.staff_space_height_base / self.piano.staff_space_height
 
                     # Play Piano with keys
-                    elif ev.key in p_pitch_of_key_on_keyboard:
-                        pitch = p_pitch_offset + p_pitch_of_key_on_keyboard.index(ev.key)
+                    elif ev.key in PITCH_OF_KEY_ON_KEYBOARD:
+                        pitch = pitch_offset + PITCH_OF_KEY_ON_KEYBOARD.index(ev.key)
                         player.stop(devices, pitch, 100, self.sounds)
                         player.load_sounds([(pitch, 100)], self.sounds)
                         cmd = "NOTE_OFF"
                         self.piano.show_keys_press(cmd, pitch)
 
                 elif ev.type == KEYDOWN:
-                    if ev.key in p_pitch_of_key_on_keyboard:
-                        pitch = p_pitch_offset + p_pitch_of_key_on_keyboard.index(ev.key)
+                    if ev.key in PITCH_OF_KEY_ON_KEYBOARD:
+                        pitch = pitch_offset + PITCH_OF_KEY_ON_KEYBOARD.index(ev.key)
                         player.load_sounds([(pitch, 100)], self.sounds)
                         player.play(devices, pitch, 100, self.sounds)
                         cmd = "NOTE_ON"
@@ -419,11 +394,12 @@ class PlayCenter():
                     # init last timestamp
                     self.last_timestamp = pitch_timestamp - 1
             except Exception, e:
-                self.piano.show_notes_staff(self.enabled_tracks, self.tracks_order_idx, self.notes_in_all_staff, self.last_timestamp,
-                                       self.staff_top,
-                                       parse_midi.g_bar_duration,
-                                       parse_midi.g_time_signature_n,
-                                       self.staff_offset_x, self.is_pause)
+                self.piano.show_notes_staff(self.enabled_tracks, self.tracks_order_idx,
+                                            self.notes_in_all_staff, self.last_timestamp,
+                                            self.staff_top,
+                                            parse_midi.g_bar_duration,
+                                            parse_midi.g_time_signature_n,
+                                            self.staff_offset_x, self.is_pause)
 
                 has_stoped = player.real_stop(self.sounds)
                 if need_update_display:
@@ -437,11 +413,14 @@ class PlayCenter():
             if pitch_timestamp != self.last_timestamp:
                 # print "bps:", utils.g_bps.get_bps_count()
                 # utils.show_chord_keys_by_ascii(self.time_pitchs)
-                is_beat_at_right_most, current_play_percent, progress_multi_lines, page_end_offset_x = self.piano.show_notes_staff(self.enabled_tracks, self.tracks_order_idx, self.notes_in_all_staff, self.last_timestamp,
-                                       self.staff_top,
-                                       parse_midi.g_bar_duration,
-                                       parse_midi.g_time_signature_n,
-                                       self.staff_offset_x, self.is_pause)
+                (is_beat_at_right_most, current_play_percent,
+                 progress_multi_lines, page_end_offset_x) = self.piano.show_notes_staff(
+                     self.enabled_tracks, self.tracks_order_idx,
+                     self.notes_in_all_staff, self.last_timestamp,
+                     self.staff_top,
+                     parse_midi.g_bar_duration,
+                     parse_midi.g_time_signature_n,
+                     self.staff_offset_x, self.is_pause)
 
                 # scroll page automatically
                 if not self.is_pause and is_beat_at_right_most and (current_play_percent == 0 or current_play_percent > (100 - 50 / progress_multi_lines)):

@@ -5,7 +5,8 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 
 def initializeDisplay(w, h):
-    screen = pygame.display.set_mode((w,h), pygame.OPENGL|pygame.DOUBLEBUF)
+    screen = pygame.display.set_mode((w,h), pygame.OPENGL | pygame.DOUBLEBUF)
+    # pygame.HWSURFACE | pygame.FULLSCREEN
 
     glClearColor(0.0, 0.0, 0.0, 1.0)
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
