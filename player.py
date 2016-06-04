@@ -58,9 +58,11 @@ def get_volecity(v):
             return selectv
     return 127
 
+g_devices = {}
 
 def init():
-    devices = {}
+    global g_devices
+
     if _platform in ["linux", "linux2"]:
         import alsaaudio
 
@@ -69,10 +71,8 @@ def init():
             device.setchannels(2)
             device.setrate(44100)
             device.setformat(alsaaudio.PCM_FORMAT_S16_LE)
-            devices[i] = {'pcm': device,
-                          'pitch':0
-                          }
-    return devices
+            g_devices[i] = {'pcm': device,
+                            'pitch':0 }
 
 
 def real_stop(sounds, time_dead_line=None):
@@ -120,7 +120,9 @@ def real_stop(sounds, time_dead_line=None):
     return count_stop, count_stop_total
 
 
-def stop(devices, pitch, volecity, sounds):
+def stop(pitch, volecity, sounds):
+    global g_devices
+
     if _platform == "darwin":
         for volecity in g_volecity_list:
             if (pitch, volecity) not in sounds:
@@ -157,8 +159,9 @@ def stop(devices, pitch, volecity, sounds):
             pcm['pitch'] = 0
 
 
-def play(devices, pitch, volecity, sounds):
+def play(pitch, volecity, sounds):
     global g_metronome_volume
+    global g_devices
 
     if _platform == "darwin":
         found_free = False
@@ -184,7 +187,7 @@ def play(devices, pitch, volecity, sounds):
             break
 
         if not found_free:
-            stop(devices, pitch, volecity, sounds)
+            stop(pitch, volecity, sounds)
 
     elif _platform == "pygame":
         _sound = sounds[(pitch, volecity)]

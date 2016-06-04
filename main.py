@@ -161,7 +161,8 @@ class PlayCenter():
         player.load_sounds([(midi_data[1], midi_data[2]) for midi_data in self.all_midi_lines],
                            self.sounds)
         self.piano.reset_piano()
-        self.time_pitchs = []
+        self.chord_keys_bound = []
+        self.play_commands = []
         self.midi_cmd_idx = 0
         self.staff_offset_x = 0
         self.last_timestamp = 0
@@ -180,7 +181,7 @@ class PlayCenter():
     def main(self):
         """Play a midi file with sound samples
         """
-        devices = player.init()
+        player.init()
         clock = pygame.time.Clock()
         old_time = 0
         p_done = False
@@ -358,7 +359,7 @@ class PlayCenter():
                     # Play Piano with keys
                     elif ev.key in PITCH_OF_KEY_ON_KEYBOARD:
                         pitch = pitch_offset + PITCH_OF_KEY_ON_KEYBOARD.index(ev.key)
-                        player.stop(devices, pitch, 100, self.sounds)
+                        player.stop(pitch, 100, self.sounds)
                         player.load_sounds([(pitch, 100)], self.sounds)
                         cmd = "NOTE_OFF"
                         self.piano.show_keys_press(cmd, pitch)
@@ -367,7 +368,7 @@ class PlayCenter():
                     if ev.key in PITCH_OF_KEY_ON_KEYBOARD:
                         pitch = pitch_offset + PITCH_OF_KEY_ON_KEYBOARD.index(ev.key)
                         player.load_sounds([(pitch, 100)], self.sounds)
-                        player.play(devices, pitch, 100, self.sounds)
+                        player.play(pitch, 100, self.sounds)
                         cmd = "NOTE_ON"
                         self.piano.show_keys_press(cmd, pitch)
 
@@ -412,7 +413,7 @@ class PlayCenter():
             # a chord
             if pitch_timestamp != self.last_timestamp:
                 # print "bps:", utils.g_bps.get_bps_count()
-                # utils.show_chord_keys_by_ascii(self.time_pitchs)
+                # utils.show_chord_keys_by_ascii(self.chord_keys_bound)
                 (is_beat_at_right_most, current_play_percent,
                  progress_multi_lines, page_end_offset_x) = self.piano.show_notes_staff(
                      self.enabled_tracks, self.tracks_order_idx,
@@ -426,26 +427,21 @@ class PlayCenter():
                 if not self.is_pause and is_beat_at_right_most and (current_play_percent == 0 or current_play_percent > (100 - 50 / progress_multi_lines)):
                     self.staff_offset_x = page_end_offset_x
 
-                utils.sync_play_time(self, pitch_timestamp, self.last_timestamp, old_time, self.sounds)
+                utils.sync_play_time(self, pitch_timestamp, old_time)
                 old_time = time.time()
                 self.last_timestamp = pitch_timestamp
-                self.time_pitchs = []
+                self.chord_keys_bound = []
+                self.play_commands = []
                 if self.is_pause and self.play_one_timestamp_while_paused:
                     self.play_one_timestamp_while_paused = False
                     continue
 
+            self.play_commands += [(cmd, pitch, volecity)]
             # playtrack
             if cmd == "NOTE_ON":
-                player.play(devices, pitch, volecity, self.sounds)
                 # build chord
-                if pitch not in self.time_pitchs:
-                    self.time_pitchs += [pitch]
-
-            elif cmd == "NOTE_OFF":
-                player.stop(devices, pitch, volecity, self.sounds)
-
-            elif cmd == "METRO_ON" and player.g_metronome_volume > 0:
-                player.play(devices, pitch, volecity, self.sounds)
+                if pitch not in self.chord_keys_bound:
+                    self.chord_keys_bound += [pitch]
 
             # show keys
             if pitch > 1:

@@ -31,14 +31,24 @@ class Bps():
 g_bps = Bps()
 
 
-def sync_play_time(self, pitch_timestamp, last_timestamp, old_time, sounds):
+def sync_play_time(self, pitch_timestamp, old_time):
     # sleep
     deta_time = time.time() - old_time
-    deta_timestamp = pitch_timestamp - last_timestamp
+    deta_timestamp = pitch_timestamp - self.last_timestamp
     wait_time = int(deta_timestamp * parse_midi.g_mseconds_per_quarter / parse_midi.g_ticks_per_quarter )
     # print "midi need wait:", wait_time
 
-    player.real_stop(sounds, wait_time/1000.0 - deta_time)
+    for cmd, pitch, volecity in self.play_commands:
+        if cmd == "NOTE_ON":
+            player.play(pitch, volecity, self.sounds)
+
+        elif cmd == "NOTE_OFF":
+            player.stop(pitch, volecity, self.sounds)
+
+        elif cmd == "METRO_ON" and player.g_metronome_volume > 0:
+            player.play(pitch, volecity, self.sounds)
+
+    player.real_stop(self.sounds, wait_time/1000.0 - deta_time)
     deta_time = time.time() - old_time
     # print "after stop:", int(deta_time*1000)
 
