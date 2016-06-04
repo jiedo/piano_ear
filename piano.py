@@ -283,7 +283,7 @@ class Piano():
                                  (r.left + r.width - 2, r.top + r.height - 4), 1)
 
 
-    def draw_piano(self, top=None, left=0):
+    def init_piano(self, top=None, left=0):
         if top is None:
             top = self.top
 
@@ -296,12 +296,15 @@ class Piano():
             left += w
         w, h = self.add_piano_keys('r', 0, top, left)
 
+
+    def reset_piano(self):
+        self.pitch_color = {}
         self.draw_keys(self.whitekeys.values() )
         self.draw_keys(self.blackkeys.values(), self.black)
         # red line
         pygame.draw.line(self.screen, self.color_red_line,
                          (0, self.top - 3),
-                         (self.screen_rect[0], self.top - 3), 4)
+                         (self.screen_rect[0], self.top - 3), 3)
 
 
     def draw_staff_lines(self, middle=0, n=6, left=0):
@@ -551,7 +554,8 @@ if __name__ == '__main__':
     pygame.display.set_caption('Piano Keyboard')
 
     piano = Piano(screen, WINSIZE)
-    piano.draw_piano()
+    piano.init_piano()
+    piano.reset_piano()
 
     clock = pygame.time.Clock()
     done = 0

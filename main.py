@@ -95,7 +95,8 @@ class PlayCenter():
         self.menu_bar.set(menus_in_bar)
         self.menu_bar_info = MenuSystem.MenuBar(top=self.screen_rect.height - self.menu_bar.lineheigth)
         self.piano = Piano(screen, WINSIZE, top=self.menu_bar_info.top - Piano.piano_white_key_height - 2)
-        self.piano.draw_piano()
+        self.piano.init_piano()
+        self.piano.reset_piano()
         self.piano.draw_lines(self.screen_rect.height * 0.618)
 
         self.staff_top = self.menu_bar.top + self.menu_bar.lineheigth + 30
@@ -158,7 +159,7 @@ class PlayCenter():
         # finish missing sounds
         player.load_sounds([(midi_data[1], midi_data[2]) for midi_data in self.all_midi_lines],
                            self.sounds)
-        self.piano.draw_piano()
+        self.piano.reset_piano()
 
         self.time_pitchs = []
         self.midi_cmd_idx = 0
@@ -279,7 +280,7 @@ class PlayCenter():
                                 break
 
                         self.play_one_timestamp_while_paused = True
-                        self.piano.draw_piano()
+                        self.piano.reset_piano()
 
 
                 elif ev.type == KEYUP:
@@ -294,7 +295,7 @@ class PlayCenter():
 
                     # Stop
                     elif ev.key == K_s:
-                        self.piano.draw_piano()
+                        self.piano.reset_piano()
                         self.staff_offset_x = 0
                         self.midi_cmd_idx = 0
                         self.last_timestamp = 0
@@ -359,7 +360,7 @@ class PlayCenter():
 
                     # # Set Progress Percent
                     # elif ev.key in [K_0, K_1, K_2, K_3, K_4, K_5, K_6, K_7, K_8, K_9]:
-                    #     self.piano.draw_piano()
+                    #     self.piano.reset_piano()
                     #     self.midi_cmd_idx = len(self.all_midi_lines) * (ev.key - 48) / 10
                     #     self.last_timestamp = -1
 
