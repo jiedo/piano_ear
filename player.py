@@ -285,7 +285,7 @@ def load_sounds(sound_keys, sounds):
             sounds[(0, 48)] = linux_get_sound_data(sound_file)
 
         elif _platform == "pyglet":
-            sound_source = pyglet.media.load(sound_file, streaming=True)
+            sound_source = pyglet.media.load(sound_file, streaming=False)
             sound_player = pyglet.media.Player()
             sound_player.queue(sound_source)
             print "queued 0"
@@ -306,7 +306,7 @@ def load_sounds(sound_keys, sounds):
             sounds[(1, 48)] = linux_get_sound_data(sound_file)
 
         elif _platform == "pyglet":
-            sound_source = pyglet.media.load(sound_file, streaming=True)
+            sound_source = pyglet.media.load(sound_file, streaming=False)
             sound_player = pyglet.media.Player()
             sound_player.queue(sound_source)
             print "queued 1"
@@ -329,7 +329,7 @@ def load_sounds(sound_keys, sounds):
             sounds[(pitch, volecity)] = linux_get_sound_data(sound_file)
 
         elif _platform == "pyglet":
-            sound_source = pyglet.media.load(sound_file) # , streaming=True
+            sound_source = pyglet.media.load(sound_file, streaming=False)
             sound_player = pyglet.media.Player()
             sound_player.queue(sound_source)
             # sound_player = sound_source.play()

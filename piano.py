@@ -128,11 +128,12 @@ class Piano():
         self.color_backgroud = self.black
 
         self.color_red_line = 130, 0, 0
-        self.color_blackkey_edge = 90, 90, 90
+
         self.color_lines = 180, 180, 180
-        self.color_add_lines = 100, 100, 100
+        self.color_add_lines = 50, 50, 50
         self.color_middle_c_line = self.color_add_lines
 
+        self.color_blackkey_edge = 90, 90, 90
         self.color_black_key_down = 100, 100, 200
         self.color_white_key_down = 100, 100, 200
         self.color_key_down = 0, 170, 200
