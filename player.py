@@ -16,9 +16,6 @@ from collections import deque
 
 __create_time__ = "May 16 2016"
 
-
-_platform_file = _platform
-
 IS_FREE = 0
 IS_SET_STOP = 1
 IS_PLAYING = 2
@@ -27,18 +24,28 @@ NON_FREE_LIMIT = 0.03
 
 if "pygame" in sys.argv:
     _platform = "pygame"
+elif "pyglet" in sys.argv:
+    _platform = "pyglet"
+
 
 if _platform == "darwin":
     # OS X
     import AppKit
+
 elif _platform == "pygame":
     import pygame.mixer
     pygame.mixer.init(44100)    #raises exception on fail
+    pygame.mixer.set_num_channels(88 * 8)
+
+elif _platform == "pyglet":
+    import pyglet
+    pyglet.options['audio'] = ('openal', 'pulse', 'silent')
 
 
 g_grand_pitch_range  = range(21,109)
 g_volecity_list = [48, 60, 71, 82, 91, 100, 115, 127]
 g_metronome_volume = 0
+
 
 def get_volecity(v):
     selectv = 48
@@ -53,9 +60,6 @@ def get_volecity(v):
 
 
 def init():
-    if _platform != "darwin":
-        pygame.mixer.set_num_channels(88 * 8)
-
     devices = {}
     if _platform in ["linux", "linux2"]:
         import alsaaudio
@@ -135,6 +139,13 @@ def stop(devices, pitch, volecity, sounds):
             _sound = sounds[(pitch, volecity)]
             _sound.set_volume(0.0)
 
+    elif _platform == "pyglet":
+        for volecity in g_volecity_list:
+            if (pitch, volecity) not in sounds:
+                continue
+            _sound = sounds[(pitch, volecity)]
+            _sound.volume = 0.0
+
     elif _platform in ["linux", "linux2"]:
         pcm = None
         for d in devices.values():
@@ -180,6 +191,12 @@ def play(devices, pitch, volecity, sounds):
         _sound.stop()
 
         _sound.set_volume(0.7)
+        _sound.play()
+
+    elif _platform == "pyglet":
+        _sound = sounds[(pitch, volecity)]
+        _sound.seek(0.0)
+        _sound.volume = 0.7
         _sound.play()
 
     elif _platform in ["linux", "linux2"]:
@@ -236,17 +253,66 @@ def test_sounds(sounds_keys, sounds):
             print sounds[key].stop()
 
 
+def linux_get_sound_data(sound_file):
+    import wave
+    sound = wave.open(sound_file, 'rb')
+    sounddata = []
+    data = sound.readframes(1024)
+    while data:
+        sounddata += [data]
+        data = sound.readframes(1024)
+    sound.close()
+    sound = ''.join(sounddata)
+    soundlen = len(sounddata)/44100
+    return sound, soundlen
+
+
 def load_sounds(sound_keys, sounds):
     # load sounds needed
-    if _platform_file == "darwin":
-        sound_file = "data/beat.wav"
-        if (0, 48) not in sounds:
-            sounds[(0, 48)] = deque([[IS_FREE, 0, AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)] for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
 
-        sound_file = "data/accent.wav"
-        if (1, 48) not in sounds:
-            sounds[(1, 48)] = deque([[IS_FREE, 0, AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)] for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
+    # metronome beat
+    sound_file = "data/beat.wav"
+    sound_file = "data/Piano_Sounds/Grand-108-048.wav"
+    if (0, 48) not in sounds:
+        if _platform == "darwin":
+            sounds[(0, 48)] = deque([[IS_FREE, 0,
+                                      AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)]
+                                     for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
+        elif _platform == "pygame":
+            sounds[(0, 48)] = pygame.mixer.Sound(sound_file)
 
+        elif _platform in ["linux", "linux2"]:
+            sounds[(0, 48)] = linux_get_sound_data(sound_file)
+
+        elif _platform == "pyglet":
+            sound_source = pyglet.media.load(sound_file, streaming=True)
+            sound_player = pyglet.media.Player()
+            sound_player.queue(sound_source)
+            print "queued 0"
+            sounds[(0, 48)] = sound_player
+
+    # metronome accent
+    sound_file = "data/accent.wav"
+    sound_file = "data/Piano_Sounds/Grand-108-127.wav"
+    if (1, 48) not in sounds:
+        if _platform == "darwin":
+            sounds[(1, 48)] = deque([[IS_FREE, 0,
+                                      AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)]
+                                     for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
+        elif _platform == "pygame":
+            sounds[(1, 48)] = pygame.mixer.Sound(sound_file)
+
+        elif _platform in ["linux", "linux2"]:
+            sounds[(1, 48)] = linux_get_sound_data(sound_file)
+
+        elif _platform == "pyglet":
+            sound_source = pyglet.media.load(sound_file, streaming=True)
+            sound_player = pyglet.media.Player()
+            sound_player.queue(sound_source)
+            print "queued 1"
+            sounds[(1, 48)] = sound_player
+
+    # piano keys
     for pitch, volecity_data in sound_keys:
         volecity = get_volecity(volecity_data)
         if (pitch, volecity) in sounds:
@@ -260,14 +326,13 @@ def load_sounds(sound_keys, sounds):
             sounds[(pitch, volecity)] = pygame.mixer.Sound(sound_file)
 
         elif _platform in ["linux", "linux2"]:
-            import wave
-            sound = wave.open(sound_file, 'rb')
-            sounddata = []
-            data = sound.readframes(1024)
-            while data:
-                sounddata += [data]
-                data = sound.readframes(1024)
-            sound.close()
-            sound = ''.join(sounddata)
-            soundlen = len(sounddata)/44100
-            sounds[(pitch, volecity)] = sound, soundlen
+            sounds[(pitch, volecity)] = linux_get_sound_data(sound_file)
+
+        elif _platform == "pyglet":
+            sound_source = pyglet.media.load(sound_file) # , streaming=True
+            sound_player = pyglet.media.Player()
+            sound_player.queue(sound_source)
+            # sound_player = sound_source.play()
+            # sound_player.pause()
+            sounds[(pitch, volecity)] = sound_player
+            print "queued ", pitch, volecity
