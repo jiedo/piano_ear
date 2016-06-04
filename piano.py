@@ -122,7 +122,7 @@ class Piano():
 	                     (0,0,128),]
 
         self.white = 140, 130, 110
-        self.black = 40, 40, 40
+        self.black = 100, 100, 100
         self.color_backgroud = 0, 0, 0
 
         self.color_red_line = 130, 0, 0
@@ -131,7 +131,7 @@ class Piano():
         self.color_add_lines = 50, 50, 50
         self.color_middle_c_line = self.color_add_lines
 
-        self.color_blackkey_edge = 100, 100, 100
+        self.color_blackkey_edge = 140, 130, 110
         self.color_black_key_down = 0, 0, 0
         self.color_white_key_down = 0, 0, 0
         self.color_current_highlight = 0, 170, 200
@@ -286,7 +286,7 @@ class Piano():
             self.screen.fill(dcolor, r)
             pygame.draw.rect(self.screen, bdcolor, r, 1)
             if bdcolor == self.black:
-                line_width = 2
+                line_width = 1
                 # left vert
                 pygame.draw.line(self.screen, self.color_blackkey_edge,
                                  (r.left + 2, r.top),
