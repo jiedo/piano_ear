@@ -328,8 +328,9 @@ class Piano():
         self.reset_piano()
 
 
-    def draw_staff_lines(self, middle=0, n=6, left=0):
+    def draw_staff_lines(self, middle=0, left=0):
         # middle: middle_c_white_offset_y
+        n = 6
         for i in range(1, int(n*2)-1):
             down = left + middle + i * self.staff_space_height
             top = left + middle - i * self.staff_space_height
@@ -337,11 +338,12 @@ class Piano():
                 pygame.draw.line(self.screen, self.color_lines, (left, top), (self.screen_width, top))
                 pygame.draw.line(self.screen, self.color_lines, (left, down), (self.screen_width, down))
             else:
+                return
+
                 self.draw_dash_line(self.color_add_lines, (left, top), (self.screen_width, top),
                                     deta_h=15, vertical=False)
                 self.draw_dash_line(self.color_add_lines, (left, down), (self.screen_width, down),
                                     deta_h=15, vertical=False)
-
         self.draw_dash_line(self.color_middle_c_line, (left, left + middle), (self.screen_width, left + middle),
                             deta_h=15, vertical=False)
 

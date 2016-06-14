@@ -395,19 +395,19 @@ class PlayCenter():
                     # init last timestamp
                     self.last_timestamp = pitch_timestamp - 1
             except Exception, e:
-                self.piano.show_notes_staff(self.enabled_tracks, self.tracks_order_idx,
+                if need_update_display:
+                    self.piano.show_notes_staff(self.enabled_tracks, self.tracks_order_idx,
                                             self.notes_in_all_staff, self.last_timestamp,
                                             self.staff_top,
                                             parse_midi.g_bar_duration,
                                             parse_midi.g_time_signature_n,
                                             self.staff_offset_x, self.is_pause)
-
-                has_stoped = player.real_stop(self.sounds)
-                if need_update_display:
+                    has_stoped = player.real_stop(self.sounds)
                     self.gl_screen_blit()
                     pygame.display.flip()
                     need_update_display = False
-                clock.tick(60)
+
+                clock.tick(40)
                 continue
 
             # a chord
