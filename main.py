@@ -24,33 +24,41 @@ def get_menu_data():
     menu_data_dict = {}
     for (dir_full_path, dirnames, filenames) in os.walk("midi"):
         dir_full_path = dir_full_path.decode("utf8")
-
-        dirpath = dir_full_path.split(u"/")[-1]
-        if dirpath not in menu_data_dict:
-            menu_data_dict[dirpath] = []
-
-        menu_data = menu_data_dict[dirpath]
-        menu_data += [dirpath]
+        if dir_full_path not in menu_data_dict:
+            menu_data_dict[dir_full_path] = []
+        menu_data = menu_data_dict[dir_full_path]
+        dirname = dir_full_path.rsplit(u"/", 1)[-1]
+        menu_data += [dirname]
 
         for dirname in dirnames:
             dirname = dirname.decode("utf8")
-            if dirname not in menu_data_dict:
-                menu_data_dict[dirname] = []
-            menu_data += [menu_data_dict[dirname]]
+            subdir_full_path = dir_full_path + u"/" + dirname
+            if subdir_full_path not in menu_data_dict:
+                menu_data_dict[subdir_full_path] = []
+            menu_data += [menu_data_dict[subdir_full_path]]
 
         midi_filenames = [dir_full_path + u"/" + filename.decode("utf8") for filename in filenames
                           if (filename.endswith(".mid") or filename.endswith(".midi"))]
         if midi_filenames:
             menu_data += midi_filenames
+        else:
+            menu_data += ["."]
 
     midi_filename_data = []
     menu_data = []
+
+    # for menu_name in menu_data_dict.keys():
+    #     print menu_name
+
     for data in menu_data_dict["midi"]:
         if not isinstance(data, list):
             continue
 
         sub_menu_data = []
         for data_inner in data[1:]:
+            if not data_inner:
+                continue
+
             if not isinstance(data_inner, list):
                 sub_menu_data += [data_inner]
                 midi_filename_data += [data_inner]
@@ -125,6 +133,7 @@ class PlayCenter():
         print midi_filename
         try:
             self.all_midi_lines, self.notes_in_all_staff, self.enabled_tracks, self.tracks_order_idx = parse_midi.load_midi(midi_filename)
+            self.all_midi_lines_length = len(self.all_midi_lines)
         except Exception, e:
             print "midi error:", e
             if midi_filename in self.midi_filename_data:
@@ -165,7 +174,7 @@ class PlayCenter():
         self.play_commands = []
         self.midi_cmd_idx = 0
         self.staff_offset_x = 0
-        self.last_timestamp = 0
+        self.last_timestamp = -1
         self.is_pause = True
         self.play_one_timestamp_while_paused = False
         self.menu_bar_info.set(self.get_menus_info_bar())
@@ -278,7 +287,7 @@ class PlayCenter():
                         self.piano.reset_piano()
                         self.staff_offset_x = 0
                         self.midi_cmd_idx = 0
-                        self.last_timestamp = 0
+                        self.last_timestamp = -1
                         self.is_pause = True
 
                     # Pause/Play
@@ -337,13 +346,17 @@ class PlayCenter():
                     # # Set Progress Percent
                     # elif ev.key in [K_0, K_1, K_2, K_3, K_4, K_5, K_6, K_7, K_8, K_9]:
                     #     self.piano.reset_piano()
-                    #     self.midi_cmd_idx = len(self.all_midi_lines) * (ev.key - 48) / 10
+                    #     self.midi_cmd_idx = self.all_midi_lines_length * (ev.key - 48) / 10
                     #     self.last_timestamp = -1
 
                     # Set Pitch Offset
                     elif ev.key in [K_v, K_b, K_n]:
                         pitch_offset = {K_v: 36,  K_b: 60,  K_n: 84}[ev.key]
 
+                    elif ev.key == K_f:
+                        player.g_volecity_adjust = (player.g_volecity_adjust+1) % len(player.g_volecity_list)
+                        player.load_sounds([(midi_data[1], midi_data[2]) for midi_data in self.all_midi_lines],
+                                           self.sounds)
 
                     elif ev.key in [K_z]:
                         if self.piano.staff_space_height > 2:
@@ -381,7 +394,7 @@ class PlayCenter():
 
             # get cmd
             try:
-                if (self.is_pause and not self.play_one_timestamp_while_paused) or self.midi_cmd_idx >= len(self.all_midi_lines):
+                if (self.is_pause and not self.play_one_timestamp_while_paused) or self.midi_cmd_idx >= self.all_midi_lines_length:
                     raise Exception("paused")
                 midi_line = self.all_midi_lines[self.midi_cmd_idx]
                 self.midi_cmd_idx += 1
@@ -412,6 +425,24 @@ class PlayCenter():
 
             # a chord
             if pitch_timestamp != self.last_timestamp:
+                # show one step ahead
+                # self.piano.draw_vertical_staff_lines(self.screen_rect.height * 0.618)
+
+                midi_cmd_idx_old = self.midi_cmd_idx-1
+                while midi_cmd_idx_old < self.all_midi_lines_length:
+                    step_head_midi_line = self.all_midi_lines[midi_cmd_idx_old]
+                    midi_cmd_idx_old += 1
+                    step_head_cmd, step_head_pitch, step_head_volecity_data, step_head_track_idx, step_head_pitch_timestamp = step_head_midi_line[:5]
+                    step_head_volecity = player.get_volecity(step_head_volecity_data)
+                    if pitch_timestamp != step_head_pitch_timestamp:
+                        break
+                    if step_head_pitch not in [0, 1] + player.g_grand_pitch_range:
+                        continue
+                    if step_head_track_idx >= 0 and not self.enabled_tracks.get(step_head_track_idx, False):
+                        continue
+                    if step_head_pitch > 1:
+                        self.piano.show_keys_predict(step_head_cmd, step_head_pitch, step_head_volecity)
+
                 # print "bps:", utils.g_bps.get_bps_count()
                 # utils.show_chord_keys_by_ascii(self.chord_keys_bound)
                 (is_beat_at_right_most, current_play_percent,
@@ -445,7 +476,7 @@ class PlayCenter():
 
             # show keys
             if pitch > 1:
-                self.piano.show_keys_press(cmd, pitch)
+                self.piano.show_keys_press(cmd, pitch, volecity)
 
 
 if __name__ == '__main__':

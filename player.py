@@ -44,19 +44,25 @@ elif _platform == "pyglet":
 
 g_grand_pitch_range  = range(21,109)
 g_volecity_list = [48, 60, 71, 82, 91, 100, 115, 127]
+g_volecity_adjust = 4
 g_metronome_volume = 0
 
 
 def get_volecity(v):
-    selectv = 48
-    absdit = abs(selectv - v)
-    for vo in g_volecity_list:
+    select_idx = 0
+    absdit = abs(48 - v)
+    for idx, vo in enumerate(g_volecity_list):
         if abs(vo - v) <= absdit:
             absdit = abs(vo - v)
-            selectv = vo
+            select_idx = idx
         else:
-            return selectv
-    return 127
+            break
+
+    if g_volecity_adjust >= 0:
+        select_idx -= g_volecity_adjust
+
+    return g_volecity_list[select_idx]
+
 
 g_devices = {}
 
