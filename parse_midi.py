@@ -129,7 +129,10 @@ def load_midi(infile=None):
 
             start_timestamp = pitch_start_timestamp.get(pitch, None)
             if start_timestamp is not None:
-                notes_in_all_staff += [(pitch, start_timestamp, timestamp - start_timestamp, track_idx)]
+                note_interval = (timestamp - start_timestamp)/(4.0*g_ticks_per_quarter)
+                notes_in_all_staff += [(pitch, start_timestamp, timestamp - start_timestamp,
+                                        note_interval,
+                                        track_idx)]
                 # add missing OFF:
                 new_all_midi_lines += [["NOTE_OFF"] + cmd_data[1:] + [0]]
 
@@ -143,7 +146,10 @@ def load_midi(infile=None):
                 continue
             if timestamp - start_timestamp <= 0:
                 continue
-            notes_in_all_staff += [(pitch, start_timestamp, timestamp - start_timestamp, track_idx)]
+            note_interval = (timestamp - start_timestamp)/(4.0*g_ticks_per_quarter)
+            notes_in_all_staff += [(pitch, start_timestamp, timestamp - start_timestamp,
+                                    note_interval,
+                                    track_idx)]
             pitch_start_timestamp[pitch] = None
             if not pitch_is_on_in_timestamp.get(timestamp, {}).get(pitch, False):
                 new_all_midi_lines += [cmd_data + [2]]
@@ -167,6 +173,25 @@ def load_midi(infile=None):
     # sort by timestamp
     new_all_midi_lines.sort(key=lambda x: x[-1])
     new_all_midi_lines.sort(key=lambda x: x[-2])
+
+
+
+    for note_data in notes_in_all_staff:
+        pitch, timestamp, duration, note_interval, track_idx = note_data
+        note_types = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+
+        a = int(1/note_interval)
+        b = 1/(note_interval*3)
+        if a in note_types and b in note_types:
+            print "error", a, b, note_interval
+        else:
+            if a in note_types:
+                print "note interval:", a
+            elif b in note_types:
+                print "note interval trip:", b
+            else:
+                print "error interval:", a, b, note_interval
+
 
     return new_all_midi_lines, notes_in_all_staff, all_enabled_tracks, all_tracks_order_idx
 

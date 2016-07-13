@@ -358,12 +358,12 @@ class PlayCenter():
                         player.load_sounds([(midi_data[1], midi_data[2]) for midi_data in self.all_midi_lines],
                                            self.sounds)
 
-                    elif ev.key in [K_z]:
+                    elif ev.key == K_z:
                         if self.piano.staff_space_height > 2:
                             self.piano.staff_space_height /= 2
                         self.piano.timestamp_range = TIMESTAMP_RANGE * parse_midi.g_ticks_per_quarter / parse_midi.g_mseconds_per_quarter
                         self.piano.timestamp_range = self.piano.timestamp_range * self.piano.staff_space_height_base / self.piano.staff_space_height
-                    elif ev.key in [K_x]:
+                    elif ev.key == K_x:
                         if self.piano.staff_space_height < 16:
                             self.piano.staff_space_height *= 2
                         self.piano.timestamp_range = TIMESTAMP_RANGE * parse_midi.g_ticks_per_quarter / parse_midi.g_mseconds_per_quarter
@@ -409,7 +409,7 @@ class PlayCenter():
                     self.last_timestamp = pitch_timestamp - 1
             except Exception, e:
                 if need_update_display:
-                    self.piano.show_notes_staff(self.enabled_tracks, self.tracks_order_idx,
+                    self.piano.show_notes_staff_in_page(self.enabled_tracks, self.tracks_order_idx,
                                             self.notes_in_all_staff, self.last_timestamp,
                                             self.staff_top,
                                             parse_midi.g_bar_duration,
@@ -446,7 +446,7 @@ class PlayCenter():
                 # print "bps:", utils.g_bps.get_bps_count()
                 # utils.show_chord_keys_by_ascii(self.chord_keys_bound)
                 (is_beat_at_right_most, current_play_percent,
-                 progress_multi_lines, page_end_offset_x) = self.piano.show_notes_staff(
+                 progress_multi_lines, page_end_offset_x) = self.piano.show_notes_staff_in_page(
                      self.enabled_tracks, self.tracks_order_idx,
                      self.notes_in_all_staff, self.last_timestamp,
                      self.staff_top,
