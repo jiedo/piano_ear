@@ -17,14 +17,14 @@
 * python2.7
 * pygame
 * pyglet
-* 88x8 sound wav files, put in:
+* 88x8 sound wav files, store in:
 
       data/Piano_Sounds/Grand-021-048.wav
 
   * 88 keys (value range: 21 ~ 108)
   * 8 level each key (value is 48, 60, 71, 82, 91, 100, 115, 127)
 
-* midi files, put in:
+* midi files, store in:
 
       midi/
 
