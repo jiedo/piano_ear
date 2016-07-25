@@ -19,6 +19,7 @@ import utils
 import glblit
 import MenuSystem
 
+TRAINING_REPEAT_TIMES = 5 - 1
 
 def get_menu_data():
     menu_data_dict = {}
@@ -76,7 +77,7 @@ def get_menu_data():
     return menu_data, midi_filename_data
 
 
-WINSIZE = [1248, 740]
+WINSIZE = [1248, 760]
 
 class PlayCenter():
     def __init__(self):
@@ -124,7 +125,7 @@ class PlayCenter():
         # gen_menu_data += ["Metro: %.1f" % player.g_metronome_volume]
         gen_menu_data += ["Time: %d/%d" % (parse_midi.g_time_signature_n, parse_midi.g_time_signature_note)]
         gen_menu_data += ["Temp: %d" % (60000 / parse_midi.g_mseconds_per_quarter)]
-        gen_menu_data += ["Playing: %s" % self.midi_filename.split("/")[-1].replace(".midi", "").replace(".mid", "")]
+        gen_menu_data += ["Playing: %s" % self.midi_filename.replace(".midi", "").replace(".mid", "")]
 
         return [MenuSystem.Menu(m, ()) for m in gen_menu_data]
 
@@ -174,6 +175,7 @@ class PlayCenter():
         self.play_commands = []
         self.midi_cmd_idx = 0
         self.staff_offset_x = 0
+        self.midi_repeat_count = 0
         self.last_timestamp = -1
         self.is_pause = True
         self.play_one_timestamp_while_paused = False
@@ -326,14 +328,14 @@ class PlayCenter():
                         need_reload = False
                         if ev.key == K_COMMA:
                             if self.midi_filename_idx > 0:
-                                midi_filename_idx = self.midi_filename_idx-1
+                                self.midi_filename_idx -= 1
                                 need_reload = True
                         elif ev.key == K_PERIOD:
                             if self.midi_filename_idx+1 < len(self.midi_filename_data):
-                                midi_filename_idx = self.midi_filename_idx + 1
+                                self.midi_filename_idx += 1
                                 need_reload = True
                         if need_reload:
-                            midi_filename = self.midi_filename_data[midi_filename_idx]
+                            midi_filename = self.midi_filename_data[self.midi_filename_idx]
                             self.load_resource(midi_filename)
 
                     # Metronome
@@ -364,7 +366,7 @@ class PlayCenter():
                         self.piano.timestamp_range = TIMESTAMP_RANGE * parse_midi.g_ticks_per_quarter / parse_midi.g_mseconds_per_quarter
                         self.piano.timestamp_range = self.piano.timestamp_range * self.piano.staff_space_height_base / self.piano.staff_space_height
                     elif ev.key == K_x:
-                        if self.piano.staff_space_height < 16:
+                        if self.piano.staff_space_height < 32:
                             self.piano.staff_space_height *= 2
                         self.piano.timestamp_range = TIMESTAMP_RANGE * parse_midi.g_ticks_per_quarter / parse_midi.g_mseconds_per_quarter
                         self.piano.timestamp_range = self.piano.timestamp_range * self.piano.staff_space_height_base / self.piano.staff_space_height
@@ -394,8 +396,12 @@ class PlayCenter():
 
             # get cmd
             try:
-                if (self.is_pause and not self.play_one_timestamp_while_paused) or self.midi_cmd_idx >= self.all_midi_lines_length:
+                if (self.is_pause and not self.play_one_timestamp_while_paused):
                     raise Exception("paused")
+                # repeat
+                if self.midi_cmd_idx >= self.all_midi_lines_length:
+                    raise Exception("repeat")
+
                 midi_line = self.all_midi_lines[self.midi_cmd_idx]
                 self.midi_cmd_idx += 1
                 cmd, pitch, volecity_data, track_idx, pitch_timestamp = midi_line[:5]
@@ -419,6 +425,21 @@ class PlayCenter():
                     self.gl_screen_blit()
                     pygame.display.flip()
                     need_update_display = False
+
+                if self.midi_cmd_idx >= self.all_midi_lines_length:
+                    if self.midi_repeat_count < TRAINING_REPEAT_TIMES:
+                        self.midi_repeat_count += 1
+                        self.staff_offset_x = 0
+                        self.midi_cmd_idx = 0
+                        self.last_timestamp = -1
+                    else:
+                        if self.midi_filename_idx+1 < len(self.midi_filename_data):
+                            self.midi_filename_idx += 1
+                        else:
+                            self.midi_filename_idx = 0
+                        midi_filename = self.midi_filename_data[self.midi_filename_idx]
+                        self.load_resource(midi_filename)
+                        self.is_pause = False
 
                 clock.tick(40)
                 continue

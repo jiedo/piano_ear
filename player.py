@@ -121,8 +121,8 @@ def real_stop(sounds, time_dead_line=None):
                         s_data[0] = IS_FREE
             s_datas.rotate(-count_stop_inner)
 
-        if count_stop:
-            print count_stop,"/", count_stop_total, "avg stop time is:", int(10000 * (time.time() - now_time)/count_stop)
+        # if count_stop:
+        #     print count_stop, "/", count_stop_total, "avg stop time is:", int(10000 * (time.time() - now_time)/count_stop)
     return count_stop, count_stop_total
 
 

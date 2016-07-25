@@ -12,7 +12,7 @@ from pygame.locals import *
 
 __create_time__ = "Feb 26 2012"
 
-TIMESTAMP_RANGE = 8000
+TIMESTAMP_RANGE = 24000
 PITCH_OF_KEY_ON_KEYBOARD = [K_TAB, K_1,
                             K_q, K_2,
                             K_w,
@@ -72,7 +72,7 @@ class Piano():
         self.staff_total_lines = 28
         self.staff_total_lines_up = 15
         # distance between lines
-        self.staff_space_height = 4
+        self.staff_space_height = 16
         self.staff_space_height_base = 8
 
         # time range of window width
@@ -140,8 +140,8 @@ class Piano():
         self.black = 100, 100, 100
         self.color_backgroud = 0, 0, 0
 
-        self.color_lines = 180, 180, 180
-        self.color_add_lines = 50, 50, 50
+        self.color_lines = 240, 240, 220
+        self.color_add_lines = 70, 70, 70
         self.color_middle_c_line = self.color_add_lines
 
         self.color_blackkey_edge = 140, 130, 110
@@ -341,12 +341,18 @@ class Piano():
         progress_multi_lines = 0
         is_beat_at_right_most = False
         while True:
-            if (self.top - staff_top - self.gap_keyboad_staff) < (self.staff_total_lines * self.staff_space_height):
-                self.screen.fill(self.color_backgroud, pygame.Rect(
-                    0, staff_top,
-                    self.screen_width, self.top - staff_top - self.gap_keyboad_staff))
-                break
             middle = staff_top + self.staff_total_lines_up * self.staff_space_height
+            left_space_height = self.top - staff_top - self.gap_keyboad_staff
+            if left_space_height < (self.staff_total_lines * self.staff_space_height):
+                if left_space_height < 0:
+                    break
+                self.screen.fill(self.color_backgroud, pygame.Rect(
+                    0, staff_top, self.screen_width, left_space_height))
+                if progress_multi_lines > 0:
+                    break
+                else:
+                    middle = staff_top + (self.staff_total_lines_up - 4) * self.staff_space_height
+
             (is_beat_at_right_most, last_bar_pos) = self.show_notes_staff_in_line(
                 enabled_tracks, tracks_order_idx, notes_in_all_staff,
                 current_timestamp, middle, bar_duration, time_signature_n, offset_x, is_pause)
@@ -421,7 +427,7 @@ class Piano():
                 note_length =  duration * self.screen_width / (self.timestamp_range) - 1
                 note_height = self.staff_space_height /2 + 1
             else:
-                note_height = self.staff_space_height # /2 + 1
+                note_height = self.staff_space_height *3/4 + 1
                 note_length = note_height
                 note_pos += self.staff_space_height * 1.618 # move to the right slightly
 
