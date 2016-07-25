@@ -12,6 +12,8 @@ from pygame.locals import *
 
 __create_time__ = "Feb 26 2012"
 
+
+# time range of window width
 TIMESTAMP_RANGE = 24000
 PITCH_OF_KEY_ON_KEYBOARD = [K_TAB, K_1,
                             K_q, K_2,
@@ -29,6 +31,7 @@ PITCH_OF_KEY_ON_KEYBOARD = [K_TAB, K_1,
                             K_RIGHTBRACKET, K_BACKSPACE,
                             K_BACKSLASH, ]
 
+
 def draw_dash_line(screen, color, start_pos, end_pos, w=1, deta_h=7, vertical=True):
     if vertical:
         x, top = start_pos
@@ -45,6 +48,7 @@ def draw_dash_line(screen, color, start_pos, end_pos, w=1, deta_h=7, vertical=Tr
 
 
 class Piano():
+
     whitekey_width = 24
     whitekey_height = 140
     blackkey_width = 14

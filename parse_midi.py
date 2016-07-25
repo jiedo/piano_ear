@@ -31,6 +31,7 @@ g_time_signature_n = 0
 g_time_signature_note = 0
 g_bar_duration = 0
 
+
 def parse_midi_track(track_cmds, all_enabled_tracks, track_idx, track):
     global g_mseconds_per_quarter, g_time_signature_n, g_time_signature_note, g_bar_duration
 
@@ -46,19 +47,14 @@ def parse_midi_track(track_cmds, all_enabled_tracks, track_idx, track):
             all_enabled_tracks[track_idx] += 1
 
             if evt.velocity < 1:
-                # print track_idx, "OFF", '%-s \t' % evt.type, evt.pitch, evt.velocity, evt.channel
                 track_cmds += [["NOTE_OFF", evt.pitch, evt.velocity, track_idx, evt.time]]
             else:
-                # print track_idx, "ON ", '%-s \t' % evt.type, evt.pitch, evt.velocity, evt.channel
                 track_cmds += [["NOTE_ON", evt.pitch, evt.velocity, track_idx, evt.time]]
 
         elif evt.type == 'NOTE_OFF':
-            # print track_idx, "OFF", '%-s \t' % evt.type, evt.pitch, evt.velocity, evt.channel
             track_cmds += [["NOTE_OFF", evt.pitch, evt.velocity, track_idx, evt.time]]
 
-        elif evt.type == 'TIME_SIGNATURE': # a 4,time
-            # Time signature is expressed as 4 numbers. nn and dd represent the "numerator" and "denominator" of the signature as notated on sheet music. The denominator is a negative power of 2: 2 = quarter note, 3 = eighth, etc.
-            #print len(evt.data)
+        elif evt.type == 'TIME_SIGNATURE':
             nn, dd, cc, bb = evt.data
             g_time_signature_n = ord(nn)
             g_time_signature_note = 2**ord(dd)
@@ -67,18 +63,11 @@ def parse_midi_track(track_cmds, all_enabled_tracks, track_idx, track):
             print " %d / %d" % (g_time_signature_n, g_time_signature_note)
             print "bar: ", g_bar_duration
 
-        elif evt.type == 'DeltaTime':
-            if evt.time > 0:
-                pass
-                #print track_idx, '%-s \t' % evt.type, evt.time
-                #pygamevt.time.wait(int(evt.time * g_mseconds_per_quarter / self.tpq ))
-
-        elif evt.type == 'SET_TEMPO': # a 4,time
+        elif evt.type == 'SET_TEMPO':
             x,y,z = evt.data
             v = ord(x) * 256 * 256 + ord(y) * 256 + ord(z)
             g_mseconds_per_quarter = v / 1000
             print "%d bps" % (60000 / g_mseconds_per_quarter)
-            #print track_idx, '%-s \t' % evt.type, evt.data
 
 
 def load_midi(infile=None):
@@ -174,8 +163,7 @@ def load_midi(infile=None):
     new_all_midi_lines.sort(key=lambda x: x[-1])
     new_all_midi_lines.sort(key=lambda x: x[-2])
 
-
-
+    # debug note type
     for note_data in notes_in_all_staff:
         pitch, timestamp, duration, note_interval, track_idx = note_data
         note_types = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
@@ -191,7 +179,6 @@ def load_midi(infile=None):
                 print "note interval trip:", b
             else:
                 print "error interval:", a, b, note_interval
-
 
     return new_all_midi_lines, notes_in_all_staff, all_enabled_tracks, all_tracks_order_idx
 

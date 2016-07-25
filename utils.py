@@ -1,13 +1,9 @@
 #encoding: utf8
 
-"""
-"""
-
 
 import pygame
 import time
 import parse_midi
-
 
 import player
 
@@ -36,9 +32,9 @@ def sync_play_time(self, pitch_timestamp, old_time):
     deta_time = time.time() - old_time
     deta_timestamp = pitch_timestamp - self.last_timestamp
     wait_time = int(deta_timestamp * parse_midi.g_mseconds_per_quarter / parse_midi.g_ticks_per_quarter )
-    # print "==== midi need wait:", wait_time
+    # print "---- midi need wait:", wait_time
 
-    # show before play
+    ## show before play
     deta_time = time.time() - old_time
     if wait_time - deta_time*1000 > 10:
         self.gl_screen_blit()

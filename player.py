@@ -22,6 +22,7 @@ IS_PLAYING = 2
 SOUND_BUFFER_REPEAT = 5
 NON_FREE_LIMIT = 0.03
 
+
 if "pygame" in sys.argv:
     _platform = "pygame"
 elif "pyglet" in sys.argv:
@@ -156,7 +157,7 @@ def stop(pitch, volecity, sounds):
 
     elif _platform in ["linux", "linux2"]:
         pcm = None
-        for d in devices.values():
+        for d in g_devices.values():
             if d['pitch'] == pitch:
                 pcm = d
                 break
@@ -210,11 +211,11 @@ def play(pitch, volecity, sounds):
 
     elif _platform in ["linux", "linux2"]:
         pcm = None
-        for d in devices.values():
+        for d in g_devices.values():
             if d['pitch'] == 0:
                 pcm = d
                 break
-        for d in devices.values():
+        for d in g_devices.values():
             if d['pitch'] == pitch:
                 pcm = d
                 break
@@ -225,6 +226,90 @@ def play(pitch, volecity, sounds):
             pcm['pitch'] = pitch
 
 
+def linux_get_sound_data(sound_file):
+    import wave
+    sound = wave.open(sound_file, 'rb')
+    sounddata = []
+    data = sound.readframes(1024)
+    while data:
+        sounddata += [data]
+        data = sound.readframes(1024)
+    sound.close()
+    sound = ''.join(sounddata)
+    soundlen = len(sounddata)/44100
+    return sound, soundlen
+
+
+def load_sounds(sound_keys, sounds):
+    # load sounds needed
+
+    # metronome beat
+    sound_file = "data/beat.wav"
+    metro_beat_pitch = 0
+    metro_volecity = g_volecity_list[-g_volecity_adjust]
+    if (metro_beat_pitch, metro_volecity) not in sounds:
+        if _platform == "darwin":
+            sounds[(metro_beat_pitch, metro_volecity)] = deque([[IS_FREE, 0,
+                                      AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)]
+                                     for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
+        elif _platform == "pygame":
+            sounds[(metro_beat_pitch, metro_volecity)] = pygame.mixer.Sound(sound_file)
+
+        elif _platform in ["linux", "linux2"]:
+            sounds[(metro_beat_pitch, metro_volecity)] = linux_get_sound_data(sound_file)
+
+        elif _platform == "pyglet":
+            sound_source = pyglet.media.load(sound_file, streaming=False)
+            sound_player = pyglet.media.Player()
+            sound_player.queue(sound_source)
+            sounds[(metro_beat_pitch, metro_volecity)] = sound_player
+
+    # metronome accent
+    sound_file = "data/accent.wav"
+    metro_accent_pitch = 1
+    if (metro_accent_pitch, metro_volecity) not in sounds:
+        if _platform == "darwin":
+            sounds[(metro_accent_pitch, metro_volecity)] = deque([[IS_FREE, 0,
+                                      AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)]
+                                     for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
+        elif _platform == "pygame":
+            sounds[(metro_accent_pitch, metro_volecity)] = pygame.mixer.Sound(sound_file)
+
+        elif _platform in ["linux", "linux2"]:
+            sounds[(metro_accent_pitch, metro_volecity)] = linux_get_sound_data(sound_file)
+
+        elif _platform == "pyglet":
+            sound_source = pyglet.media.load(sound_file, streaming=False)
+            sound_player = pyglet.media.Player()
+            sound_player.queue(sound_source)
+            sounds[(metro_accent_pitch, metro_volecity)] = sound_player
+
+    # piano keys
+    for pitch, volecity_data in sound_keys:
+        volecity = get_volecity(volecity_data)
+        if (pitch, volecity) in sounds:
+            continue
+        sound_file = "data/Piano_Sounds/Grand-%03d-%03d.wav" % (pitch, volecity)
+
+        if _platform == "darwin":
+            sounds[(pitch, volecity)] = deque([[IS_FREE, 0, AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)] for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
+
+        elif _platform == "pygame":
+            sounds[(pitch, volecity)] = pygame.mixer.Sound(sound_file)
+
+        elif _platform in ["linux", "linux2"]:
+            sounds[(pitch, volecity)] = linux_get_sound_data(sound_file)
+
+        elif _platform == "pyglet":
+            sound_source = pyglet.media.load(sound_file, streaming=False)
+            sound_player = pyglet.media.Player()
+            sound_player.queue(sound_source)
+            # sound_player = sound_source.play()
+            # sound_player.pause()
+            sounds[(pitch, volecity)] = sound_player
+
+
+################
 def test_sounds(sounds_keys, sounds):
     count = 0
     last_time = time.time()
@@ -260,88 +345,3 @@ def test_sounds(sounds_keys, sounds):
         for key in keys:
             print "stop key:", key
             print sounds[key].stop()
-
-
-def linux_get_sound_data(sound_file):
-    import wave
-    sound = wave.open(sound_file, 'rb')
-    sounddata = []
-    data = sound.readframes(1024)
-    while data:
-        sounddata += [data]
-        data = sound.readframes(1024)
-    sound.close()
-    sound = ''.join(sounddata)
-    soundlen = len(sounddata)/44100
-    return sound, soundlen
-
-
-def load_sounds(sound_keys, sounds):
-    # load sounds needed
-
-    # metronome beat
-    sound_file = "data/beat.wav"
-    sound_file = "data/Piano_Sounds/Grand-108-048.wav"
-    if (0, 48) not in sounds:
-        if _platform == "darwin":
-            sounds[(0, 48)] = deque([[IS_FREE, 0,
-                                      AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)]
-                                     for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
-        elif _platform == "pygame":
-            sounds[(0, 48)] = pygame.mixer.Sound(sound_file)
-
-        elif _platform in ["linux", "linux2"]:
-            sounds[(0, 48)] = linux_get_sound_data(sound_file)
-
-        elif _platform == "pyglet":
-            sound_source = pyglet.media.load(sound_file, streaming=False)
-            sound_player = pyglet.media.Player()
-            sound_player.queue(sound_source)
-            print "queued 0"
-            sounds[(0, 48)] = sound_player
-
-    # metronome accent
-    sound_file = "data/accent.wav"
-    sound_file = "data/Piano_Sounds/Grand-108-127.wav"
-    if (1, 48) not in sounds:
-        if _platform == "darwin":
-            sounds[(1, 48)] = deque([[IS_FREE, 0,
-                                      AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)]
-                                     for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
-        elif _platform == "pygame":
-            sounds[(1, 48)] = pygame.mixer.Sound(sound_file)
-
-        elif _platform in ["linux", "linux2"]:
-            sounds[(1, 48)] = linux_get_sound_data(sound_file)
-
-        elif _platform == "pyglet":
-            sound_source = pyglet.media.load(sound_file, streaming=False)
-            sound_player = pyglet.media.Player()
-            sound_player.queue(sound_source)
-            print "queued 1"
-            sounds[(1, 48)] = sound_player
-
-    # piano keys
-    for pitch, volecity_data in sound_keys:
-        volecity = get_volecity(volecity_data)
-        if (pitch, volecity) in sounds:
-            continue
-        sound_file = "data/Piano_Sounds/Grand-%03d-%03d.wav" % (pitch, volecity)
-
-        if _platform == "darwin":
-            sounds[(pitch, volecity)] = deque([[IS_FREE, 0, AppKit.NSSound.alloc().initWithContentsOfFile_byReference_(sound_file, False)] for _ in range(SOUND_BUFFER_REPEAT)], SOUND_BUFFER_REPEAT)
-
-        elif _platform == "pygame":
-            sounds[(pitch, volecity)] = pygame.mixer.Sound(sound_file)
-
-        elif _platform in ["linux", "linux2"]:
-            sounds[(pitch, volecity)] = linux_get_sound_data(sound_file)
-
-        elif _platform == "pyglet":
-            sound_source = pyglet.media.load(sound_file, streaming=False)
-            sound_player = pyglet.media.Player()
-            sound_player.queue(sound_source)
-            # sound_player = sound_source.play()
-            # sound_player.pause()
-            sounds[(pitch, volecity)] = sound_player
-            print "queued ", pitch, volecity

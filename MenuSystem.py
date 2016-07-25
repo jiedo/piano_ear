@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+#encoding: utf8
+
 from pygame import *
 from pygame import gfxdraw
 font.init()
