@@ -300,14 +300,14 @@ class PlayCenter():
                     elif ev.key == K_c:
                         self.piano.is_longbar_show = not self.piano.is_longbar_show
 
-                    elif ev.key == K_LEFT:
+                    elif ev.key == K_COMMA:
                         # Slower
                         parse_midi.g_mseconds_per_quarter = int(60000 / (
                             60000 / parse_midi.g_mseconds_per_quarter - 10))
                         if parse_midi.g_mseconds_per_quarter > 2000:
                             parse_midi.g_mseconds_per_quarter = 2000
                         self.menu_bar_info.set(self.get_menus_info_bar())
-                    elif ev.key == K_RIGHT:
+                    elif ev.key == K_PERIOD:
                         # Faster
                         parse_midi.g_mseconds_per_quarter = int(60000 / (
                             60000 / parse_midi.g_mseconds_per_quarter + 10))
@@ -324,13 +324,13 @@ class PlayCenter():
                             self.staff_offset_x = 0
 
                     # Previous/Next MIDI
-                    elif ev.key in [K_COMMA, K_PERIOD]:
+                    elif ev.key in [K_LEFT, K_RIGHT]:
                         need_reload = False
-                        if ev.key == K_COMMA:
+                        if ev.key == K_LEFT:
                             if self.midi_filename_idx > 0:
                                 self.midi_filename_idx -= 1
                                 need_reload = True
-                        elif ev.key == K_PERIOD:
+                        elif ev.key == K_RIGHT:
                             if self.midi_filename_idx+1 < len(self.midi_filename_data):
                                 self.midi_filename_idx += 1
                                 need_reload = True

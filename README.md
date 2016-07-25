@@ -44,12 +44,12 @@ Esc | exit
 Enter | reload midi files, refresh menu
 Space | pause/play current song
 s | stop current song
-Left | playing slower
-Right | playing faster
+Left | previous song
+Right | next song
 UP | staff page up
 Down | staff page down
-,(Comma) | previous song
-.(Period) | next song
+,(Comma) | playing slower
+.(Period) | playing faster
 f | round turn sound strong to smooth
 m | round turn up sound metronome
 z | shrink staff
