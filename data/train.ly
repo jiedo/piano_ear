@@ -8,46 +8,42 @@
 }
 
 \header {
-  tagline = "jiedo"  % removed
+  tagline = "Ear training"  % removed
   title = "Music"
   composer = "Faust"
+
 }
 
 
 \score {
   \relative c' {
 
+    \time 2/2
+
     \set Staff.midiInstrument = #"electric grand"
 
     c-"C Major Scale(Ionian)" d e f g a b c
-
-R1 R R R
+R1
     c,4-"Lydian" d e fis g a b c
-
 R1
     c,4-"Mixo-Lydian" d e f g a bes c
 
-
-
+R1
+R1
     c,4-"C Minor Scale(Aeolian)" d ees f g aes bes c
-
 R1
     c,4-"C Harmonic Scale" d ees f g aes b c
-
-
+R1
     c,4-"C Melodic Scale" d ees f g a b c
-
+R1
 R1
     c,4-"Dorian" d ees f g a bes c
-
-
+R1
     c,4-"Phrygian" des ees f g aes bes c
-
 R1
     c,4-"Locrian" des ees f ges aes bes c
-
-
-
+R1
+R1
 
 % intervals:
 c,2 c
@@ -105,6 +101,8 @@ R
 <c c'>-"Perfect Octove"
 
 
+R
+
 % triad chord:
 <c e g>-"Major Triad"
 R
@@ -150,9 +148,6 @@ R
 
 <c f g bes>-"7Sus4"
 R
-
-
-
 
 
   }
