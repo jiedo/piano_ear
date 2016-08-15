@@ -14,7 +14,7 @@ __create_time__ = "Feb 26 2012"
 
 
 # time range of window width
-TIMESTAMP_RANGE = 24000
+TIMESTAMP_RANGE = 36000
 PITCH_OF_KEY_ON_KEYBOARD = [K_TAB, K_1,
                             K_q, K_2,
                             K_w,
@@ -48,16 +48,21 @@ def draw_dash_line(screen, color, start_pos, end_pos, w=1, deta_h=7, vertical=Tr
 
 
 class Piano():
-
     whitekey_width = 24
     whitekey_height = 140
     blackkey_width = 14
     blackkey_height = 84
+
     gap_keyboad_staff = 60
 
     def __init__(self, screen, screen_size, top=None):
         self.screen = screen
         self.screen_width, self.screen_height = screen_size
+
+        self.whitekey_width = 24*self.screen_width/1280
+        self.whitekey_height = 140*self.screen_width/1280
+        self.blackkey_width = 14*self.screen_width/1280
+        self.blackkey_height = 84*self.screen_width/1280
 
         self.notes = """A2 #A2 B2
     C1 #C1 D1 #D1 E1 F1 #F1 G1 #G1 A1 #A1 B1
@@ -85,7 +90,7 @@ class Piano():
         if top is None:
             top = self.screen_height - self.whitekey_height
 
-        self.top = top
+        self.top = top  - self.whitekey_height
         self.lastbar_pos_in_line1 = None
         self.lastbar_pos_in_line2 = None
 
@@ -164,11 +169,11 @@ class Piano():
         if key_type == 'm':
             piano_key_offset = [15,14, 14, 14,15,14,14,13,14,13, 14,14]
             whitekey_n = 7
-            blackkey_offset = [15, 43, 86, 113, 140]
+            blackkey_offset = [int(i*self.screen_width/1280) for i in [15, 43, 86, 113, 140]]
             key_pitch = 24 + 12 * key_pitch
         elif key_type == 'l':
             whitekey_n = 2
-            blackkey_offset = [17]
+            blackkey_offset = [int(17*self.screen_width/1280)]
             key_pitch = 21
         elif key_type == 'r':
             whitekey_n = 1
@@ -222,8 +227,8 @@ class Piano():
     def draw_vertical_staff_lines(self, top=0, n=6, left=0):
         bottom = self.top
         # clean backgroud
-        self.screen.fill(self.color_backgroud,
-                         pygame.Rect(0, top, self.screen_width, bottom - top))
+        # self.screen.fill(self.color_backgroud,
+        #                  pygame.Rect(0, top, self.screen_width, bottom - top))
         middle_c_white_index = 23
         middle_c_white_offset_x = middle_c_white_index * self.whitekey_width + self.whitekey_width/2
         for i in range(1, int(n*2)-1):
@@ -239,22 +244,25 @@ class Piano():
         draw_dash_line(self.screen, self.color_middle_c_line, (x, top), (x, bottom))
 
 
-    def draw_note(self, key_note_idx, top=340):
+    def get_note_font_render_block(self, key_note_idx, top=340):
         note = self.notes[key_note_idx-21]
-        print note
+        # print note
         if key_note_idx in self.blackkeys:
-            vertical_label = u"\ue262\ue0a2"
+            vertical_label = u"\ue262 \ue0a2"
             key_note_idx = key_note_idx - 1
         elif key_note_idx in self.whitekeys:
             vertical_label = u"\ue0a2"
-        key_rec = self.whitekeys[key_note_idx]
-        note_pos = key_rec.left + self.whitekey_width/2
-        note_pos -= 85
-        self.piano_note_font = pygame.font.Font(pygame.font.match_font('Bravura Text'), 144)
+        self.piano_note_font = pygame.font.Font(pygame.font.match_font('Bravura Text'), 80)
         ren = self.piano_note_font.render(vertical_label, True, self.color_lines, self.color_backgroud)
         vertical_label_size = self.piano_note_font.size(vertical_label)
-        #print vertical_label_size
-        #note_rec = pygame.Rect(note_pos, 100, vertical_label_size[0], vertical_label_size[1])
+        return ren, vertical_label_size
+
+
+    def draw_note_font(self, key_note_idx, top=340):
+        ren, vertical_label_size = self.get_note_font_render_block(key_note_idx, top=top)
+        key_rec = self.whitekeys[key_note_idx]
+        note_pos = key_rec.left + self.whitekey_width/2
+        note_pos -= 50
         note_rec = pygame.Rect(note_pos, top, vertical_label_size[1], vertical_label_size[0])
         #pygame.draw.rect(ren, self.black, note_rec, True)
         ren = pygame.transform.rotate(ren, 270)
@@ -355,7 +363,8 @@ class Piano():
                 if progress_multi_lines > 0:
                     break
                 else:
-                    middle = staff_top + (self.staff_total_lines_up - 4) * self.staff_space_height
+                    # middle = staff_top + (self.staff_total_lines_up - 4) * self.staff_space_height
+                    middle = self.screen_height/2
 
             (is_beat_at_right_most, last_bar_pos) = self.show_notes_staff_in_line(
                 enabled_tracks, tracks_order_idx, notes_in_all_staff,
@@ -470,7 +479,10 @@ class Piano():
                 if is_black:
                     # draw black
                     pygame.draw.rect(self.screen, note_color, note_rec, 1)
+                    #pygame.draw.ellipse(self.screen, note_color, note_rec, 1)
+
                 else:
+                    #pygame.draw.ellipse(self.screen, note_color, note_rec, 0)
                     self.screen.fill(note_color, note_rec)
 
             # draw flag
@@ -559,9 +571,15 @@ class Piano():
             key_color = key_color_down
         # store key color
         self.pitch_color[pitch] = key_color
-        # note_rec, note_pos = self.draw_note(pitch, top=WINSIZE[1] * 0.7)
-        # self.draw_vertical_staff_lines(WINSIZE[1] * 0.618)
-        # pygame.draw.rect(self.screen, self.color_backgroud, note_rec, False)
+
+        note_rec, note_pos = self.draw_note_font(pitch, top=self.screen_height * 0.73)
+        if cmd == "NOTE_ON":
+            pygame.draw.rect(self.screen, self.color_current_highlight, note_rec, 1)
+        else:
+            self.screen.fill(self.color_backgroud, note_rec)
+
+        self.draw_vertical_staff_lines(self.screen_height * 0.618)
+
         self.draw_keys([pitch_key_rec], key_color)
         if pitch_left_blackkeys_rec:
             self.draw_keys([pitch_left_blackkeys_rec], self.pitch_color.get(pitch-1, self.black))

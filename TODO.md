@@ -1,12 +1,15 @@
 # TODO
 
 1. bug: update key press when keyup
-1. play时在infobar上显示音名、音程关系、和弦
+2. play时在infobar上显示音名、音程关系、和弦
 
     当前单音、与上一个单音的音程、当前和声（双音、三音、四音）
 
 3. 完善staff的beam
-3. use pdf staff, do not draw staff by self
+4. 拉开高低音谱表的距离，通过小节内的平均音高判断音符所属的谱表，若平均音高居中，则通过音符附近的音判断该音符所属谱表
+5. use pdf staff, do not draw staff by self
+
+6. MacOS上支持retina显示
 
 
 ## Done

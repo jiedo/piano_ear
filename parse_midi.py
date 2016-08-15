@@ -170,15 +170,19 @@ def load_midi(infile=None):
 
         a = int(1/note_interval)
         b = 1/(note_interval*3)
-        if a in note_types and b in note_types:
-            print "error", a, b, note_interval
+        c = 1/(note_interval*7)
+        if a in note_types and b in note_types and c in note_types:
+            print "error", a, b, c, note_interval
         else:
             if a in note_types:
-                print "note interval:", a
+                pass
+                # print "note interval:", a
             elif b in note_types:
                 print "note interval trip:", b
+            elif c in note_types:
+                print "note interval seven:", c
             else:
-                print "error interval:", a, b, note_interval
+                print "error interval:", a, b, c, note_interval
 
     return new_all_midi_lines, notes_in_all_staff, all_enabled_tracks, all_tracks_order_idx
 

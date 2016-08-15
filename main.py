@@ -42,14 +42,9 @@ def get_menu_data():
                           if (filename.endswith(".mid") or filename.endswith(".midi"))]
         if midi_filenames:
             menu_data += midi_filenames
-        else:
-            menu_data += ["."]
 
     midi_filename_data = []
     menu_data = []
-
-    # for menu_name in menu_data_dict.keys():
-    #     print menu_name
 
     for data in menu_data_dict["midi"]:
         if not isinstance(data, list):
@@ -77,7 +72,7 @@ def get_menu_data():
     return menu_data, midi_filename_data
 
 
-WINSIZE = [1248, 760]
+WINSIZE = [1680, 1000]
 
 class PlayCenter():
     def __init__(self):
@@ -103,7 +98,7 @@ class PlayCenter():
         self.menu_bar.set(menus_in_bar)
         self.menu_bar_info = MenuSystem.MenuBar(top=self.screen_rect.height - self.menu_bar.lineheigth)
         self.piano = Piano(screen, WINSIZE,
-                           top=self.menu_bar_info.top - Piano.whitekey_height - self.piano_info_bar_gap)
+                           top=self.menu_bar_info.top - self.piano_info_bar_gap)
 
         self.piano.init_piano()
         self.piano.draw_vertical_staff_lines(self.screen_rect.height * 0.618)
@@ -366,7 +361,7 @@ class PlayCenter():
                         self.piano.timestamp_range = TIMESTAMP_RANGE * parse_midi.g_ticks_per_quarter / parse_midi.g_mseconds_per_quarter
                         self.piano.timestamp_range = self.piano.timestamp_range * self.piano.staff_space_height_base / self.piano.staff_space_height
                     elif ev.key == K_x:
-                        if self.piano.staff_space_height < 32:
+                        if self.piano.staff_space_height < 128:
                             self.piano.staff_space_height *= 2
                         self.piano.timestamp_range = TIMESTAMP_RANGE * parse_midi.g_ticks_per_quarter / parse_midi.g_mseconds_per_quarter
                         self.piano.timestamp_range = self.piano.timestamp_range * self.piano.staff_space_height_base / self.piano.staff_space_height
