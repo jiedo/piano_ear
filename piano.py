@@ -77,6 +77,23 @@ class Piano():
         self.whitekeys = {}
         self.blackkeys = {}
         self.pitch_color = {}
+        self.pitch_rainbow = [(255,0,0), # red
+                              (205,107,0), # orange
+                              (155,155,0), # yellow
+                              (107,205,0), #
+
+                              (0,255,0), # green
+                              (0,205,107), #
+                              (0,155,155),
+                              (0,107,205), #
+
+                              (0,0,255), # blue
+                              (107,0,205), #
+                              (155,0,155), # voilet
+                              (205,0,107), #
+        ]
+
+        self.rect2pitch = {}
 
         self.staff_total_lines = 28
         self.staff_total_lines_up = 15
@@ -282,7 +299,15 @@ class Piano():
                     key_color = self.black
                     border_color = self.white
 
+
             self.screen.fill(key_color, r)
+            key_label_rec = pygame.Rect(r.left, r.top, r.width, 40)
+            key_label_color = self.black
+            if r.left in self.rect2pitch:
+                key_label_color = self.pitch_rainbow[(self.rect2pitch[r.left] - 24) % 12]
+
+            self.screen.fill(key_label_color, key_label_rec)
+
             pygame.draw.rect(self.screen, border_color, r, 1)
             if key_color == self.black:
                 line_width = 1
@@ -615,6 +640,11 @@ class Piano():
             w, h = self.add_piano_keys('m', i, top, left)
             left += w
         w, h = self.add_piano_keys('r', 0, top, left)
+
+        for pitch, rect in self.whitekeys.items():
+            self.rect2pitch[rect.left] = pitch
+        for pitch, rect in self.blackkeys.items():
+            self.rect2pitch[rect.left] = pitch
         self.reset_piano()
 
 
